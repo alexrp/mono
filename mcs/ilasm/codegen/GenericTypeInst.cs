@@ -19,7 +19,7 @@ namespace Mono.ILASM {
 
                 private BaseClassRef class_ref;
                 private PEAPI.GenericTypeInst p_gen_inst;
-                private bool is_valuetypeinst;
+                private bool is_valuetypeinst = false; // TODO: always false
                 private GenericArguments gen_args;
                 private bool is_added; /* Added to PEFile (to TypeSpec table) ? */
                 /* Note: Using static hashtable here as GenericTypeInsts is not cached */

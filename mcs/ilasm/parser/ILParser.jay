@@ -31,7 +31,7 @@ namespace Mono.ILASM {
                 private string pinvoke_meth;
                 private PEAPI.PInvokeAttr pinvoke_attr;
                 private ILTokenizer tokenizer;
-		static int yacc_verbose_flag;
+		static int yacc_verbose_flag = 0;
 
                 class NameValuePair {
                         public string Name;
@@ -57,12 +57,14 @@ namespace Mono.ILASM {
 
                 public bool CheckSecurityActionValidity (System.Security.Permissions.SecurityAction action, bool for_assembly)
                 {
+#pragma warning disable 0618
                         if ((action == System.Security.Permissions.SecurityAction.RequestMinimum || 
                                 action == System.Security.Permissions.SecurityAction.RequestOptional || 
                                 action == System.Security.Permissions.SecurityAction.RequestRefuse) && !for_assembly) {
                                 Report.Warning (String.Format ("System.Security.Permissions.SecurityAction '{0}' is not valid for this declaration", action));
                                 return false;
                         }
+#pragma warning restore 0618
 
                         return true;
                 }

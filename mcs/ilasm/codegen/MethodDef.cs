@@ -51,7 +51,9 @@ namespace Mono.ILASM {
                 private TypeDef type_def;
                 private GenericParameters gen_params;
                 private Location start;
-                private CodeGen codegen;
+#pragma warning disable 0414
+                private CodeGen codegen; // TODO: unused variable
+#pragma warning restore 0414
 
                 public MethodDef (CodeGen codegen, PEAPI.MethAttr meth_attr,
 				  PEAPI.CallConv call_conv, PEAPI.ImplAttr impl_attr,

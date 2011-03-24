@@ -29,7 +29,7 @@ namespace Mono.ILASM {
 
                 private PEFile pefile;
                 private ExternAssembly current_assemblyref;
-                private ExternModule current_moduleref;
+                private ExternModule current_moduleref = null; // TODO: always null
                 private string current_namespace;
                 private TypeDef current_typedef;
                 private MethodDef current_methoddef;
@@ -57,11 +57,12 @@ namespace Mono.ILASM {
 
                 private int sub_system;
                 private int cor_flags;
-                private long image_base;
+#pragma warning disable 0414
+                private long image_base; // TODO: unused variable
+#pragma warning restore 0414
                 private long stack_reserve;
 
                 private string output_file;
-		private string debug_file;
                 private bool is_dll;
                 private bool entry_point;
 
@@ -456,7 +457,7 @@ namespace Mono.ILASM {
 
                                 out_stream = new FileStream (output_file, FileMode.Create, FileAccess.Write);
                                 pefile = new PEFile (ThisAssembly != null ? ThisAssembly.Name : null, ThisModule.Name, is_dll, ThisAssembly != null, null, out_stream);
-                                PEAPI.Assembly asmb = pefile.GetThisAssembly ();
+                                //PEAPI.Assembly asmb = pefile.GetThisAssembly ();
 
                                 ThisModule.PeapiModule = pefile.GetThisModule ();
 

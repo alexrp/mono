@@ -15,7 +15,9 @@ namespace Mono.ILASM {
         public class DataDef {
 
                 private string name;
-                private bool is_tls;
+#pragma warning disable 0414
+                private bool is_tls; // TODO: unused variable
+#pragma warning restore 0414
 
                 private PEAPI.Constant constant;
 
