@@ -38,8 +38,8 @@
     <Reference Include="Mono.Security">
       <HintPath>..\class\lib\net_2_0\Mono.Security.dll</HintPath>
     </Reference>
-    <Reference Include="PEAPI">
-      <HintPath>..\class\lib\net_2_0\PEAPI.dll</HintPath>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
