@@ -98,8 +98,8 @@ namespace Mono.ILASM
 				} catch (ILAsmException e) {
 					Error (e.ToString ());
 					return false;
-				} catch (PEAPI.PEFileException pe) {
-					Error ("Error : " + pe.Message);
+				} catch (Exception ex) {
+					Error ("Error : " + ex.Message);
 					return false;
 				} 
 

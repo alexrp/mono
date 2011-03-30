@@ -6,7 +6,6 @@
 // (C) 2003 Jackson Harper, All rights reserved
 //
 
-using PEAPI;
 using System;
 using System.IO;
 using System.Collections;
@@ -14,6 +13,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
+using Mono.Cecil;
 
 using MIPermission = Mono.ILASM.Permission;
 using MIPermissionSet = Mono.ILASM.PermissionSet;
@@ -29,14 +29,14 @@ namespace Mono.ILASM {
 		private bool pinvoke_info;
 		private string pinvoke_mod;
 		private string pinvoke_meth;
-		private PEAPI.PInvokeAttr pinvoke_attr;
+		private PInvokeAttributes pinvoke_attr;
 		private ILTokenizer tokenizer;
 		static int yacc_verbose_flag = 0;
 
 		class NameValuePair {
 
 			public string Name;
-			public object Value;
+			public object Value; // Can be byte, short, int, etc...
 
 			public NameValuePair (string name, object value)
 			{
@@ -47,10 +47,10 @@ namespace Mono.ILASM {
 
 		class PermPair {
 
-			public PEAPI.SecurityAction sec_action;
+			public Mono.Cecil.SecurityAction sec_action;
 			public object perm;
 
-			public PermPair (PEAPI.SecurityAction sec_action, object perm)
+			public PermPair (Mono.Cecil.SecurityAction sec_action, object perm)
 			{
 				this.sec_action = sec_action;
 				this.perm = perm;
@@ -118,7 +118,7 @@ namespace Mono.ILASM {
 			}
 
 			IPermission iper = (IPermission) t.GetMethod ("CreatePermission").Invoke (obj, null);
-			return new PermPair ((PEAPI.SecurityAction) action, iper);
+			return new PermPair ((Mono.Cecil.SecurityAction) action, iper);
 		}
 
 		public ILParser (CodeGen codegen, ILTokenizer tokenizer)
@@ -755,7 +755,7 @@ generic_class_ref	: class_ref
 
 formal_typars		   : formal_typar_attr constraints_clause formal_typar
 						  {
-								GenericParameter gp = new GenericParameter ((string) $3, (PEAPI.GenericParamAttributes) $1, (ArrayList) $2);
+								GenericParameter gp = new GenericParameter ((string) $3, (Mono.Cecil.GenericParameterAttributes) $1, (ArrayList) $2);
 
 								GenericParameters colln = new GenericParameters ();
 								colln.Add (gp);
@@ -764,34 +764,34 @@ formal_typars		   : formal_typar_attr constraints_clause formal_typar
 						| formal_typars COMMA formal_typar_attr constraints_clause formal_typar
 						  {
 								GenericParameters colln = (GenericParameters) $1;
-								colln.Add (new GenericParameter ((string) $5, (PEAPI.GenericParamAttributes) $3, (ArrayList) $4));
+								colln.Add (new GenericParameter ((string) $5, (Mono.Cecil..GenericParameterAttributes) $3, (ArrayList) $4));
 								$$ = colln;
 						  }
 						 ;
  
 formal_typar_attr	: /* EMPTY */
 						  {
-								$$ = new PEAPI.GenericParamAttributes ();
+								$$ = new Mono.Cecil.GenericParameterAttributes ();
 						  }
 			| formal_typar_attr PLUS
 						  {
-							   $$ = (PEAPI.GenericParamAttributes) $1 | PEAPI.GenericParamAttributes.Covariant; 
+							   $$ = (Mono.Cecil.GenericParameterAttributes) $1 | Mono.Cecil.GenericParameterAttributes.Covariant; 
 						  }
 			| formal_typar_attr DASH
 						  {
-							   $$ = (PEAPI.GenericParamAttributes) $1 | PEAPI.GenericParamAttributes.Contravariant; 
+							   $$ = (Mono.Cecil.GenericParameterAttributes) $1 | Mono.Cecil.GenericParameterAttributes.Contravariant; 
 						  }
 			| formal_typar_attr D_CTOR
 						  {
-							   $$ = (PEAPI.GenericParamAttributes) $1 | PEAPI.GenericParamAttributes.DefaultConstructorConstrait; 
+							   $$ = (Mono.Cecil.GenericParameterAttributes) $1 | Mono.Cecil.GenericParameterAttributes.DefaultConstructorConstraint; 
 						  }
 			| formal_typar_attr K_VALUETYPE
 						  {
-							   $$ = (PEAPI.GenericParamAttributes) $1 | PEAPI.GenericParamAttributes.NotNullableValueTypeConstraint; 
+							   $$ = (Mono.Cecil.GenericParameterAttributes) $1 | Mono.Cecil.GenericParameterAttributes.NotNullableValueTypeConstraint; 
 						  }
 			| formal_typar_attr K_CLASS
 						  {
-							   $$ = (PEAPI.GenericParamAttributes) $1 | PEAPI.GenericParamAttributes.ReferenceTypeConstraint; 
+							   $$ = (Mono.Cecil.GenericParameterAttributes) $1 | Mono.Cecil.GenericParameterAttributes.ReferenceTypeConstraint; 
 						  }
 						;
 
@@ -2842,18 +2842,18 @@ sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PA
 				System.Text.UnicodeEncoding ue = new System.Text.UnicodeEncoding ();
 				PermissionSetAttribute psa = new PermissionSetAttribute ((System.Security.Permissions.SecurityAction) (short) $2);
 				psa.XML = ue.GetString ((byte []) $4);
-				$$ = new PermPair ((PEAPI.SecurityAction) $2, psa.CreatePermissionSet ());
+				$$ = new PermPair ((Mono.Cecil.SecurityAction) $2, psa.CreatePermissionSet ());
 			  }
 			| D_PERMISSIONSET sec_action comp_qstring
 			  {
 				PermissionSetAttribute psa = new PermissionSetAttribute ((System.Security.Permissions.SecurityAction) (short) $2);
 				psa.XML = (string) $3;
-				$$ = new PermPair ((PEAPI.SecurityAction) $2, psa.CreatePermissionSet ());
+				$$ = new PermPair ((Mono.Cecil.SecurityAction) $2, psa.CreatePermissionSet ());
 			  }
 			| D_PERMISSIONSET sec_action ASSIGN OPEN_BRACE permissions CLOSE_BRACE
 			  {
 #if NET_2_0
-				$$ = new MIPermissionSet ((PEAPI.SecurityAction) $2, (ArrayList) $5);
+				$$ = new MIPermissionSet ((Mono.Cecil.SecurityAction) $2, (ArrayList) $5);
 #else
 				Report.Error ("Use ilasm2 for 2.0 style declarative security attributes.");
 #endif
@@ -2977,63 +2977,63 @@ cavalue 		: truefalse
 
 sec_action		: K_REQUEST
 			  {
-				$$ = PEAPI.SecurityAction.Request;
+				$$ = Mono.Cecil.SecurityAction.Request;
 			  }
 			| K_DEMAND
 			  {
-				$$ = PEAPI.SecurityAction.Demand;
+				$$ = Mono.Cecil.SecurityAction.Demand;
 			  }
 			| K_ASSERT
 			  {
-				$$ = PEAPI.SecurityAction.Assert;
+				$$ = Mono.Cecil.SecurityAction.Assert;
 			  }
 			| K_DENY
 			  {
-				$$ = PEAPI.SecurityAction.Deny;
+				$$ = Mono.Cecil.SecurityAction.Deny;
 			  }
 			| K_PERMITONLY
 			  {
-				$$ = PEAPI.SecurityAction.PermitOnly;
+				$$ = Mono.Cecil.SecurityAction.PermitOnly;
 			  }
 			| K_LINKCHECK
 			  {
-				$$ = PEAPI.SecurityAction.LinkDemand;
+				$$ = Mono.Cecil.SecurityAction.LinkDemand;
 			  }
 			| K_INHERITCHECK
 			  {
-				$$ = PEAPI.SecurityAction.InheritDemand;
+				$$ = Mono.Cecil.SecurityAction.InheritDemand;
 			  }
 			| K_REQMIN
 			  {
-				$$ = PEAPI.SecurityAction.RequestMinimum;
+				$$ = Mono.Cecil.SecurityAction.RequestMinimum;
 			  }
 			| K_REQOPT
 			  {
-				$$ = PEAPI.SecurityAction.RequestOptional;
+				$$ = Mono.Cecil.SecurityAction.RequestOptional;
 			  }
 			| K_REQREFUSE
 			  {
-				$$ = PEAPI.SecurityAction.RequestRefuse;
+				$$ = Mono.Cecil.SecurityAction.RequestRefuse;
 			  }
 			| K_PREJITGRANT
 			  {
-				$$ = PEAPI.SecurityAction.PreJitGrant;
+				$$ = Mono.Cecil.SecurityAction.PreJitGrant;
 			  }
 			| K_PREJITDENY
 			  {
-				$$ = PEAPI.SecurityAction.PreJitDeny;
+				$$ = Mono.Cecil.SecurityAction.PreJitDeny;
 			  }
 			| K_NONCASDEMAND
 			  {
-				$$ = PEAPI.SecurityAction.NonCasDemand;
+				$$ = Mono.Cecil.SecurityAction.NonCasDemand;
 			  }
 			| K_NONCASLINKDEMAND
 			  {
-				$$ = PEAPI.SecurityAction.NonCasLinkDemand;
+				$$ = Mono.Cecil.SecurityAction.NonCasLinkDemand;
 			  }
 			| K_NONCASINHERITANCE
 			  {
-				$$ = PEAPI.SecurityAction.NonCasInheritance;
+				$$ = Mono.Cecil.SecurityAction.NonCasInheritance;
 			  }
 			/* FIXME: Should we have LinkDemandChoice, InheritDemandChoice and DemandChoice ? */  
 			;
@@ -3092,7 +3092,7 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 
 assembly_head		: D_ASSEMBLY asm_attr slashed_name
 						  {
-								codegen.SetThisAssembly ((string) $3, (PEAPI.AssemAttr) $2);
+								codegen.SetThisAssembly ((string) $3, (Mono.Cecil.AssemblyAttributes) $2);
 								codegen.CurrentCustomAttrTarget = codegen.ThisAssembly;
 				codegen.CurrentDeclSecurityTarget = codegen.ThisAssembly;
 						  }
@@ -3100,14 +3100,14 @@ assembly_head		: D_ASSEMBLY asm_attr slashed_name
 
 asm_attr		: /* EMPTY */
 			  {
-				  $$ = new PEAPI.AssemAttr ();
+				  $$ = new Mono.Cecil.AssemblyAttributes ();
 			  }
 			/*| asm_attr K_NOAPPDOMAIN
 			| asm_attr K_NOPROCESS
 			| asm_attr K_NOMACHINE*/
 			| asm_attr K_RETARGETABLE
 			  {
-				  $$ = ((PEAPI.AssemAttr) $1) | PEAPI.AssemAttr.Retargetable;
+				  $$ = ((Mono.Cecil.AssemblyAttributes) $1) | Mono.Cecil.AssemblyAttributes.Retargetable;
 			  }
 			;
 
@@ -3157,14 +3157,14 @@ assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr slashed_name
 								System.Reflection.AssemblyName asmb_name = 
 					new System.Reflection.AssemblyName ();
 				asmb_name.Name = (string) $4;
-				codegen.BeginAssemblyRef ((string) $4, asmb_name, (PEAPI.AssemAttr) $3);
+				codegen.BeginAssemblyRef ((string) $4, asmb_name, (Mono.Cecil.AssemblyAttributes) $3);
 						  }
 			| D_ASSEMBLY K_EXTERN asm_attr slashed_name K_AS slashed_name
 						  {
 								System.Reflection.AssemblyName asmb_name = 
 					new System.Reflection.AssemblyName ();
 				asmb_name.Name = (string) $4;
-				codegen.BeginAssemblyRef ((string) $6, asmb_name, (PEAPI.AssemAttr) $3);
+				codegen.BeginAssemblyRef ((string) $6, asmb_name, (Mono.Cecil.AssemblyAttributes) $3);
 						  }
 			;
 
