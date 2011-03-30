@@ -6,152 +6,147 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class FieldDef : ICustomAttrTarget
+	{
 
-        public class FieldDef : ICustomAttrTarget {
+		private string name;
+		private BaseTypeRef type;
+		private PEAPI.FieldAttr attr;
+		private PEAPI.FieldDef field_def;
+		private ArrayList customattr_list;
+		private PEAPI.NativeType native_type;
+		private bool offset_set;
+		private bool value_set;
+		private bool is_resolved;
+		private uint offset;
+		private PEAPI.Constant constant;
+		private string at_data_id;
 
-                private string name;
-                private BaseTypeRef type;
-                private PEAPI.FieldAttr attr;
-                private PEAPI.FieldDef field_def;
-                private ArrayList customattr_list;
-                private PEAPI.NativeType native_type;
+		public FieldDef (PEAPI.FieldAttr attr,string name,
+							BaseTypeRef type)		{
+			this.attr = attr;
+			this.name = name;
+			this.type = type;
 
-                private bool offset_set;
-                private bool value_set;
+			offset_set = false;
+			value_set = false;
 
-                private bool is_resolved;
+			at_data_id = null;
 
-                private uint offset;
-                private PEAPI.Constant constant;
-                private string at_data_id;
+			is_resolved = false;
+		}
 
-                public FieldDef (PEAPI.FieldAttr attr, string name,
-                                BaseTypeRef type)
-                {
-                        this.attr = attr;
-                        this.name = name;
-                        this.type = type;
+		public string Name {
+			get { return name; }
+		}
 
-                        offset_set = false;
-                        value_set = false;
+		public PEAPI.FieldDef PeapiFieldDef {
+			get { return field_def; }
+		}
 
-                        at_data_id = null;
+		public bool IsStatic {
+			get { return (attr & PEAPI.FieldAttr.Static) != 0; }
+		}
 
-                        is_resolved = false;
-                }
+		public PEAPI.FieldAttr Attributes {
+			get { return attr; }
+			set { attr = value; }
+		}
 
-                public string Name {
-                        get { return name; }
-                }
+		public BaseTypeRef Type {
+			get { return type; }
+		}
 
-                public PEAPI.FieldDef PeapiFieldDef {
-                        get { return field_def; }
-                }
+		public void SetOffset (uint val)
+		{
+			offset_set = true;
+			offset = val;
+		}
 
-                public bool IsStatic {
-                        get { return (attr & PEAPI.FieldAttr.Static) != 0; }
-                }
+		public void SetValue (PEAPI.Constant constant)
+		{
+			value_set = true;
+			this.constant = constant;
+		}
 
-                public PEAPI.FieldAttr Attributes {
-                        get { return attr; }
-                        set { attr = value; }
-                }
+		public void AddDataValue (string at_data_id)
+		{
+			this.at_data_id = at_data_id;
+		}
 
-                public BaseTypeRef Type {
-                        get { return type; }
-                }
+		public void AddCustomAttribute (CustomAttr customattr)
+		{
+			if (customattr_list == null)
+				customattr_list = new ArrayList ();
 
-                public void SetOffset (uint val)
-                {
-                        offset_set = true;
-                        offset = val;
-                }
+			customattr_list.Add (customattr);
+		}
 
-                public void SetValue (PEAPI.Constant constant)
-                {
-                        value_set = true;
-                        this.constant = constant;
-                }
+		public void AddMarshalInfo (PEAPI.NativeType native_type)
+		{
+			this.native_type = native_type;        
+		}
 
-                public void AddDataValue (string at_data_id)
-                {
-                        this.at_data_id = at_data_id;
-                }
+		public PEAPI.FieldDef Resolve (CodeGen code_gen)
+		{
+			if (is_resolved)
+				return field_def;
 
-                public void AddCustomAttribute (CustomAttr customattr)
-                {
-                        if (customattr_list == null)
-                                customattr_list = new ArrayList ();
+			type.Resolve (code_gen);
+			field_def = code_gen.PEFile.AddField (attr, name, type.PeapiType);
 
-                        customattr_list.Add (customattr);
-                }
-                
-                public void AddMarshalInfo (PEAPI.NativeType native_type)
-                {
-                        this.native_type = native_type;        
-                }
+			is_resolved = true;
 
-                public PEAPI.FieldDef Resolve (CodeGen code_gen)
-                {
-                        if (is_resolved)
-                                return field_def;
+			return field_def;
+		}
 
-                        type.Resolve (code_gen);
-                        field_def = code_gen.PEFile.AddField (attr, name, type.PeapiType);
+		public PEAPI.FieldDef Resolve (CodeGen code_gen, PEAPI.ClassDef classdef)
+		{
+			if (is_resolved)
+				return field_def;
 
-                        is_resolved = true;
+			type.Resolve (code_gen);
+			field_def = classdef.AddField (attr, name, type.PeapiType);
 
-                        return field_def;
-                }
+			if (customattr_list != null)
+				foreach (CustomAttr customattr in customattr_list)
+					customattr.AddTo (code_gen, field_def);
 
-                public PEAPI.FieldDef Resolve (CodeGen code_gen, PEAPI.ClassDef classdef)
-                {
-                        if (is_resolved)
-                                return field_def;
+			if (native_type != null)
+				field_def.SetMarshalInfo (native_type);
 
-                        type.Resolve (code_gen);
-                        field_def = classdef.AddField (attr, name, type.PeapiType);
+			is_resolved = true;
 
-                        if (customattr_list != null)
-                                foreach (CustomAttr customattr in customattr_list)
-                                        customattr.AddTo (code_gen, field_def);
+			return field_def;
+		}
 
-                        if (native_type != null)
-                                field_def.SetMarshalInfo (native_type);
+		/// <summary>
+		///  Define a global field
+		/// </summary>
+		public void Define (CodeGen code_gen)
+		{
+			Resolve (code_gen);
+			WriteCode (code_gen, field_def);
+		}
 
-                        is_resolved = true;
+		/// <summary>
+		///  Define a field member of the specified class
+		/// </summary>
+		public void Define (CodeGen code_gen, PEAPI.ClassDef class_def)
+		{
+			Resolve (code_gen, class_def);
+			WriteCode (code_gen, field_def);
+		}
 
-                        return field_def;
-                }
-
-                /// <summary>
-                ///  Define a global field
-                /// </summary>
-                public void Define (CodeGen code_gen)
-                {
-                        Resolve (code_gen);
-                        WriteCode (code_gen, field_def);
-                }
-
-                /// <summary>
-                ///  Define a field member of the specified class
-                /// </summary>
-                public void Define (CodeGen code_gen, PEAPI.ClassDef class_def)
-                {
-                        Resolve (code_gen, class_def);
-                        WriteCode (code_gen, field_def);
-                }
-
-                protected void WriteCode (CodeGen code_gen, PEAPI.FieldDef field_def)
-                {
-                        if (offset_set)
-                                field_def.SetOffset (offset);
+		protected void WriteCode (CodeGen code_gen, PEAPI.FieldDef field_def)
+		{
+			if (offset_set)
+				field_def.SetOffset (offset);
 
 			if (value_set) {
 				PEAPI.ByteArrConst dc = constant as PEAPI.ByteArrConst;
@@ -160,12 +155,12 @@ namespace Mono.ILASM {
 				field_def.AddValue (constant);
 			}
 
-                        if (at_data_id != null) {
-                                PEAPI.DataConstant dc = code_gen.GetDataConst (at_data_id);
-                                field_def.AddDataValue (dc);
-                        }
-                }
-        }
+			if (at_data_id != null) {
+				PEAPI.DataConstant dc = code_gen.GetDataConst (at_data_id);
+				field_def.AddDataValue (dc);
+			}
+		}
+	}
 
 }
 

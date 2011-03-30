@@ -1,14 +1,15 @@
 // StringHelper.cs
 // Author: Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 using System.Text;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
 
 	/// <summary>
 	/// </summary>
-	internal class StringHelper : StringHelperBase {
+	internal class StringHelper : StringHelperBase
+	{
 
 		private static readonly string startIdChars = "#$@_";
 		private static readonly string idChars = "_$@?`";
@@ -39,11 +40,10 @@ namespace Mono.ILASM {
 			return (mode != Token.UNKNOWN);
 		}
 
-
 		private static bool IsIdChar (int c)
 		{
-			char ch = (char) c;
-			return (Char.IsLetterOrDigit(ch) || idChars.IndexOf (ch) != -1);
+			char ch = (char)c;
+			return (Char.IsLetterOrDigit (ch) || idChars.IndexOf (ch) != -1);
 		}
 
 		/// <summary>
@@ -51,7 +51,8 @@ namespace Mono.ILASM {
 		/// <returns></returns>
 		public override string Build ()
 		{
-			if (mode == Token.UNKNOWN) return String.Empty;
+			if (mode == Token.UNKNOWN)
+				return String.Empty;
 			int ch = 0;
 
 			ILReader reader = host.Reader;
@@ -69,11 +70,11 @@ namespace Mono.ILASM {
 						ch = reader.Read ();
 
 						/*
-						 * Long string can be broken across multiple lines
-						 * by using '\' as the last char in line.
-						 * Any white space chars between '\' and the first
-						 * char on the next line are ignored.
-						 */
+							* Long string can be broken across multiple lines
+							* by using '\' as the last char in line.
+							* Any white space chars between '\' and the first
+							* char on the next line are ignored.
+							*/
 						if (ch == '\n') {
 							reader.SkipWhitespace ();
 							continue;
@@ -81,19 +82,19 @@ namespace Mono.ILASM {
 
 						int escaped = Escape (reader, ch);
 						if (escaped == -1) {
-                                                        reader.Unread (ch);
-                                                        ch = '\\';
-                                                } else {
-                                                        ch = escaped;
+							reader.Unread (ch);
+							ch = '\\';
+						} else {
+							ch = escaped;
 						}
 					}
 
-					idsb.Append((char)ch);
+					idsb.Append ((char)ch);
 				}
 			} else { // ID
 				while ((ch = reader.Read ()) != -1) {
 					if (IsIdChar (ch)) {
-						idsb.Append ((char) ch);
+						idsb.Append ((char)ch);
 					} else {
 						reader.Unread (ch);
 						break;
@@ -114,17 +115,17 @@ namespace Mono.ILASM {
 		{
 			int res = -1;
 
-			if (ch >= '0' && ch <='7') {
+			if (ch >= '0' && ch <= '7') {
 				StringBuilder octal = new StringBuilder ();
 				octal.Append ((char)ch);
 				int possibleOctalChar = reader.Peek ();
-				if (possibleOctalChar >= '0' && possibleOctalChar <='7') {
+				if (possibleOctalChar >= '0' && possibleOctalChar <= '7') {
 					octal.Append ((char)reader.Read ());
 					possibleOctalChar = reader.Peek ();
-					if (possibleOctalChar >= '0' && possibleOctalChar <='7')
+					if (possibleOctalChar >= '0' && possibleOctalChar <= '7')
 						octal.Append ((char)reader.Read ());
 				}
-				res = Convert.ToInt32(octal.ToString (), 8);
+				res = Convert.ToInt32 (octal.ToString (), 8);
 			} else {
 				int id = "abfnrtv\"'\\".IndexOf ((char)ch);
 				if (id != -1) {

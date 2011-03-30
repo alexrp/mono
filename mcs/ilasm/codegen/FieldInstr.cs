@@ -6,33 +6,30 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 
+namespace Mono.ILASM
+{
+	public class FieldInstr : IInstr
+	{
 
-namespace Mono.ILASM {
+		private PEAPI.FieldOp op;
+		private IFieldRef operand;
 
-        public class FieldInstr : IInstr {
+		public FieldInstr (PEAPI.FieldOp op,IFieldRef operand,Location loc)
+			: base (loc)		{
+			this.op = op;
+			this.operand = operand;
+		}
 
-                private PEAPI.FieldOp op;
-                private IFieldRef operand;
+		public override void Emit (CodeGen code_gen, MethodDef meth,
+						PEAPI.CILInstructions cil)
+		{
+			operand.Resolve (code_gen);
+			cil.FieldInst (op, operand.PeapiField);
+		}
 
-                public FieldInstr (PEAPI.FieldOp op, IFieldRef operand, Location loc)
-			: base (loc)
-                {
-                        this.op = op;
-                        this.operand = operand;
-                }
-
-                public override void Emit (CodeGen code_gen, MethodDef meth,
-					   PEAPI.CILInstructions cil)
-                {
-                        operand.Resolve (code_gen);
-                        cil.FieldInst (op, operand.PeapiField);
-                }
-
-        }
+	}
 
 }
 

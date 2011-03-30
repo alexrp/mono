@@ -6,58 +6,56 @@
 //
 // (C) 2003 Ximian, Inc (http://www.ximian.com)
 //
-
 using System;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class GenericMethodSig
+	{
 
-        public class GenericMethodSig {
+		private GenericArguments gen_args;
+		private bool is_resolved;
+		private PEAPI.GenericMethodSig sig;
+		private static Hashtable sig_table;
 
-                private GenericArguments gen_args;
-                private bool is_resolved;
-                private PEAPI.GenericMethodSig sig;
+		public GenericMethodSig (GenericArguments gen_args)		{
+			this.gen_args = gen_args;
+			is_resolved = false;
+		}
 
-                private static Hashtable sig_table;
+		public PEAPI.GenericMethodSig Sig {
+			get { return sig; }
+		}
 
-                public GenericMethodSig (GenericArguments gen_args)
-                {
-                        this.gen_args = gen_args;
-                        is_resolved = false;
-                }
+		public PEAPI.GenericMethodSig Resolve (CodeGen code_gen)
+		{
+			if (is_resolved)
+				return sig;
 
-                public PEAPI.GenericMethodSig Sig {
-                        get { return sig; }
-                }
+			sig = new PEAPI.GenericMethodSig (gen_args.Resolve (code_gen));
+			is_resolved = true;
 
-                public PEAPI.GenericMethodSig Resolve (CodeGen code_gen)
-                {
-                        if (is_resolved)
-                                return sig;
+			return sig;
+		}
 
-                        sig = new PEAPI.GenericMethodSig (gen_args.Resolve (code_gen));
-                        is_resolved = true;
+		public static GenericMethodSig GetInstance (GenericArguments gen_args)
+		{
+			GenericMethodSig sig = null;
 
-                        return sig;
-                }
+			if (sig_table == null)
+				sig_table = new Hashtable ();
+			else
+				sig = (GenericMethodSig)sig_table [gen_args.ToString ()];
 
-                public static GenericMethodSig GetInstance (GenericArguments gen_args)
-                {
-                        GenericMethodSig sig = null;
+			if (sig == null) {
+				sig = new GenericMethodSig (gen_args);
+				sig_table [gen_args.ToString ()] = sig;
+			}
 
-                        if (sig_table == null)
-                                sig_table = new Hashtable ();
-                        else
-                                sig = (GenericMethodSig) sig_table [gen_args.ToString ()];
-
-                        if (sig == null) {
-                                sig = new GenericMethodSig (gen_args);
-                                sig_table [gen_args.ToString ()] = sig;
-                        }
-                        
-                        return sig;
-                }
-        }
+			return sig;
+		}
+	}
 
 }
 

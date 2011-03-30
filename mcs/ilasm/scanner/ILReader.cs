@@ -1,28 +1,29 @@
 // ILReader.cs
 // Author: Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 using System.IO;
 using System.Text;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
 
 
 	/// <summary>
 	/// </summary>
-	public class ILReader {
-		
+	public class ILReader
+	{
+
 		private StreamReader reader;
 		private Stack putback_stack;
 		private Location location;
 		private Location markedLocation;
-		
+
 		public ILReader (StreamReader reader)
 		{
 			this.reader = reader;
 			putback_stack = new Stack ();
-			
+
 			location = new Location ();
 			markedLocation = Location.Unknown;
 		}
@@ -50,16 +51,16 @@ namespace Mono.ILASM {
 		private int DoRead ()
 		{
 			if (putback_stack.Count > 0) 
-				return (char) putback_stack.Pop ();
-			
+				return (char)putback_stack.Pop ();
+
 			return reader.Read ();
 		}
 
 		private int DoPeek ()
 		{
 			if (putback_stack.Count > 0)
-				return (char) putback_stack.Peek ();
-			
+				return (char)putback_stack.Peek ();
+
 			return reader.Peek ();
 		}
 
@@ -101,10 +102,10 @@ namespace Mono.ILASM {
 		/// <summary>
 		/// </summary>
 		/// <param name="chars"></param>
-		public void Unread (char [] chars)
+		public void Unread (char[] chars)
 		{
 			for (int i=chars.Length-1; i>=0; i--)
-				Unread (chars[i]);					
+				Unread (chars [i]);					
 		}
 
 		/// <summary>
@@ -121,8 +122,10 @@ namespace Mono.ILASM {
 		public void SkipWhitespace ()
 		{
 			int ch = Read ();
-			for (; ch != -1 && Char.IsWhiteSpace((char) ch); ch = Read ());
-			if (ch != -1) Unread (ch);
+			for (; ch != -1 && Char.IsWhiteSpace((char) ch); ch = Read ())
+				;
+			if (ch != -1)
+				Unread (ch);
 		}
 
 
@@ -133,8 +136,10 @@ namespace Mono.ILASM {
 		{
 			StringBuilder sb = new StringBuilder ();
 			int ch = Read ();
-			for (; ch != -1 && !Char.IsWhiteSpace((char) ch); sb.Append ((char) ch), ch = Read ());
-			if (ch != -1) Unread (ch);
+			for (; ch != -1 && !Char.IsWhiteSpace((char) ch); sb.Append ((char) ch), ch = Read ())
+				;
+			if (ch != -1)
+				Unread (ch);
 			return sb.ToString ();
 		}
 

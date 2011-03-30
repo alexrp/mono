@@ -1,14 +1,15 @@
 // StringHelperBase.cs
 // Author: Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 using System.Text;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
 
 	/// <summary>
 	/// </summary>
-	internal abstract class StringHelperBase {
+	internal abstract class StringHelperBase
+	{
 
 		protected ILTokenizer host;
 		protected int mode;
@@ -16,7 +17,8 @@ namespace Mono.ILASM {
 		/// <summary>
 		/// </summary>
 		/// <param name="host"></param>
-		public StringHelperBase (ILTokenizer host) {
+		public StringHelperBase (ILTokenizer host)
+		{
 			this.host = host;
 			mode = Token.UNKNOWN;
 		}

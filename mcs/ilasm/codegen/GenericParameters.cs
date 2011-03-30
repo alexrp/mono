@@ -6,33 +6,33 @@
 //
 // Copyright 2006 Novell, Inc (http://www.novell.com)
 //
-
 using System;
 using System.Collections;
 using System.Text;
 
-namespace Mono.ILASM {
-
-	public class GenericParameter : ICustomAttrTarget {
+namespace Mono.ILASM
+{
+	public class GenericParameter : ICustomAttrTarget
+	{
 		string id;
 		int num;
-                PEAPI.GenericParamAttributes attr;
+		PEAPI.GenericParamAttributes attr;
 		ArrayList constraintsList;
 		ArrayList customattrList;
-		
+
 		public GenericParameter (string id) 
 			: this (id, 0, null)
 		{
 		}
 
-		public GenericParameter (string id, PEAPI.GenericParamAttributes attr, ArrayList constraints)
+		public GenericParameter (string id,PEAPI.GenericParamAttributes attr,ArrayList constraints)
 		{
 			this.id = id;
 			this.attr = attr;
 			num = -1;
 			constraintsList = null;
 			customattrList = null;
-				
+
 			if (constraints != null)
 				foreach (BaseTypeRef typeref in constraints)
 					AddConstraint (typeref);
@@ -73,13 +73,13 @@ namespace Mono.ILASM {
 
 		public void Resolve (CodeGen code_gen, PEAPI.MethodDef methoddef)
 		{
-			PEAPI.GenericParameter gp = methoddef.AddGenericParameter ((short) num, id, attr);
+			PEAPI.GenericParameter gp = methoddef.AddGenericParameter ((short)num, id, attr);
 			Resolve (code_gen, gp);
 		}
 
 		public void Resolve (CodeGen code_gen, PEAPI.ClassDef classdef)
 		{
-			PEAPI.GenericParameter gp = classdef.AddGenericParameter ((short) num, id, attr);
+			PEAPI.GenericParameter gp = classdef.AddGenericParameter ((short)num, id, attr);
 			Resolve (code_gen, gp);
 		}
 
@@ -97,7 +97,7 @@ namespace Mono.ILASM {
 		{
 			if (constraintsList == null)
 				return;
-				
+
 			foreach (BaseTypeRef constraint in constraintsList) {
 				BaseGenericTypeRef gtr = constraint as BaseGenericTypeRef;
 				if (gtr != null)
@@ -118,7 +118,8 @@ namespace Mono.ILASM {
 
 	}
 
-	public class GenericParameters {
+	public class GenericParameters
+	{
 		ArrayList param_list;
 		string param_str;
 
@@ -133,7 +134,7 @@ namespace Mono.ILASM {
 		}
 
 		public GenericParameter this [int index] {
-			get { return (param_list != null ? (GenericParameter) param_list [index] : null); }
+			get { return (param_list != null ? (GenericParameter)param_list [index] : null); }
 			set { Add (value); }
 		}
 
@@ -148,7 +149,7 @@ namespace Mono.ILASM {
 			param_list.Add (gen_param);
 			param_str = null;
 		}
-		
+
 		public GenericParameter GetGenericParam (string id)
 		{
 			if (param_list == null)
@@ -159,7 +160,7 @@ namespace Mono.ILASM {
 					return param;
 			return null;
 		}
-	
+
 		public int GetGenericParamNum (string id)
 		{
 			GenericParameter param = GetGenericParam (id);
@@ -174,7 +175,7 @@ namespace Mono.ILASM {
 			foreach (GenericParameter param in param_list)
 				param.Resolve (code_gen, classdef);
 		}
-		
+
 		public void Resolve (CodeGen code_gen, PEAPI.MethodDef methoddef)
 		{
 			foreach (GenericParameter param in param_list)

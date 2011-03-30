@@ -1,20 +1,18 @@
 // Method.cs
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Mono.ILASM {
-
-
-	public class MethodName {
+namespace Mono.ILASM
+{
+	public class MethodName
+	{
 		private static int methodCount = 0;
-
 		private bool isCtor;
 		private string name;
-		
+
 		/// <summary>
 		/// </summary>
 		public MethodName () : this ("M_" + (methodCount++))
@@ -32,7 +30,7 @@ namespace Mono.ILASM {
 		/// </summary>
 		/// <param name="name"></param>
 		/// <param name="ctor"></param>
-		public MethodName (string name, bool ctor)
+		public MethodName (string name,bool ctor)
 		{
 			this.name = name;
 			this.isCtor = ctor;
@@ -68,7 +66,8 @@ namespace Mono.ILASM {
 
 	/// <summary>
 	/// </summary>
-	public class Method {
+	public class Method
+	{
 
 		private MethodName name;
 		private MethodAttributes attrs;
@@ -76,7 +75,6 @@ namespace Mono.ILASM {
 		private string retType;
 		private MethodBuilder method_builder;
 		private bool entry_point = false;
-
 		private ArrayList param_list;
 		private ArrayList instructions;
 		private ArrayList local_list;
@@ -192,7 +190,7 @@ namespace Mono.ILASM {
 				local_list = new ArrayList ();
 
 			local_list.Add (local);
-	
+
 		}
 
 		public void SetParamList (ArrayList param_list)
@@ -213,8 +211,8 @@ namespace Mono.ILASM {
 		/// <returns></returns>
 		public override string ToString ()
 		{
-			return String.Format ("IL.Method [Name: {0}, Attrs: {1}, CallConv: {2}, RetType: {3}, Instr: {4}]",
-			                      Name, Attrs, CallConv, RetType, InstrCount);
+			return String.Format ("IL.Method [Name: {0}, Attrs: {1}, CallConv: {2}, RetType: {3}, Instr: {4}]", 
+								Name, Attrs, CallConv, RetType, InstrCount);
 		}
 
 		public MethodBuilder Builder {
@@ -225,7 +223,7 @@ namespace Mono.ILASM {
 
 		public void Resolve (Class host)
 		{
-			Type return_type = host.CodeGen.TypeManager[RetType];
+			Type return_type = host.CodeGen.TypeManager [RetType];
 			method_builder = host.TypeBuilder.DefineMethod (Name, Attrs, 
 				CallConv, return_type, CreateTypeList (host.CodeGen.TypeManager));
 		}
@@ -243,7 +241,7 @@ namespace Mono.ILASM {
 
 				if (local_list != null) {
 					foreach (DictionaryEntry local in local_list) {
-						Type local_type = host.CodeGen.TypeManager[(string)local.Key];
+						Type local_type = host.CodeGen.TypeManager [(string)local.Key];
 						if (local_type == null) {
 							Console.WriteLine ("Could not find type: {0}", local.Key);
 							return;
@@ -266,15 +264,15 @@ namespace Mono.ILASM {
 
 			int count = param_list.Count;
 			Type[] type_list = new Type[count];
-			
+
 			for (int i=0; i<count; i++) {
-				type_list[i] = type_manager[(string) param_list[i]];
+				type_list [i] = type_manager [(string)param_list [i]];
 			}
-		
+
 			return type_list;
 		}
 
 	}
 
-	
+
 }

@@ -6,35 +6,32 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 
+namespace Mono.ILASM
+{
+	public class MethodInstr : IInstr
+	{
 
-namespace Mono.ILASM {
+		private PEAPI.MethodOp op;
+		private BaseMethodRef operand;
 
-        public class MethodInstr : IInstr {
+		public MethodInstr (PEAPI.MethodOp op,BaseMethodRef operand,Location loc)
+			: base (loc)		{
+			this.op = op;
+			this.operand = operand;
 
-                private PEAPI.MethodOp op;
-                private BaseMethodRef operand;
+			if (op == PEAPI.MethodOp.newobj || op == PEAPI.MethodOp.callvirt)
+				operand.CallConv |= PEAPI.CallConv.Instance;
+		}
 
-                public MethodInstr (PEAPI.MethodOp op, BaseMethodRef operand, Location loc)
-			: base (loc)
-                {
-                        this.op = op;
-                        this.operand = operand;
-
-                        if (op == PEAPI.MethodOp.newobj || op == PEAPI.MethodOp.callvirt)
-                                operand.CallConv |= PEAPI.CallConv.Instance;
-                }
-
-                public override void Emit (CodeGen code_gen, MethodDef meth,
-					   PEAPI.CILInstructions cil)
-                {
-                        operand.Resolve (code_gen);
-                        cil.MethInst (op, operand.PeapiMethod);
-                }
-        }
+		public override void Emit (CodeGen code_gen, MethodDef meth,
+						PEAPI.CILInstructions cil)
+		{
+			operand.Resolve (code_gen);
+			cil.MethInst (op, operand.PeapiMethod);
+		}
+	}
 
 }
 

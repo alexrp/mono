@@ -25,36 +25,34 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-
 using System.Reflection;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class PermissionMember
+	{
 
-        public class PermissionMember {
+		MemberTypes member_type;
+		BaseTypeRef type_ref;
+		string name;
+		object value;
+		PEAPI.PermissionMember member;
 
-                MemberTypes member_type;
-                BaseTypeRef type_ref;
-                string name;
-                object value;
+		public PermissionMember (MemberTypes member_type,BaseTypeRef type_ref,string name,object value)		{
+			this.member_type = member_type;
+			this.type_ref = type_ref;
+			this.name = name;
+			this.value = value;
+		}
 
-                PEAPI.PermissionMember member;
-                
-                public PermissionMember (MemberTypes member_type, BaseTypeRef type_ref, string name, object value)
-                {
-                        this.member_type = member_type;
-                        this.type_ref = type_ref;
-                        this.name = name;
-                        this.value = value;
-                }
+		public PEAPI.PermissionMember Resolve (CodeGen code_gen)
+		{
+			type_ref.Resolve (code_gen);
 
-                public PEAPI.PermissionMember Resolve (CodeGen code_gen)
-                {
-                        type_ref.Resolve (code_gen);
+			member = new PEAPI.PermissionMember (member_type, type_ref.PeapiType, name, value);
 
-                        member = new PEAPI.PermissionMember (member_type, type_ref.PeapiType, name, value);
-
-                        return member;
-                }
-        }
+			return member;
+		}
+	}
 
 }

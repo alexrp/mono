@@ -1,14 +1,15 @@
 // Location.cs
 // Author: Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
 
 
 	/// <summary>
 	/// </summary>
-	public class Location : ICloneable {
+	public class Location : ICloneable
+	{
 		internal int line;
 		internal int column;
 
@@ -19,7 +20,8 @@ namespace Mono.ILASM {
 
 		/// <summary>
 		/// </summary>
-		public Location () {
+		public Location ()
+		{
 			line = 1;
 			column = 1;
 		}
@@ -28,7 +30,7 @@ namespace Mono.ILASM {
 		/// </summary>
 		/// <param name="line"></param>
 		/// <param name="column"></param>
-		public Location (int line, int column)
+		public Location (int line,int column)
 		{
 			this.line = line;
 			this.column = column;
@@ -91,7 +93,8 @@ namespace Mono.ILASM {
 		/// <summary>
 		/// </summary>
 		/// <returns></returns>
-		public virtual object Clone () {
+		public virtual object Clone ()
+		{
 			return new Location (this);
 		}
 

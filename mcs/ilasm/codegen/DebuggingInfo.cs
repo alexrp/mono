@@ -6,15 +6,14 @@
 //
 // Copyright (C) 2004 Novell, Inc.
 //
-
 using PEAPI;
 using System;
 using System.IO;
 using System.Collections;
 using Mono.CompilerServices.SymbolWriter;
 
-namespace Mono.ILASM {
-
+namespace Mono.ILASM
+{
 	public class SymbolWriter : MonoSymbolWriter
 	{
 		Mono.ILASM.SourceMethod current_method;
@@ -27,7 +26,7 @@ namespace Mono.ILASM {
 			methods = new ArrayList ();
 		}
 
-		public Mono.ILASM.SourceMethod BeginMethod (MethodDef method, Location start)
+		public Mono.ILASM.SourceMethod BeginMethod (MethodDef method,Location start)
 		{
 			current_method = new Mono.ILASM.SourceMethod (current_source, method, start);
 			methods.Add (current_method);
@@ -67,7 +66,7 @@ namespace Mono.ILASM {
 		ArrayList lines;
 		public int StartLine, EndLine;
 
-		public SourceMethod (CompileUnitEntry file, MethodDef method, Location start)
+		public SourceMethod (CompileUnitEntry file,MethodDef method, Location start)
 		{
 			this.file = file;
 			this.method = method;
@@ -84,13 +83,13 @@ namespace Mono.ILASM {
 		public int Token {
 			get {
 				PEAPI.MethodDef pemethod = method.PeapiMethodDef;
-				return (int) (((uint) PEAPI.MDTable.Method << 24) | pemethod.Row);
+				return (int)(((uint)PEAPI.MDTable.Method << 24) | pemethod.Row);
 			}
 		}
 
 		public void MarkLocation (int line, uint offset)
 		{
-			lines.Add (new LineNumberEntry (0, line, (int) offset));
+			lines.Add (new LineNumberEntry (0, line, (int)offset));
 		}
 
 		public void Write (MonoSymbolWriter writer)
@@ -100,7 +99,8 @@ namespace Mono.ILASM {
 
 			LocalVariableEntry[] locals = method.GetLocalVars ();
 
-			/*MethodEntry entry =*/ writer.SymbolFile.DefineMethod (
+			/*MethodEntry entry =*/
+			writer.SymbolFile.DefineMethod (
 				file, Token, null, locals, the_lines, null, null, 0, 0);
 		}
 	}

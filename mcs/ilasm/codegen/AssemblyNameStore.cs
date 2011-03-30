@@ -6,16 +6,15 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 using System.Reflection;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class AssemblyNameStore
+	{
 
-	public class AssemblyNameStore {
-	
 		private Hashtable name_store;
 
 		public AssemblyNameStore ()
@@ -23,7 +22,7 @@ namespace Mono.ILASM {
 
 		}
 
-		public void Add (AssemblyName assembly_name) 
+		public void Add (AssemblyName assembly_name)
 		{
 			if (name_store == null)
 				name_store = new Hashtable ();
@@ -34,11 +33,11 @@ namespace Mono.ILASM {
 		{
 			AssemblyName assembly_name;
 
-			assembly_name = (AssemblyName)name_store[name];
+			assembly_name = (AssemblyName)name_store [name];
 
 			if (assembly_name == null)
 				return null;
-				
+
 			return Assembly.Load (assembly_name);
 		}
 	}

@@ -8,14 +8,15 @@
 //
 
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public interface ISehClause
+	{
 
-        public interface ISehClause {
+		PEAPI.HandlerBlock Resolve (CodeGen code_gen, MethodDef method);
 
-                PEAPI.HandlerBlock Resolve (CodeGen code_gen, MethodDef method);
-
-                void SetHandlerBlock (HandlerBlock hb);
-        }
+		void SetHandlerBlock (HandlerBlock hb);
+	}
 
 }
 

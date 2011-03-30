@@ -1,16 +1,17 @@
 // Class.cs
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
-
 using System;
 using System.Collections;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
 
 	/// <summary>
 	/// </summary>
-	public class ClassName {
+	public class ClassName
+	{
 
 		private string name;
 		private string assembly;
@@ -20,12 +21,12 @@ namespace Mono.ILASM {
 		/// <summary>
 		/// </summary>
 		/// <param name="name"></param>
-		public ClassName (string name) {
+		public ClassName (string name)
+		{
 			this.name = name;
 			this.assembly = String.Empty;
 			this.module = String.Empty;
 		}
-
 
 		public string Name {
 			get {
@@ -39,7 +40,8 @@ namespace Mono.ILASM {
 
 	/// <summary>
 	/// </summary>
-	public class Class {
+	public class Class
+	{
 
 		private string name;
 
@@ -48,13 +50,9 @@ namespace Mono.ILASM {
 
 		// implements clause
 		private ArrayList interfaces;
-
 		private ArrayList methods;
-
 		private TypeBuilder tb;
-
 		private CodeGen codgen;
-
 		private TypeAttributes attrs;
 
 
@@ -74,7 +72,8 @@ namespace Mono.ILASM {
 		/// <param name="m"></param>
 		public void AddMethod (Method m)
 		{
-			if (methods == null) methods = new ArrayList ();
+			if (methods == null)
+				methods = new ArrayList ();
 			methods.Add (m);
 		}
 
@@ -117,9 +116,9 @@ namespace Mono.ILASM {
 		public void Emit (CodeGen cg)
 		{
 			codgen = cg;
-			
-			TypeBuilder.CreateType();
-			cg.TypeManager[name] = TypeBuilder;
+
+			TypeBuilder.CreateType ();
+			cg.TypeManager [name] = TypeBuilder;
 
 			if (methods != null) {
 				foreach (Method m in methods) 
@@ -134,10 +133,10 @@ namespace Mono.ILASM {
 				}
 			}	
 		}
-		
+
 		// This can be removed when System.Reflection.Emit.TypeBuilder.GetMethod is implemented
 		// TODO: This function needs allot of work
-		public MethodInfo GetMethod (string method_name, BindingFlags binding_flags,
+		public MethodInfo GetMethod (string method_name, BindingFlags binding_flags, 
 			Type[] param_type_list)
 		{
 			foreach (Method method in methods) {
@@ -154,14 +153,15 @@ namespace Mono.ILASM {
 				if (param_type_list.Length != size)
 					continue;
 				for (int i=0; i<size; i++) {
-					if (param_type_list[i] != param_info[i].ParameterType)
+					if (param_type_list [i] != param_info [i].ParameterType)
 						goto end;	
 				}
 
 				return method.Builder;
-				end: continue;
+				end:
+				continue;
 			}
-	
+
 			return null;
 		}
 	}

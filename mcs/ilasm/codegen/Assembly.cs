@@ -27,97 +27,93 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-
-
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class Assembly : IDeclSecurityTarget, ICustomAttrTarget
+	{
+		private DeclSecurity decl_sec;
+		private ArrayList customattr_list;
+		private string name;
+		private byte[] public_key;
+		private int major_version;
+		private int minor_version;
+		private int build_version;
+		private int revision_version;
+		private string locale;
+		private int hash_algorithm;
+		private PEAPI.AssemAttr attr;
 
-        public class Assembly : IDeclSecurityTarget, ICustomAttrTarget 
-        {
-                private DeclSecurity decl_sec;
-                private ArrayList customattr_list;
+		public Assembly (string name)		{
+			this.name = name;
+		}
 
-                private string name;
-                private byte [] public_key;
-                private int major_version;
-                private int minor_version;
-                private int build_version;
-                private int revision_version;
-                private string locale;
-                private int hash_algorithm;
-                private PEAPI.AssemAttr attr;
+		public string Name {
+			get { return name; }
+		}
 
-                public Assembly (string name)
-                {
-                        this.name = name;
-                }
+		public DeclSecurity DeclSecurity {
+			get { 
+				if (decl_sec == null)
+					decl_sec = new DeclSecurity ();
+				return decl_sec; 
+			}
+		}
 
-                public string Name {
-                        get { return name; }
-                }
+		public void SetVersion (int major, int minor, int build, int revision)
+		{
+			this.major_version = major;
+			this.minor_version = minor;
+			this.build_version = build;
+			this.revision_version = revision;
+		}
 
-                public DeclSecurity DeclSecurity {
-                        get { 
-                                if (decl_sec == null)
-                                        decl_sec = new DeclSecurity ();
-                                return decl_sec; 
-                        }
-                }
+		public void SetLocale (string locale)
+		{
+			this.locale = locale;
+		}
 
-                public void SetVersion (int major, int minor, int build, int revision)
-                {
-                        this.major_version = major;
-                        this.minor_version = minor;
-                        this.build_version = build;
-                        this.revision_version = revision;
-                }
+		public void SetHashAlgorithm (int algorithm)
+		{
+			hash_algorithm = algorithm;
+		}
 
-                public void SetLocale (string locale)
-                {
-                        this.locale = locale;
-                }
+		public void SetPublicKey (byte[] public_key)
+		{
+			this.public_key = public_key;
+		}
 
-                public void SetHashAlgorithm (int algorithm)
-                {
-                        hash_algorithm = algorithm;
-                }
+		public void SetAssemblyAttr (PEAPI.AssemAttr attr)
+		{
+			this.attr = attr;
+		}
 
-                public void SetPublicKey (byte [] public_key)
-                {
-                        this.public_key = public_key;
-                }
+		public void AddCustomAttribute (CustomAttr customattr)
+		{
+			if (customattr_list == null)
+				customattr_list = new ArrayList ();
 
-                public void SetAssemblyAttr (PEAPI.AssemAttr attr)
-                {
-                        this.attr = attr;
-                }
+			customattr_list.Add (customattr);
+		}
 
-                public void AddCustomAttribute (CustomAttr customattr)
-                {
-                        if (customattr_list == null)
-                                customattr_list = new ArrayList ();
+		public void Resolve (CodeGen code_gen, PEAPI.Assembly asm)
+		{
+			if (customattr_list != null)
+				foreach (CustomAttr customattr in customattr_list) {
+					customattr.AddTo (code_gen, asm);
+				}
 
-                        customattr_list.Add (customattr);
-                }
-
-                public void Resolve (CodeGen code_gen, PEAPI.Assembly asm)
-                {
-                        if (customattr_list != null)
-                                foreach (CustomAttr customattr in customattr_list) {
-                                        customattr.AddTo (code_gen, asm);
-                                }
-                        
-                        if (decl_sec != null)
+			if (decl_sec != null)
 				decl_sec.AddTo (code_gen, asm);
 
 
-                        asm.AddAssemblyInfo(major_version,
-                                minor_version, build_version,
-                                revision_version, public_key,
-                                (uint) hash_algorithm, locale);
+			asm.AddAssemblyInfo (major_version, 
+							minor_version, build_version, 
+							revision_version, public_key, 
+							(uint)hash_algorithm, locale);
 
-                        asm.AddAssemblyAttr (attr);
-                }
-        }
+			asm.AddAssemblyAttr (attr);
+		}
+	}
 }

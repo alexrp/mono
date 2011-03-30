@@ -6,44 +6,42 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class TryBlock : IInstr
+	{
 
-        public class TryBlock : IInstr {
+		private HandlerBlock block;
+		private ArrayList clause_list;
 
-                private HandlerBlock block;
-                private ArrayList clause_list;
-
-                public TryBlock (HandlerBlock block, Location loc)
-			: base (loc)
-                {
+		public TryBlock (HandlerBlock block,Location loc)
+			: base (loc)		{
 			this.block = block;
 			clause_list = new ArrayList ();
-                }
+		}
 
-                public void AddSehClause (ISehClause clause)
-                {
-                        clause_list.Add (clause);
-                }
+		public void AddSehClause (ISehClause clause)
+		{
+			clause_list.Add (clause);
+		}
 
-                public override void Emit (CodeGen code_gen, MethodDef meth,
-					   PEAPI.CILInstructions cil)
-                {
-                        PEAPI.CILLabel from = block.GetFromLabel (code_gen, meth);
-                        PEAPI.CILLabel to = block.GetToLabel (code_gen, meth);
-                        PEAPI.TryBlock try_block = new PEAPI.TryBlock (from, to);
+		public override void Emit (CodeGen code_gen, MethodDef meth,
+						PEAPI.CILInstructions cil)
+		{
+			PEAPI.CILLabel from = block.GetFromLabel (code_gen, meth);
+			PEAPI.CILLabel to = block.GetToLabel (code_gen, meth);
+			PEAPI.TryBlock try_block = new PEAPI.TryBlock (from, to);
 
-                        foreach (ISehClause clause in clause_list)
-                                try_block.AddHandler (clause.Resolve (code_gen, meth));
-			
-                        cil.AddTryBlock (try_block);
-                }
+			foreach (ISehClause clause in clause_list)
+				try_block.AddHandler (clause.Resolve (code_gen, meth));
 
-        }
+			cil.AddTryBlock (try_block);
+		}
+
+	}
 
 }
 

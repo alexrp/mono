@@ -6,245 +6,243 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
 using PEAPI;
 using System;
 using System.Collections;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class ClassTable
+	{
 
-        public class ClassTable {
+		private class ClassTableItem
+		{
 
-                private class ClassTableItem {
+			private static readonly int DefinedFlag = 2;
+			private int flags;
+			public ArrayList LocationList;
+			public ClassDef Class;
+			public MethodTable method_table;
+			public FieldTable field_table;
 
-                        private static readonly int DefinedFlag = 2;
+			public ClassTableItem (ClassDef klass,Location location)			{
+				flags = 0;
+				Class = klass;
+				LocationList = new ArrayList ();
+				LocationList.Add (location);
+				method_table = new MethodTable (klass);
+				field_table = new FieldTable (klass);
+			}
 
-                        private int flags;
+			public bool Defined {
+				get { return ((flags & DefinedFlag) != 0); }
+				set {
+					if (value)
+						flags |= DefinedFlag;
+					else
+						flags ^= DefinedFlag;
+				}
+			}
 
-                        public ArrayList LocationList;
-                        public ClassDef Class;
-                        public MethodTable method_table;
-                        public FieldTable field_table;
+			public bool CheckDefined ()
+			{
+				if (!Defined)
+					return false;
 
-                        public ClassTableItem (ClassDef klass, Location location)
-                        {
-                                flags = 0;
-                                Class = klass;
-                                LocationList = new ArrayList ();
-                                LocationList.Add (location);
-                                method_table = new MethodTable (klass);
-                                field_table = new FieldTable (klass);
-                        }
+				if (!FieldTable.CheckDefined ())
+					return false;
 
-                        public bool Defined {
-                                get { return ((flags & DefinedFlag) != 0); }
-                                set {
-                                        if (value)
-                                                flags |= DefinedFlag;
-                                        else
-                                                flags ^= DefinedFlag;
-                                }
-                        }
+				if (!MethodTable.CheckDefined ())
+					return false;
 
-                        public bool CheckDefined ()
-                        {
-                                if (!Defined)
-                                        return false;
+				return true;
+			}
 
-                                if (!FieldTable.CheckDefined ())
-                                        return false;
+			public MethodTable MethodTable {
+				get { return method_table; }
+			}
 
-                                if (!MethodTable.CheckDefined ())
-                                        return false;
+			public FieldTable FieldTable {
+				get { return field_table; }
+			}
 
-                                return true;
-                        }
+		}
 
-                        public MethodTable MethodTable {
-                                get { return method_table; }
-                        }
+		protected readonly TypeAttr DefaultAttr;
+		protected Hashtable table;
+		protected PEFile pefile;
 
-                        public FieldTable FieldTable {
-                                get { return field_table; }
-                        }
+		public ClassTable (PEFile pefile)		{
+			DefaultAttr = TypeAttr.Public;
+			this.pefile = pefile;
+			table = new Hashtable ();
+		}
 
-                }
+		public Class Get (string full_name)
+		{
+			ClassTableItem item = table [full_name] as ClassTableItem;
 
-                protected readonly TypeAttr DefaultAttr;
-                protected Hashtable table;
-                protected PEFile pefile;
+			if (item == null)
+				return null;
 
-                public ClassTable (PEFile pefile)
-                {
-                        DefaultAttr = TypeAttr.Public;
-                        this.pefile = pefile;
-                        table = new Hashtable ();
-                }
+			return item.Class;
+		}
 
-                public Class Get (string full_name)
-                {
-                        ClassTableItem item = table[full_name] as ClassTableItem;
+		public Class GetReference (string full_name, Location location)
+		{
+			ClassTableItem item = table [full_name] as ClassTableItem;
 
-                        if (item == null)
-                                return null;
+			if (item != null) {
+				item.LocationList.Add (location);
+				return item.Class;
+			}
 
-                        return item.Class;
-                }
+			string name_space, name;
+			GetNameAndNamespace (full_name, out name_space, out name);
+			ClassDef klass = pefile.AddClass (DefaultAttr, name_space, name);
+			AddReference (full_name, klass, location);
 
-                public Class GetReference (string full_name, Location location)
-                {
-                        ClassTableItem item = table[full_name] as ClassTableItem;
+			return klass;
+		}
 
-                        if (item != null) {
-                                item.LocationList.Add (location);
-                                return item.Class;
-                        }
+		public MethodTable GetMethodTable (string full_name, Location location)
+		{
+			ClassTableItem item = table [full_name] as ClassTableItem;
 
-                        string name_space, name;
-                        GetNameAndNamespace (full_name, out name_space, out name);
-                        ClassDef klass = pefile.AddClass (DefaultAttr, name_space, name);
-                        AddReference (full_name, klass, location);
+			if (item == null) {
+				GetReference (full_name, location);
+				return GetMethodTable (full_name, location);
+			}
 
-                        return klass;
-                }
+			return item.MethodTable;
+		}
 
-                public MethodTable GetMethodTable (string full_name, Location location)
-                {
-                        ClassTableItem item = table[full_name] as ClassTableItem;
+		public FieldTable GetFieldTable (string full_name, Location location)
+		{
+			ClassTableItem item = table [full_name] as ClassTableItem;
 
-                        if (item == null) {
-                                GetReference (full_name, location);
-                                return GetMethodTable (full_name, location);
-                        }
+			if (item == null) {
+				GetReference (full_name, location);
+				return GetFieldTable (full_name, location);
+			}
 
-                        return item.MethodTable;
-                }
+			return item.FieldTable;
+		}
 
-                public FieldTable GetFieldTable (string full_name, Location location)
-                {
-                        ClassTableItem item = table[full_name] as ClassTableItem;
+		public ClassDef AddDefinition (string name_space, string name,
+					TypeAttr attr, Location location)
+		{
+			string full_name;
 
-                        if (item == null) {
-                                GetReference (full_name, location);
-                                return GetFieldTable (full_name, location);
-                        }
+			if (name_space != null)
+				full_name = String.Format ("{0}.{1}", name_space, name);
+			else
+				full_name = name;
 
-                        return item.FieldTable;
-                }
+			ClassTableItem item = (ClassTableItem)table [full_name];
 
-                public ClassDef AddDefinition (string name_space, string name,
-                        TypeAttr attr, Location location)
-                {
-                        string full_name;
+			if (item == null) {
+				ClassDef klass = pefile.AddClass (attr, name_space, name);
+				AddDefined (full_name, klass, location);
+				return klass;
+			}
 
-                        if (name_space != null)
-                                full_name = String.Format ("{0}.{1}", name_space, name);
-                        else
-                                full_name = name;
+			item.Class.AddAttribute (attr);
+			item.Defined = true;
 
-                        ClassTableItem item = (ClassTableItem) table[full_name];
+			return item.Class;
+		}
 
-                        if (item == null) {
-                                ClassDef klass = pefile.AddClass (attr, name_space, name);
-                                AddDefined (full_name, klass, location);
-                                return klass;
-                        }
+		public ClassDef AddDefinition (string name_space, string name,
+					TypeAttr attr, Class parent, Location location)
+		{
+			string full_name;
 
-                        item.Class.AddAttribute (attr);
-                        item.Defined = true;
+			if (name_space != null)
+				full_name = String.Format ("{0}.{1}", name_space, name);
+			else
+				full_name = name;
 
-                        return item.Class;
-                }
+			ClassTableItem item = (ClassTableItem)table [full_name];
 
-                public ClassDef AddDefinition (string name_space, string name,
-                        TypeAttr attr, Class parent, Location location)
-                {
-                        string full_name;
+			if (item == null) {
+				ClassDef klass = pefile.AddClass (attr, name_space, name, parent);
+				AddDefined (full_name, klass, location);
+				return klass;
+			}
 
-                        if (name_space != null)
-                                full_name = String.Format ("{0}.{1}", name_space, name);
-                        else
-                                full_name = name;
+			/// TODO: Need to set parent, will need to modify PEAPI for this.
+			item.Class.AddAttribute (attr);
+			item.Defined = true;
 
-                        ClassTableItem item = (ClassTableItem) table[full_name];
+			return item.Class;
+		}
 
-                        if (item == null) {
-                                ClassDef klass = pefile.AddClass (attr, name_space, name, parent);
-                                AddDefined (full_name, klass, location);
-                                return klass;
-                        }
+		/// <summary>
+		///  When there is no code left to compile, check to make sure referenced types where defined
+		///  TODO: Proper error reporting
+		/// </summary>
+		public void CheckForUndefined ()
+		{
+			foreach (DictionaryEntry dic_entry in table) {
+				ClassTableItem table_item = (ClassTableItem)dic_entry.Value;
+				if (table_item.CheckDefined ())
+					continue;
+				Report.Error (String.Format ("Type: {0} is not defined.", dic_entry.Key));
+			}
+		}
 
-                        /// TODO: Need to set parent, will need to modify PEAPI for this.
-                        item.Class.AddAttribute (attr);
-                        item.Defined = true;
+		/// <summary>
+		///  If a type is allready defined throw an Error
+		/// </summary>
+		protected void CheckExists (string full_name)
+		{
+			ClassTableItem item = table [full_name] as ClassTableItem;
 
-                        return item.Class;
-                }
+			if ((item != null) && (item.Defined)) {
+				Report.Error (String.Format ("Class: {0} defined in multiple locations.", 
+								full_name));
+			}
+		}
 
-                /// <summary>
-                ///  When there is no code left to compile, check to make sure referenced types where defined
-                ///  TODO: Proper error reporting
-                /// </summary>
-                public void CheckForUndefined ()
-                {
-                        foreach (DictionaryEntry dic_entry in table) {
-                                ClassTableItem table_item = (ClassTableItem) dic_entry.Value;
-                                if (table_item.CheckDefined ())
-                                        continue;
-                                Report.Error (String.Format ("Type: {0} is not defined.", dic_entry.Key));
-                        }
-                }
+		protected void AddDefined (string full_name, ClassDef klass, Location location)
+		{
+			if (table.Contains (full_name))
+				return;
 
-                /// <summary>
-                ///  If a type is allready defined throw an Error
-                /// </summary>
-                protected void CheckExists (string full_name)
-                {
-                        ClassTableItem item = table[full_name] as ClassTableItem;
+			ClassTableItem item = new ClassTableItem (klass, location);
+			item.Defined = true;
 
-                        if ((item != null) && (item.Defined)) {
-                                Report.Error (String.Format ("Class: {0} defined in multiple locations.",
-                                        full_name));
-                        }
-                }
+			table [full_name] = item;
+		}
 
-                protected void AddDefined (string full_name, ClassDef klass, Location location)
-                {
-                        if (table.Contains (full_name))
-                                return;
+		protected void AddReference (string full_name, ClassDef klass, Location location)
+		{
+			if (table.Contains (full_name))
+				return;
 
-                        ClassTableItem item = new ClassTableItem (klass, location);
-                        item.Defined = true;
+			ClassTableItem item = new ClassTableItem (klass, location);
 
-                        table[full_name] = item;
-                }
+			table [full_name] = item;
+		}
 
-                protected void AddReference (string full_name, ClassDef klass, Location location)
-                {
-                        if (table.Contains (full_name))
-                                return;
+		public static void GetNameAndNamespace (string full_name,
+					out string name_space, out string name)
+		{
 
-                        ClassTableItem item = new ClassTableItem (klass, location);
+			int last_dot = full_name.LastIndexOf ('.');
 
-                        table[full_name] = item;
-                }
+			if (last_dot < 0) {
+				name_space = String.Empty;
+				name = full_name;
+				return;
+			}
 
-                public static void GetNameAndNamespace (string full_name,
-                        out string name_space, out string name) {
+			name_space = full_name.Substring (0, last_dot);
+			name = full_name.Substring (last_dot + 1);
+		}
 
-                        int last_dot = full_name.LastIndexOf ('.');
-
-                        if (last_dot < 0) {
-                                name_space = String.Empty;
-                                name = full_name;
-                                return;
-                        }
-
-                        name_space = full_name.Substring (0, last_dot);
-                        name = full_name.Substring (last_dot + 1);
-                }
-
-        }
+	}
 
 }
 

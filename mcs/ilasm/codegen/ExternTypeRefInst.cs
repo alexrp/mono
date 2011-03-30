@@ -6,14 +6,13 @@
 //
 // (C) 2004 Novell, Inc (http://www.novell.com)
 //
-
-
 using System;
 using System.Collections;
 
-namespace Mono.ILASM {
-
-	public class ExternTypeRefInst : BaseTypeRef {
+namespace Mono.ILASM
+{
+	public class ExternTypeRefInst : BaseTypeRef
+	{
 
 		private ExternTypeRef type_ref;
 		private PEAPI.Type type;
@@ -22,7 +21,7 @@ namespace Mono.ILASM {
 		private GenericArguments gen_args;
 		private static Hashtable method_table = new Hashtable ();
 
-		public ExternTypeRefInst (ExternTypeRef type_ref, GenericArguments gen_args, bool is_valuetypeinst)
+		public ExternTypeRefInst (ExternTypeRef type_ref,GenericArguments gen_args,bool is_valuetypeinst)
 		{
 			this.type_ref = type_ref;
 			this.gen_args = gen_args;
@@ -39,13 +38,11 @@ namespace Mono.ILASM {
 			get { return type_ref.FullName; }
 		}
 
-
 		public string SigMod {
 			get { return type_ref.SigMod; }
 			set { type_ref.SigMod = value; }
 		}
 
-		
 		public bool IsPinned {
 			get { return type_ref.IsPinned; }
 		}
@@ -62,7 +59,7 @@ namespace Mono.ILASM {
 			get { return type_ref.UseTypeSpec; }
 		}
 
-                public ExternTypeRefInst Clone ()
+		public ExternTypeRefInst Clone ()
 		{
 			return new ExternTypeRefInst (type_ref.Clone (), gen_args, is_valuetypeinst);
 		}
@@ -89,7 +86,7 @@ namespace Mono.ILASM {
 			type_ref.MakeUnmanagedPointer ();
 		}
 
-		public void MakeCustomModified (CodeGen code_gen,
+		public void MakeCustomModified (CodeGen code_gen, 
 				PEAPI.CustomModifier modifier, BaseClassRef klass)
 		{
 			type_ref.MakeCustomModified (code_gen, modifier, klass);

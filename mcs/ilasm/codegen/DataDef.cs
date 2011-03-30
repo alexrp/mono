@@ -6,37 +6,35 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 
-namespace Mono.ILASM {
+namespace Mono.ILASM
+{
+	public class DataDef
+	{
 
-        public class DataDef {
-
-                private string name;
+		private string name;
 #pragma warning disable 0414
-                private bool is_tls; // TODO: unused variable
+		private bool is_tls; // TODO: unused variable
 #pragma warning restore 0414
 
-                private PEAPI.Constant constant;
+		private PEAPI.Constant constant;
 
-                public DataDef (string name, bool is_tls)
-                {
-                        this.name = name;
-                        this.is_tls = is_tls;
-                }
+		public DataDef (string name,bool is_tls)		{
+			this.name = name;
+			this.is_tls = is_tls;
+		}
 
-                public PEAPI.Constant PeapiConstant {
-                        get { return constant; }
-                        set { constant = value; }
-                }
+		public PEAPI.Constant PeapiConstant {
+			get { return constant; }
+			set { constant = value; }
+		}
 
-                public string Name {
-                        get { return name; }
-                        set { name = value; }
-                }
-        }
+		public string Name {
+			get { return name; }
+			set { name = value; }
+		}
+	}
 
 }
 

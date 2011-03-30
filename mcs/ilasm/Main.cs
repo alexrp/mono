@@ -3,18 +3,20 @@ using System.IO;
 
 using Mono.ILASM;
 
+public class ILAsmTest
+{
+	private ILAsmTest ()
+	{
+	}
 
-public class ILAsmTest {
-	private ILAsmTest() {}
-
-
-	public static int Main (string [] args) {
+	public static int Main (string[] args)
+	{
 
 		if (args.Length != 1) {
 			Console.WriteLine ("Usage : ilasm [filename]");
 			return 1;
 		}
-		
+
 		StreamReader reader = File.OpenText (args [0]);
 		ILTokenizer scanner = new ILTokenizer (reader);
 

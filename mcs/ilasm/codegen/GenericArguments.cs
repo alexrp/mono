@@ -6,19 +6,19 @@
 //
 // Copyright 2005 Novell, Inc (http://www.novell.com)
 //
-
 using System;
 using System.Collections;
 using System.Text;
 
-namespace Mono.ILASM {
-
-	public class GenericArguments {
+namespace Mono.ILASM
+{
+	public class GenericArguments
+	{
 		ArrayList type_list;
 		string type_str;
-		BaseTypeRef [] type_arr;
+		BaseTypeRef[] type_arr;
 		bool is_resolved;
-		PEAPI.Type [] p_type_list;
+		PEAPI.Type[] p_type_list;
 
 		public GenericArguments ()
 		{
@@ -44,18 +44,18 @@ namespace Mono.ILASM {
 			type_str = null;
 			type_arr = null;
 		}
-		
-		public BaseTypeRef [] ToArray ()
+
+		public BaseTypeRef[] ToArray ()
 		{
 			if (type_list == null)
 				return null;
 			if (type_arr == null)
-				type_arr = (BaseTypeRef []) type_list.ToArray (typeof (BaseTypeRef));
+				type_arr = (BaseTypeRef[])type_list.ToArray (typeof(BaseTypeRef));
 
 			return type_arr;
 		}
 
-		public PEAPI.Type [] Resolve (CodeGen code_gen)
+		public PEAPI.Type[] Resolve (CodeGen code_gen)
 		{
 			if (is_resolved)
 				return p_type_list;

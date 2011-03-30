@@ -6,101 +6,100 @@
 //
 // (C) 2003 Jackson Harper, All rights reserved
 //
-
-
 using System;
 using System.Collections;
 
+namespace Mono.ILASM
+{
 
-namespace Mono.ILASM {
+	/// <summary>
+	///  Definition of a parameter passed to a method
+	/// </summary>
+	public class ParamDef : ICustomAttrTarget
+	{
 
-        /// <summary>
-        ///  Definition of a parameter passed to a method
-        /// </summary>
-        public class ParamDef : ICustomAttrTarget {
+		private PEAPI.ParamAttr attr;
+		private string name;
+		private BaseTypeRef typeref;
+		private bool is_defined;
+		private PEAPI.Param peapi_param;
+		private PEAPI.Constant defval;
+		private ArrayList customattr_list;
+		private PEAPI.NativeType native_type;
+		public static readonly ParamDef Ellipsis = new ParamDef (new PEAPI.ParamAttr (), "ELLIPSIS", null);
 
-                private PEAPI.ParamAttr attr;
-                private string name;
-                private BaseTypeRef typeref;
-                private bool is_defined;
-                private PEAPI.Param peapi_param;
-                private PEAPI.Constant defval;
-                private ArrayList customattr_list;
-                private PEAPI.NativeType native_type;
+		public ParamDef (PEAPI.ParamAttr attr,string name,
+							BaseTypeRef typeref)
+		{
+			this.attr = attr;
+			this.name = name;
+			this.typeref = typeref;
+			is_defined = false;
+			defval = null;
+		}
 
-                public static readonly ParamDef Ellipsis = new ParamDef (new PEAPI.ParamAttr (), "ELLIPSIS", null);
+		public void AddDefaultValue (PEAPI.Constant cVal)
+		{
+			defval = cVal;
+		}
 
-                public ParamDef (PEAPI.ParamAttr attr, string name,
-                                BaseTypeRef typeref) {
-                        this.attr = attr;
-                        this.name = name;
-                        this.typeref = typeref;
-                        is_defined = false;
-                        defval = null;
-                }
+		public void AddCustomAttribute (CustomAttr customattr)
+		{
+			if (customattr_list == null)
+				customattr_list = new ArrayList ();
 
-                public void AddDefaultValue (PEAPI.Constant cVal)
-                {
-                        defval = cVal;
-                }
+			customattr_list.Add (customattr);
+		}
 
-                public void AddCustomAttribute (CustomAttr customattr)
-                {
-                        if (customattr_list == null)
-                                customattr_list = new ArrayList ();
+		public void AddMarshalInfo (PEAPI.NativeType native_type)
+		{
+			this.native_type = native_type;
+		}
 
-                        customattr_list.Add (customattr);
-                }
+		public BaseTypeRef Type {
+			get { return typeref; }
+		}
 
-                public void AddMarshalInfo (PEAPI.NativeType native_type)
-                {
-                        this.native_type = native_type;
-                }
+		public string TypeName {
+			get { return typeref.FullName; }
+		}
 
-                public BaseTypeRef Type {
-                        get { return typeref; }
-                }
+		public string Name {
+			get { return name; }
+		}
 
-                public string TypeName {
-                        get { return typeref.FullName; }
-                }
+		public PEAPI.Param PeapiParam {
+			get { return peapi_param; }
+		}
 
-                public string Name {
-                        get { return name; }
-                }
+		public bool IsSentinel ()
+		{
+			return (typeref is SentinelTypeRef && this != Ellipsis);
+		}
 
-                public PEAPI.Param PeapiParam {
-                        get { return peapi_param; }
-                }
+		public void Define (CodeGen code_gen)
+		{
+			if (is_defined)
+				return;
 
-                public bool IsSentinel ()
-                {
-                        return (typeref is SentinelTypeRef && this != Ellipsis);
-                }
+			typeref.Resolve (code_gen);
 
-                public void Define (CodeGen code_gen)
-                {
-                        if (is_defined)
-                                return;
+			peapi_param = new PEAPI.Param (attr,
+								name, typeref.PeapiType);
+			if (defval != null) {
+				peapi_param.AddDefaultValue (defval);
+			}
 
-                        typeref.Resolve (code_gen);
+			if (customattr_list != null)
+				foreach (CustomAttr customattr in customattr_list)
+					customattr.AddTo (code_gen, peapi_param);
 
-                        peapi_param = new PEAPI.Param (attr,
-                                        name, typeref.PeapiType);
-                        if (defval != null) {
-                                peapi_param.AddDefaultValue (defval);
-                        }
+			if (native_type != null)
+				peapi_param.AddMarshallInfo (native_type);
 
-                        if (customattr_list != null)
-                                foreach (CustomAttr customattr in customattr_list)
-                                        customattr.AddTo (code_gen, peapi_param);
-
-                        if (native_type != null)
-                                peapi_param.AddMarshallInfo (native_type);
-
-                        is_defined = true;
-                }
-        }
+			is_defined = true;
+		}
+	}
 
 }
 

@@ -6,20 +6,19 @@
 //
 // Copyright 2004 Novell, Inc (http://www.novell.com)
 //
-
-
 using System;
 
-namespace Mono.ILASM {
-
-	public class FileRef {
+namespace Mono.ILASM
+{
+	public class FileRef
+	{
 
 		private string name;
-		private byte [] hash;
+		private byte[] hash;
 		private bool has_metadata;
 		private bool entrypoint;
 
-		public FileRef (string name, byte[] hash, bool has_metadata, bool entrypoint)
+		public FileRef (string name,byte[] hash,bool has_metadata,bool entrypoint)
 		{
 			this.name = name;
 			this.hash = hash;
