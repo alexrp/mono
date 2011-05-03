@@ -15,15 +15,9 @@ using System.Security;
 using System.Security.Permissions;
 using Mono.Cecil;
 
-using MIPermission = Mono.ILASM.Permission;
-using MIPermissionSet = Mono.ILASM.PermissionSet;
-
-namespace Mono.ILASM {
-
-	public class ILParser {
-
+namespace Mono.ILAsm {
+	public sealed class ILParser {
 		private CodeGen codegen;
-
 		private bool is_value_class;
 		private bool is_enum_class;
 		private bool pinvoke_info;
@@ -31,10 +25,9 @@ namespace Mono.ILASM {
 		private string pinvoke_meth;
 		private PInvokeAttributes pinvoke_attr;
 		private ILTokenizer tokenizer;
-		static int yacc_verbose_flag = 0;
+		private static int yacc_verbose_flag = 0;
 
-		class NameValuePair {
-
+		private class NameValuePair {
 			public string Name;
 			public object Value; // Can be byte, short, int, etc...
 
@@ -45,8 +38,7 @@ namespace Mono.ILASM {
 			}
 		}
 
-		class PermPair {
-
+		private class PermPair {
 			public Mono.Cecil.SecurityAction sec_action;
 			public object perm;
 
@@ -111,7 +103,7 @@ namespace Mono.ILASM {
 			object obj = Activator.CreateInstance (t, new object [] {(System.Security.Permissions.SecurityAction) (short) action});
 
 			if (pairs != null) {
-				foreach (NameValuePair pair in pairs) {
+				foreach (var pair in pairs) {
 					PropertyInfo pi = t.GetProperty (pair.Name);
 					pi.SetValue (obj, pair.Value, null);
 				}
@@ -133,7 +125,7 @@ namespace Mono.ILASM {
 
 		private BaseTypeRef GetTypeRef (BaseTypeRef b)
 		{
-			//FIXME: Caching required.. 
+			//FIXME: Caching required..
 			return b.Clone ();
 		}
 
@@ -764,7 +756,7 @@ formal_typars		   : formal_typar_attr constraints_clause formal_typar
 						| formal_typars COMMA formal_typar_attr constraints_clause formal_typar
 						  {
 								GenericParameters colln = (GenericParameters) $1;
-								colln.Add (new GenericParameter ((string) $5, (Mono.Cecil..GenericParameterAttributes) $3, (ArrayList) $4));
+								colln.Add (new GenericParameter ((string) $5, (Mono.Cecil.GenericParameterAttributes) $3, (ArrayList) $4));
 								$$ = colln;
 						  }
 						 ;
@@ -3301,12 +3293,12 @@ hexbyte			: HEXBYTE	   { }
 
 bytes_list			  : OPEN_PARENS
 						  {
-								tokenizer.InByteArray = true;
+								tokenizer.in_byte_array  = true;
 						  }
 						  bytes CLOSE_PARENS
 						  {
 								$$ = $3;
-								tokenizer.InByteArray = false;
+								tokenizer.in_byte_array  = false;
 						  }
 						;
 
@@ -3356,4 +3348,3 @@ comp_name		: id
 %%
 
 }
-

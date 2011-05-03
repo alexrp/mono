@@ -8,19 +8,28 @@
 //
 using System;
 
-namespace Mono.ILASM
-{
-	public class ILTokenizingException : ILAsmException
-	{
+namespace Mono.ILAsm {
+	[Serializable]
+	public class ILTokenizingException : ILAsmException {
+		public string Token { get; private set; }
 
-		public readonly string Token;
 
-		public ILTokenizingException (Location location,string token)
-					: base (location, token)		{
+		public ILTokenizingException (Location location, string token)
+			: base (token, location)
+		{
 			Token = token;
 		}
+
+
+		public ILTokenizingException (Location location, string token, Exception inner)
+			: base (token, location, inner)
+		{
+		}
+
+
+		protected ILTokenizingException (SerializationInfo info, StreamingContext context)
+			: base (info, context)
+		{
+		}
 	}
-
 }
-
-

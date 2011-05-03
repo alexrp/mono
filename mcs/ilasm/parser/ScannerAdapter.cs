@@ -2,60 +2,32 @@
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
 using System;
 
-namespace Mono.ILASM
-{
-
-	/// <summary>
-	/// </summary>
-	public class ScannerAdapter : yyParser.yyInput
-	{
-
-		private ITokenStream tokens;
-
-		/// <summary>
-		/// </summary>
-		/// <param name="tokens"></param>
+namespace Mono.ILAsm {
+	public sealed class ScannerAdapter : yyParser.yyInput {
 		public ScannerAdapter (ITokenStream tokens)
 		{
-			this.tokens = tokens;
+			this.BaseStream = tokens;
 		}
-
-
-		/// <summary>
-		/// </summary>
-		public ITokenStream BaseStream {
-			get {
-				return tokens;
-			}
-		}
+		
+		public ITokenStream BaseStream { get; private set; }
 
 		//
 		// yyParser.yyInput interface
 		//
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
+		
 		public bool advance ()
 		{
-			return (tokens.NextToken != ILToken.EOF);
+			return (BaseStream.NextToken != ILToken.EOF);
 		}
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
+		
 		public int token ()
 		{
-			return tokens.LastToken.TokenId;
+			return BaseStream.LastToken.TokenId;
 		}
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
+		
 		public object value ()
 		{
-			return tokens.LastToken.Value;
+			return BaseStream.LastToken.Value;
 		}
 	}
 }
-

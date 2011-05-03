@@ -6,45 +6,38 @@ using System.Text;
 using System.Collections;
 using System.Globalization;
 
-namespace Mono.ILASM
-{
-	public delegate void NewTokenEvent (object sender,NewTokenEventArgs args);
+namespace Mono.ILAsm {
+	public delegate void NewTokenEvent (object sender, NewTokenEventArgs args);
 
-	public class NewTokenEventArgs : EventArgs
-	{
+	public class NewTokenEventArgs : EventArgs {
+		public ILToken Token { get; private set; }
 
-		public readonly ILToken Token;
-
-		public NewTokenEventArgs (ILToken token)		{
+		public NewTokenEventArgs (ILToken token)
+		{
 			Token = token;
 		}
 	}
 
-	/// <summary>
-	/// </summary>
-	public class ILTokenizer : ITokenStream
-	{
-
-		private static readonly string idchars = "_$@?.`";
-		private static Hashtable keywords;
-		private static Hashtable directives;
+	public class ILTokenizer : ITokenStream {
+		private const string idchars = "_$@?.`";
+		private static readonly Hashtable keywords;
+		private static readonly Hashtable directives;
 		private ILToken lastToken;
-		private ILReader reader;
-		private StringHelper strBuilder;
-		private NumberHelper numBuilder;
-		private bool in_byte_array;
+		private readonly ILReader reader;
+		private readonly StringHelper strBuilder;
+		private readonly NumberHelper numBuilder;
+		internal bool in_byte_array;
 
 		public event NewTokenEvent NewTokenEvent;
 
-		static ILTokenizer ()		{
+		static ILTokenizer ()
+		{
 			keywords = ILTables.Keywords;
 			directives = ILTables.Directives;
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <param name="reader"></param>
-		public ILTokenizer (StreamReader reader)		{
+		public ILTokenizer (StreamReader reader)
+		{
 			this.reader = new ILReader (reader);
 			strBuilder = new StringHelper (this);
 			numBuilder = new NumberHelper (this);
@@ -63,31 +56,22 @@ namespace Mono.ILASM
 			}
 		}
 
-		public bool InByteArray {
-			get { return in_byte_array; }
-			set { in_byte_array = value; }
-		}
-
 		public ILToken GetNextToken ()
 		{
 			if (lastToken == ILToken.EOF)
 				return ILToken.EOF;
-
+			
 			int ch;
 			int next;
 			ILToken res = ILToken.EOF.Clone () as ILToken;
-
-
+			
 			while ((ch = reader.Read ()) != -1) {
-
 				// Comments
 				if (ch == '/') {
 					next = reader.Peek ();
 					if (next == '/') {
 						// double-slash comment, skip to the end of the line.
-						for (reader.Read (); 
-												next != -1 && next != '\n'; 
-												next = reader.Read ())
+						for (reader.Read (); next != -1 && next != '\n'; next = reader.Read ())
 							;
 						continue;
 					} else if (next == '*') {
@@ -98,7 +82,8 @@ namespace Mono.ILASM
 								goto end;
 							}
 						}
-								end:
+						
+					end:
 						continue;
 					}
 				}
@@ -106,9 +91,9 @@ namespace Mono.ILASM
 				// HEXBYTES are flagged by the parser otherwise it is
 				// impossible to figure them out
 				if (in_byte_array) {
-					string hx = String.Empty;
+					var hx = string.Empty;
 
-					if (Char.IsWhiteSpace ((char)ch))
+					if (char.IsWhiteSpace ((char) ch))
 						continue;
 
 					if (ch == ')') {
@@ -117,18 +102,20 @@ namespace Mono.ILASM
 					}
 
 					if (!is_hex (ch))
-						throw new ILTokenizingException (reader.Location, ((char)ch).ToString ());
-					hx += (char)ch;
+						throw new ILTokenizingException (reader.Location, ((char) ch).ToString ());
+					
+					hx += (char) ch;
 					if (is_hex (reader.Peek ()))
-						hx += (char)reader.Read ();
-					else if (!Char.IsWhiteSpace ((char)reader.Peek ()) && reader.Peek () != ')')
-						throw new ILTokenizingException (reader.Location,
-													((char)reader.Peek ()).ToString ());
+						hx += (char) reader.Read ();
+					else if (!char.IsWhiteSpace ((char) reader.Peek ()) && reader.Peek () != ')')
+						throw new ILTokenizingException (reader.Location, ((char) reader.Peek ()).ToString ());
+					
 					res.token = Token.HEXBYTE;
-					res.val = Byte.Parse (hx, NumberStyles.HexNumber);
+					res.val = byte.Parse (hx, NumberStyles.HexNumber);
 
-					while (Char.IsWhiteSpace ((char)reader.Peek ()))
+					while (char.IsWhiteSpace ((char)reader.Peek ()))
 						reader.Read ();
+					
 					break;
 				}
 
@@ -141,16 +128,18 @@ namespace Mono.ILASM
 						reader.Read ();
 						break;
 					}
+					
 					reader.Unread (ch2);
 					reader.RestoreLocation ();
 				}
 
 				if (ch == '.' || ch == '#') {
 					next = reader.Peek ();
-					if (ch == '.' && Char.IsDigit ((char)next)) {
+					if (ch == '.' && char.IsDigit ((char) next)) {
 						numBuilder.Start (ch);
 						reader.Unread (ch);
 						numBuilder.Build ();
+						
 						if (numBuilder.ResultToken != ILToken.Invalid) {
 							res.CopyFrom (numBuilder.ResultToken);
 							break;
@@ -159,7 +148,7 @@ namespace Mono.ILASM
 						if (strBuilder.Start (next) && strBuilder.TokenId == Token.ID) {
 							reader.MarkLocation ();
 							string dirBody = strBuilder.Build ();
-							string dir = new string ((char)ch, 1) + dirBody;
+							var dir = new string ((char) ch, 1) + dirBody;
 							if (IsDirective (dir)) {
 								res = ILTables.Directives [dir] as ILToken;
 							} else {
@@ -170,13 +159,14 @@ namespace Mono.ILASM
 						} else {
 							res = ILToken.Dot;
 						}
+						
 						break;
 					}
 				}
 
 				// Numbers && Hexbytes
 				if (numBuilder.Start (ch)) {
-					if ((ch == '-') && !(Char.IsDigit ((char)reader.Peek ()))) {
+					if ((ch == '-') && !(char.IsDigit ((char) reader.Peek ()))) {
 						res = ILToken.Dash;
 						break;
 					} else {
@@ -190,7 +180,7 @@ namespace Mono.ILASM
 				}
 
 				// Punctuation
-				ILToken punct = ILToken.GetPunctuation (ch);
+				var punct = ILToken.GetPunctuation (ch);
 				if (punct != null) {
 					if (punct == ILToken.Colon && reader.Peek () == ':') {
 						reader.Read ();
@@ -205,19 +195,21 @@ namespace Mono.ILASM
 				if (strBuilder.Start (ch)) {
 					reader.Unread (ch);
 					string val = strBuilder.Build ();
+					
 					if (strBuilder.TokenId == Token.ID) {
-						ILToken opcode;
+						ILToken opCode;
 						next = reader.Peek ();
 						if (next == '.') {
 							reader.MarkLocation ();
 							reader.Read ();
 							next = reader.Peek ();
-							if (IsIdChar ((char)next)) {
+							
+							if (IsIdChar ((char) next)) {
 								string opTail = BuildId ();
-								string full_str = String.Format ("{0}.{1}", val, opTail);
-								opcode = InstrTable.GetToken (full_str);
+								var full_str = string.Format ("{0}.{1}", val, opTail);
+								opCode = InstrTable.GetToken (full_str);
 
-								if (opcode == null) {
+								if (opCode == null) {
 									if (strBuilder.TokenId != Token.ID) {
 										reader.Unread (opTail.ToCharArray ());
 										reader.Unread ('.');
@@ -227,28 +219,31 @@ namespace Mono.ILASM
 										res.token = Token.COMP_NAME;
 										res.val = full_str;
 									}
+									
 									break;
 								} else {
-									res = opcode;
+									res = opCode;
 									break;
 								}
-
-							} else if (Char.IsWhiteSpace ((char)next)) {
+							} else if (char.IsWhiteSpace ((char) next)) {
 								// Handle 'tail.' and 'unaligned.'
-								opcode = InstrTable.GetToken (val + ".");
-								if (opcode != null) {
-									res = opcode;
+								opCode = InstrTable.GetToken (val + ".");
+								if (opCode != null) {
+									res = opCode;
 									break;
 								}
+								
 								// Let the parser handle the dot
 								reader.Unread ('.');
 							}
 						}
-						opcode = InstrTable.GetToken (val);
-						if (opcode != null) {
-							res = opcode;
+						
+						opCode = InstrTable.GetToken (val);
+						if (opCode != null) {
+							res = opCode;
 							break;
 						}
+						
 						if (IsKeyword (val)) {
 							res = ILTables.Keywords [val] as ILToken;
 							break;
@@ -266,18 +261,12 @@ namespace Mono.ILASM
 			return res;
 		}
 
-
-		/// <summary>
-		/// </summary>
 		public ILToken NextToken {
 			get {
 				return GetNextToken ();
 			}
 		}
 
-
-		/// <summary>
-		/// </summary>
 		public ILToken LastToken {
 			get {
 				return lastToken;
@@ -291,68 +280,56 @@ namespace Mono.ILASM
 
 		private static bool IsIdStartChar (char ch)
 		{
-			return (Char.IsLetter (ch) || (idchars.IndexOf (ch) != -1));
+			return (char.IsLetter (ch) || (idchars.IndexOf (ch) != -1));
 		}
 
 		private static bool IsIdChar (char ch)
 		{
-			return (Char.IsLetterOrDigit (ch) || (idchars.IndexOf (ch) != -1));
+			return (char.IsLetterOrDigit (ch) || (idchars.IndexOf (ch) != -1));
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <param name="name"></param>
-		/// <returns></returns>
-		public static bool IsOpcode (string name)
+		public static bool IsOpCode (string name)
 		{
 			return InstrTable.IsInstr (name);
 		}
 
-
-		/// <summary>
-		/// </summary>
-		/// <param name="name"></param>
-		/// <returns></returns>
 		public static bool IsDirective (string name)
 		{
 			char ch = name [0];
 			bool res = (ch == '.' || ch == '#');
 
-			if (res) {
+			if (res)
 				res = directives.Contains (name);
-			}
 
 			return res;
 		}
 
 		private string BuildId ()
 		{
-			StringBuilder idsb = new StringBuilder ();
+			var idsb = new StringBuilder ();
 			int ch, last;
 
 			last = -1;
 			while ((ch = reader.Read ()) != -1) {
-				if (IsIdChar ((char)ch) || ch == '.') {
-					idsb.Append ((char)ch);
+				if (IsIdChar ((char) ch) || ch == '.') {
+					idsb.Append ((char) ch);
 				} else {
 					reader.Unread (ch);
 					// Never end an id on a DOT
 					if (last == '.') {
 						reader.Unread (last);
 						idsb.Length -= 1;
-					}        
+					}
+					
 					break;
 				}
+				
 				last = ch;
 			}
 
 			return idsb.ToString ();
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <param name="name"></param>
-		/// <returns></returns>
 		public static bool IsKeyword (string name)
 		{
 			return keywords.Contains (name);
@@ -360,9 +337,9 @@ namespace Mono.ILASM
 
 		private void OnNewToken (ILToken token)
 		{
-			if (NewTokenEvent != null)
-				NewTokenEvent (this, new NewTokenEventArgs (token));
+			var evnt = NewTokenEvent;
+			if (evnt != null)
+				evnt (this, new NewTokenEventArgs (token));
 		}
-
 	}
 }

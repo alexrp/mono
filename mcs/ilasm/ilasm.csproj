@@ -11,16 +11,16 @@
     <FileAlignment>512</FileAlignment>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
+    <StartupObject>Mono.ILASM.Driver</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <RootNamespace>ilasm</RootNamespace>
+    <RootNamespace>Mono.ILAsm</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_2_0</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Optimize>false</Optimize>
@@ -297,7 +297,6 @@
     <Compile Include="parser\ScannerAdapter.cs" />
     <Compile Include="Report.cs" />
     <Compile Include="scanner\ILReader.cs" />
-    <Compile Include="scanner\ILSyntaxError.cs" />
     <Compile Include="scanner\ILTables.cs" />
     <Compile Include="scanner\ILToken.cs" />
     <Compile Include="scanner\ILTokenizer.cs" />
@@ -311,6 +310,8 @@
     <None Include="tests\one.cs" />
     <None Include="tests\oneg.cs" />
     <None Include="tests\two.cs" />
+    <Compile Include="ILAsmException.cs" />
+    <Compile Include="InternalErrorException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

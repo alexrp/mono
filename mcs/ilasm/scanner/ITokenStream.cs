@@ -3,13 +3,10 @@
 using System;
 using System.Collections;
 
-namespace Mono.ILASM
-{
-	public interface ITokenStream
-	{
+namespace Mono.ILAsm {
+	public interface ITokenStream {
 		ILToken NextToken { get; }
 
 		ILToken LastToken { get; }
 	}
 }
-
