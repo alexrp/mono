@@ -3027,7 +3027,6 @@ sec_action		: K_REQUEST
 			  {
 				$$ = Mono.Cecil.SecurityAction.NonCasInheritance;
 			  }
-			/* FIXME: Should we have LinkDemandChoice, InheritDemandChoice and DemandChoice ? */  
 			;
 
 module_head		: D_MODULE
