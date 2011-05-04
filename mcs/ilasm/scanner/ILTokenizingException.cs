@@ -7,6 +7,7 @@
 // Copyright 2004 Novell, Inc (http://www.novell.com)
 //
 using System;
+using System.Runtime.Serialization;
 
 namespace Mono.ILAsm {
 	[Serializable]

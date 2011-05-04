@@ -7,7 +7,7 @@ using System.Collections;
 using System.Globalization;
 
 namespace Mono.ILAsm {
-	public delegate void NewTokenEvent (object sender, NewTokenEventArgs args);
+	public delegate void NewTokenEvent (object sender,NewTokenEventArgs args);
 
 	public class NewTokenEventArgs : EventArgs {
 		public ILToken Token { get; private set; }
@@ -19,13 +19,13 @@ namespace Mono.ILAsm {
 	}
 
 	public class ILTokenizer : ITokenStream {
-		private const string idchars = "_$@?.`";
+		private const string id_chars = "_$@?.`";
 		private static readonly Hashtable keywords;
 		private static readonly Hashtable directives;
-		private ILToken lastToken;
+		private ILToken last_token;
 		private readonly ILReader reader;
-		private readonly StringHelper strBuilder;
-		private readonly NumberHelper numBuilder;
+		private readonly StringHelper str_builder;
+		private readonly NumberHelper num_builder;
 		internal bool in_byte_array;
 
 		public event NewTokenEvent NewTokenEvent;
@@ -39,9 +39,9 @@ namespace Mono.ILAsm {
 		public ILTokenizer (StreamReader reader)
 		{
 			this.reader = new ILReader (reader);
-			strBuilder = new StringHelper (this);
-			numBuilder = new NumberHelper (this);
-			lastToken = ILToken.Invalid.Clone () as ILToken;
+			this.str_builder = new StringHelper (this);
+			this.num_builder = new NumberHelper (this);
+			this.last_token = ILToken.Invalid.Clone () as ILToken;
 		}
 
 		public ILReader Reader {
@@ -58,7 +58,7 @@ namespace Mono.ILAsm {
 
 		public ILToken GetNextToken ()
 		{
-			if (lastToken == ILToken.EOF)
+			if (last_token == ILToken.EOF)
 				return ILToken.EOF;
 			
 			int ch;
@@ -113,7 +113,7 @@ namespace Mono.ILAsm {
 					res.token = Token.HEXBYTE;
 					res.val = byte.Parse (hx, NumberStyles.HexNumber);
 
-					while (char.IsWhiteSpace ((char)reader.Peek ()))
+					while (char.IsWhiteSpace ((char) reader.Peek ()))
 						reader.Read ();
 					
 					break;
@@ -136,23 +136,23 @@ namespace Mono.ILAsm {
 				if (ch == '.' || ch == '#') {
 					next = reader.Peek ();
 					if (ch == '.' && char.IsDigit ((char) next)) {
-						numBuilder.Start (ch);
+						num_builder.Start (ch);
 						reader.Unread (ch);
-						numBuilder.Build ();
+						num_builder.Build ();
 						
-						if (numBuilder.ResultToken != ILToken.Invalid) {
-							res.CopyFrom (numBuilder.ResultToken);
+						if (num_builder.ResultToken != ILToken.Invalid) {
+							res.CopyFrom (num_builder.ResultToken);
 							break;
 						}
 					} else {
-						if (strBuilder.Start (next) && strBuilder.TokenId == Token.ID) {
+						if (str_builder.Start (next) && str_builder.TokenId == Token.ID) {
 							reader.MarkLocation ();
-							string dirBody = strBuilder.Build ();
-							var dir = new string ((char) ch, 1) + dirBody;
+							string dir_body = str_builder.Build ();
+							var dir = new string ((char) ch, 1) + dir_body;
 							if (IsDirective (dir)) {
 								res = ILTables.Directives [dir] as ILToken;
 							} else {
-								reader.Unread (dirBody.ToCharArray ());
+								reader.Unread (dir_body.ToCharArray ());
 								reader.RestoreLocation ();
 								res = ILToken.Dot;
 							}
@@ -165,15 +165,15 @@ namespace Mono.ILAsm {
 				}
 
 				// Numbers && Hexbytes
-				if (numBuilder.Start (ch)) {
+				if (num_builder.Start (ch)) {
 					if ((ch == '-') && !(char.IsDigit ((char) reader.Peek ()))) {
 						res = ILToken.Dash;
 						break;
 					} else {
 						reader.Unread (ch);
-						numBuilder.Build ();
-						if (numBuilder.ResultToken != ILToken.Invalid) {
-							res.CopyFrom (numBuilder.ResultToken);
+						num_builder.Build ();
+						if (num_builder.ResultToken != ILToken.Invalid) {
+							res.CopyFrom (num_builder.ResultToken);
 							break;
 						}
 					}
@@ -192,11 +192,11 @@ namespace Mono.ILAsm {
 				}
 
 				// ID | QSTRING | SQSTRING | INSTR_* | KEYWORD
-				if (strBuilder.Start (ch)) {
+				if (str_builder.Start (ch)) {
 					reader.Unread (ch);
-					string val = strBuilder.Build ();
+					string val = str_builder.Build ();
 					
-					if (strBuilder.TokenId == Token.ID) {
+					if (str_builder.TokenId == Token.ID) {
 						ILToken opCode;
 						next = reader.Peek ();
 						if (next == '.') {
@@ -210,7 +210,7 @@ namespace Mono.ILAsm {
 								opCode = InstrTable.GetToken (full_str);
 
 								if (opCode == null) {
-									if (strBuilder.TokenId != Token.ID) {
+									if (str_builder.TokenId != Token.ID) {
 										reader.Unread (opTail.ToCharArray ());
 										reader.Unread ('.');
 										reader.RestoreLocation ();
@@ -250,14 +250,14 @@ namespace Mono.ILAsm {
 						}
 					}
 
-					res.token = strBuilder.TokenId;
+					res.token = str_builder.TokenId;
 					res.val = val;
 					break;
 				}
 			}
 
 			OnNewToken (res);
-			lastToken.CopyFrom (res);
+			last_token.CopyFrom (res);
 			return res;
 		}
 
@@ -269,7 +269,7 @@ namespace Mono.ILAsm {
 
 		public ILToken LastToken {
 			get {
-				return lastToken;
+				return last_token;
 			}
 		}
 
@@ -280,12 +280,12 @@ namespace Mono.ILAsm {
 
 		private static bool IsIdStartChar (char ch)
 		{
-			return (char.IsLetter (ch) || (idchars.IndexOf (ch) != -1));
+			return (char.IsLetter (ch) || (id_chars.IndexOf (ch) != -1));
 		}
 
 		private static bool IsIdChar (char ch)
 		{
-			return (char.IsLetterOrDigit (ch) || (idchars.IndexOf (ch) != -1));
+			return (char.IsLetterOrDigit (ch) || (id_chars.IndexOf (ch) != -1));
 		}
 
 		public static bool IsOpCode (string name)

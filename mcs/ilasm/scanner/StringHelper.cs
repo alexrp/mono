@@ -5,8 +5,8 @@ using System.Text;
 
 namespace Mono.ILAsm {
 	internal sealed class StringHelper : StringHelperBase {
-		private const string startIdChars = "#$@_";
-		private const string idChars = "_$@?`";
+		private const string start_id_chars = "#$@_";
+		private const string id_chars = "_$@?`";
 
 		public StringHelper (ILTokenizer host)
 			: base (host)
@@ -17,7 +17,7 @@ namespace Mono.ILAsm {
 		{
 			TokenId = Token.UNKNOWN;
 
-			if (char.IsLetter (ch) || startIdChars.IndexOf (ch) != -1)
+			if (char.IsLetter (ch) || start_id_chars.IndexOf (ch) != -1)
 				TokenId = Token.ID;
 			else if (ch == '\'')
 				TokenId = Token.SQSTRING;
@@ -30,7 +30,7 @@ namespace Mono.ILAsm {
 		private static bool IsIdChar (int c)
 		{
 			char ch = (char) c;
-			return (char.IsLetterOrDigit (ch) || idChars.IndexOf (ch) != -1);
+			return (char.IsLetterOrDigit (ch) || id_chars.IndexOf (ch) != -1);
 		}
 
 		public override string Build ()
@@ -95,11 +95,11 @@ namespace Mono.ILAsm {
 			if (ch >= '0' && ch <= '7') {
 				var octal = new StringBuilder ();
 				octal.Append ((char) ch);
-				int possibleOctalChar = reader.Peek ();
-				if (possibleOctalChar >= '0' && possibleOctalChar <= '7') {
+				int possible_octal_char = reader.Peek ();
+				if (possible_octal_char >= '0' && possible_octal_char <= '7') {
 					octal.Append ((char) reader.Read ());
-					possibleOctalChar = reader.Peek ();
-					if (possibleOctalChar >= '0' && possibleOctalChar <= '7')
+					possible_octal_char = reader.Peek ();
+					if (possible_octal_char >= '0' && possible_octal_char <= '7')
 						octal.Append ((char) reader.Read ());
 				}
 				

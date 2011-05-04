@@ -25,7 +25,7 @@ namespace Mono.ILAsm {
 		public static bool Quiet { get; set; }
 
 
-		public static string FilePath { get; set; }
+		public static string FilePath { get; internal set; }
 
 
 		public static void AssembleFile (string file, string listing,

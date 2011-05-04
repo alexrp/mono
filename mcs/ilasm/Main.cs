@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 
-using Mono.ILASM;
-
 namespace Mono.ILAsm {
 	public static class ILAsmTest {
 		public static int Main (string[] args)
@@ -15,9 +13,9 @@ namespace Mono.ILAsm {
 			var reader = File.OpenText (args [0]);
 			var scanner = new ILTokenizer (reader);
 
-			const bool testScanner = true;
+			const bool test_scanner = true;
 
-			if (testScanner) {
+			if (test_scanner) {
 				ILToken tok;
 				while ((tok = scanner.NextToken) != ILToken.EOF) {
 					Console.WriteLine (tok);

@@ -10,7 +10,7 @@ namespace Mono.ILAsm {
 		private readonly StreamReader reader;
 		private readonly Stack putback_stack;
 		private Location location;
-		private Location markedLocation;
+		private Location marked_location;
 
 		public ILReader (StreamReader reader)
 		{
@@ -18,7 +18,7 @@ namespace Mono.ILAsm {
 			putback_stack = new Stack ();
 
 			location = new Location ();
-			markedLocation = Location.Unknown;
+			marked_location = Location.Unknown;
 		}
 
 		public Location Location {
@@ -114,16 +114,16 @@ namespace Mono.ILAsm {
 
 		public void MarkLocation ()
 		{
-			if (markedLocation == Location.Unknown)
-				markedLocation = new Location (location);
+			if (marked_location == Location.Unknown)
+				marked_location = new Location (location);
 			else
-				markedLocation.CopyFrom (location);
+				marked_location.CopyFrom (location);
 		}
 
 		public void RestoreLocation ()
 		{
-			if (markedLocation != Location.Unknown)
-				location.CopyFrom (markedLocation);
+			if (marked_location != Location.Unknown)
+				location.CopyFrom (marked_location);
 		}
 	}
 }

@@ -2,8 +2,10 @@
 // Author: Sergey Chaban (serge@wildwestsoftware.com)
 using System;
 
-namespace Mono.ILAsm {
-	public class ILToken : ICloneable {
+namespace Mono.ILAsm
+{
+	public class ILToken : ICloneable
+	{
 		internal int token;
 		internal object val;
 		public static readonly ILToken Invalid = new ILToken (-1, "invalid");
@@ -123,6 +125,7 @@ namespace Mono.ILAsm {
 		private static bool EqImpl (ILToken t1, ILToken t2)
 		{
 			bool res = false;
+			
 			if ((t1 as object) != null)
 				res = t1.Equals (t2);
 			else
@@ -143,7 +146,7 @@ namespace Mono.ILAsm {
 
 		public static ILToken GetPunctuation (int ch)
 		{
-			int id = "{}[](),:;=*&+/!<>".IndexOf ((char) ch);
+			int id = "{}[](),:;=*&+/!<>".IndexOf ((char)ch);
 			ILToken res = null;
 
 			if (id != -1)

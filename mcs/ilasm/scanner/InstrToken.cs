@@ -8,71 +8,49 @@ namespace Mono.ILAsm {
 		public InstrToken (OpCode opcode)
 		{
 			this.val = opcode;
-			token = GetInstrType (opcode);
+			this.token = GetInstrType (opcode);
 		}
 
 		public static int GetInstrType (OpCode opCode)
 		{
-			OperandType t = opCode.OperandType;
-			int token = Token.UNKNOWN;
-
-			switch (t) {
+			switch (opCode.OperandType) {
 			case OperandType.InlineBrTarget:
 			case OperandType.ShortInlineBrTarget:
-				token = Token.INSTR_BRTARGET;
-				break;
+				return Token.INSTR_BRTARGET;
 			case OperandType.InlineField:
-				token = Token.INSTR_FIELD;
-				break;
+				return Token.INSTR_FIELD;
 			case OperandType.InlineI:
 			case OperandType.ShortInlineI:
-				token = Token.INSTR_I;
-				break;
+				return Token.INSTR_I;
 			case OperandType.InlineI8:
-				token = Token.INSTR_I8;
-				break;
+				return Token.INSTR_I8;
 			case OperandType.InlineMethod:
-				token = Token.INSTR_METHOD;
-				break;
+				return Token.INSTR_METHOD;
 			case OperandType.InlineNone:
-				token = Token.INSTR_NONE;
-				break;
+				return Token.INSTR_NONE;
 #pragma warning disable 0618
 			case OperandType.InlinePhi:
-				token = Token.INSTR_PHI;
-				break;
+				return Token.INSTR_PHI;
 #pragma warning restore 0618
 			case OperandType.InlineR:
 			case OperandType.ShortInlineR:
-				token = Token.INSTR_R;
-				break;
-			/*
-			case OperandType.InlineRVA:
-				token = Token.INSTR_RVA;
-				break;
-			*/
+				return Token.INSTR_R;
 			case OperandType.InlineSig:
-				token = Token.INSTR_SIG;
-				break;
+				return Token.INSTR_SIG;
 			case OperandType.InlineString:
-				token = Token.INSTR_STRING;
-				break;
+				return Token.INSTR_STRING;
 			case OperandType.InlineSwitch:
-				token = Token.INSTR_SWITCH;
-				break;
+				return Token.INSTR_SWITCH;
 			case OperandType.InlineTok:
-				token = Token.INSTR_TOK;
-				break;
+				return Token.INSTR_TOK;
 			case OperandType.InlineType:
-				token = Token.INSTR_TYPE;
-				break;
+				return Token.INSTR_TYPE;
 			case OperandType.InlineVar:
 			case OperandType.ShortInlineVar:
-				token = Token.INSTR_VAR;
-				break;
+				return Token.INSTR_VAR;
 			}
 			
-			return token;
+			return Token.UNKNOWN;
 		}
 	}
 }
