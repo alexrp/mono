@@ -18,12 +18,9 @@ using System.Security.Cryptography;
 using System.Threading;
 using Mono.Security;
 
-namespace Mono.ILAsm
-{
-	public sealed class Driver
-	{
-		private enum Target : byte
-		{
+namespace Mono.ILAsm {
+	public sealed class Driver {
+		private enum Target : byte {
 			Dll,
 			Exe
 		}
@@ -34,16 +31,14 @@ namespace Mono.ILAsm
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
 			var driver = new DriverMain (args);
-			if (!driver.Run ()) {
+			if (!driver.Run ())
 				return 1;
-			}
 
 			Report.Message ("Operation completed successfully");
 			return 0;
 		}
 
-		private sealed class DriverMain
-		{
+		private sealed class DriverMain {
 			private List<string> il_file_list;
 			private string output_file;
 			private Target target = Target.Exe;
@@ -59,23 +54,19 @@ namespace Mono.ILAsm
 			private string key_name;
 			private StrongName sn;
 
-
 			public DriverMain (string[] args)
 			{
 				il_file_list = new List<string> ();
 				ParseArgs (args);
 			}
 
-
 			public bool Run ()
 			{
-				if (il_file_list.Count == 0) {
+				if (il_file_list.Count == 0)
 					Usage ();
-				}
 
-				if (output_file == null) {
+				if (output_file == null)
 					output_file = CreateOutputFileName ();
-				}
 
 				try {
 					codegen = new CodeGen (output_file, target == Target.Dll, debugging_info);
@@ -84,17 +75,14 @@ namespace Mono.ILAsm
 						ProcessFile (file_path);
 					}
 					
-					if (scan_only) {
+					if (scan_only)
 						return true;
-					}
 
-					if (Report.ErrorCount > 0) {
+					if (Report.ErrorCount > 0)
 						return false;
-					}
 
-					if (target != Target.Dll && !codegen.HasEntryPoint) {
+					if (target != Target.Dll && !codegen.HasEntryPoint)
 						Report.Error ("No entry point found.");
-					}
 
 					// if we have a key and aren't assembling a netmodule
 					if ((key_name != null) && !codegen.IsThisAssembly (null)) {
@@ -129,24 +117,22 @@ namespace Mono.ILAsm
 				return true;
 			}
 
-
 			private void Error (string message)
 			{
 				Console.WriteLine (message + Environment.NewLine);
 				Console.WriteLine ("***** FAILURE *****" + Environment.NewLine);
 			}
 
-
 			private void LoadKey ()
 			{
 				if (key_container) {
-					CspParameters csp = new CspParameters ();
+					var csp = new CspParameters ();
 					csp.KeyContainerName = key_name;
-					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider (csp);
+					var rsa = new RSACryptoServiceProvider (csp);
 					sn = new StrongName (rsa);
 				} else {
 					byte[] data = null;
-					using (FileStream fs = File.OpenRead (key_name)) {
+					using (var fs = File.OpenRead (key_name)) {
 						data = new byte [fs.Length];
 						fs.Read (data, 0, data.Length);
 						fs.Close ();
@@ -155,7 +141,6 @@ namespace Mono.ILAsm
 				}
 			}
 
-
 			private bool Sign (string fileName)
 			{
 				// note: if the file cannot be signed (no public key in it) then
@@ -163,7 +148,6 @@ namespace Mono.ILAsm
 				// exist
 				return sn.Sign (fileName);
 			}
-
 
 			private void ProcessFile (string filePath)
 			{
@@ -176,9 +160,8 @@ namespace Mono.ILAsm
 				var reader = File.OpenText (filePath);
 				var scanner = new ILTokenizer (reader);
 
-				if (show_tokens) {
+				if (show_tokens)
 					scanner.NewTokenEvent += new NewTokenEvent (ShowToken);
-				}
 
 				//if (show_method_def)
 				//        MethodTable.MethodDefinedEvent += new MethodDefinedEvent (ShowMethodDef);
@@ -187,20 +170,18 @@ namespace Mono.ILAsm
 
 				if (scan_only) {
 					ILToken tok;
-					while ((tok = scanner.NextToken) != ILToken.EOF) {
+					while ((tok = scanner.NextToken) != ILToken.EOF)
 						Console.WriteLine (tok);
-					}
 					return;
 				}
 
-				ILParser parser = new ILParser (codegen, scanner);
+				var parser = new ILParser (codegen, scanner);
 				codegen.BeginSourceFile (filePath);
 				try {
-					if (show_parser) {
+					if (show_parser)
 						parser.yyparse (new ScannerAdapter (scanner), new yydebug.yyDebugSimple ());
-					} else {
+					else
 						parser.yyparse (new ScannerAdapter (scanner), null);
-					}
 				} catch (ILTokenizingException ilte) {
 					Report.Error (ilte.Location, "syntax error at token '" + ilte.Token + "'");
 				} catch (Mono.ILASM.yyParser.yyException ye) {
@@ -216,7 +197,6 @@ namespace Mono.ILAsm
 					codegen.EndSourceFile ();
 				}
 			}
-
 
 			public void ShowToken (object sender, NewTokenEventArgs args)
 			{
@@ -287,15 +267,13 @@ namespace Mono.ILAsm
 					case "resource":
 						break;
 					case "key":
-						if (command_arg.Length > 0) {
+						if (command_arg.Length > 0)
 							key_container = (command_arg [0] == '@');
-						}
 
-						if (key_container) {
+						if (key_container)
 							key_name = command_arg.Substring (1);
-						} else {
+						else
 							key_name = command_arg;
-						}
 
 						break;
 					case "scan_only":
@@ -314,23 +292,20 @@ namespace Mono.ILAsm
 						show_parser = true;
 						break;
 					case "-about":
-						if (str [0] != '-') {
+						if (str [0] != '-')
 							break;
-						}
 						
 						About ();
 						break;
 					case "-version":
-						if (str [0] != '-') {
+						if (str [0] != '-')
 							break;
-						}
 
 						Version ();
 						break;
 					default:
-						if (str [0] == '-') {
+						if (str [0] == '-')
 							break;
-						}
 
 						il_file_list.Add (str);
 						break;
@@ -338,17 +313,15 @@ namespace Mono.ILAsm
 				}
 			}
 
-
 			private string GetCommand (string str, out string command_arg)
 			{
 				int end_index = str.IndexOfAny (new char[] {':', '='}, 1);
 				var command = str.Substring (1, end_index == -1 ? str.Length - 1 : end_index - 1);
 
-				if (end_index != -1) {
+				if (end_index != -1)
 					command_arg = str.Substring (end_index + 1);
-				} else {
+				else
 					command_arg = null;
-				}
 
 				return command.ToLower ();
 			}
@@ -358,16 +331,14 @@ namespace Mono.ILAsm
 			/// </summary>
 			private string CreateOutputFileName ()
 			{
-				var file_name = (string)il_file_list [0];
+				var file_name = (string) il_file_list [0];
 				int ext_index = file_name.LastIndexOf ('.');
 
-				if (ext_index == -1) {
+				if (ext_index == -1)
 					ext_index = file_name.Length;
-				}
 
 				return String.Format ("{0}.{1}", file_name.Substring (0, ext_index), target_string);
 			}
-
 
 			private void Usage ()
 			{
@@ -385,14 +356,12 @@ namespace Mono.ILAsm
 				Environment.Exit (1);
 			}
 
-
 			private void About ()
 			{
 				Console.WriteLine ("For more information on Mono, visit the project Web site{0}" +
 					"   http://www.go-mono.com{0}{0}", Environment.NewLine);
 				Environment.Exit (0);
 			}
-
 
 			private void Version ()
 			{

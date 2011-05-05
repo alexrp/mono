@@ -59,9 +59,8 @@ namespace Mono.ILAsm {
 		public override string ToString ()
 		{
 			var location_str = " : ";
-			if (Location != null) {
+			if (Location != null)
 				location_str = " (" + Location.line + ", " + Location.column + ") : ";
-			}
 
 			return String.Format ("{0}{1}Error : {2}",
 				(FilePath != null ? FilePath : ""), location_str, Message);

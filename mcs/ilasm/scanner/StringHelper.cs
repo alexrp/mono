@@ -67,23 +67,20 @@ namespace Mono.ILAsm {
 						if (escaped == -1) {
 							reader.Unread (ch);
 							ch = '\\';
-						} else {
+						} else
 							ch = escaped;
-						}
 					}
 
 					idsb.Append ((char) ch);
 				}
-			} else { // ID
-				while ((ch = reader.Read ()) != -1) {
+			} else // ID
+				while ((ch = reader.Read ()) != -1)
 					if (IsIdChar (ch)) {
 						idsb.Append ((char) ch);
 					} else {
 						reader.Unread (ch);
 						break;
 					}
-				}
-			}
 			
 			return idsb.ToString ();
 		}

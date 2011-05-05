@@ -17,9 +17,8 @@ namespace Mono.ILAsm {
 
 			if (test_scanner) {
 				ILToken tok;
-				while ((tok = scanner.NextToken) != ILToken.EOF) {
+				while ((tok = scanner.NextToken) != ILToken.EOF)
 					Console.WriteLine (tok);
-				}
 			} else {
 				var parser = new ILParser (new CodeGen ());
 				parser.yyparse (new ScannerAdapter (scanner), new yydebug.yyDebugSimple ());

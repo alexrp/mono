@@ -230,9 +230,13 @@
     <None Include="tests\two.cs" />
     <Compile Include="ILAsmException.cs" />
     <Compile Include="InternalErrorException.cs" />
+    <Compile Include="codegen\CodeGenerator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <ItemGroup>
+    <Folder Include="codegen\" />
+  </ItemGroup>
 </Project>

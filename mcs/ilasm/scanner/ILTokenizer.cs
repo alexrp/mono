@@ -76,12 +76,11 @@ namespace Mono.ILAsm {
 						continue;
 					} else if (next == '*') {
 						reader.Read ();
-						for (next = reader.Read (); next != -1; next = reader.Read ()) {
+						for (next = reader.Read (); next != -1; next = reader.Read ())
 							if (next == '*' && reader.Peek () == '/') {
 								reader.Read ();
 								goto end;
 							}
-						}
 						
 					end:
 						continue;
@@ -149,33 +148,31 @@ namespace Mono.ILAsm {
 							reader.MarkLocation ();
 							string dir_body = str_builder.Build ();
 							var dir = new string ((char) ch, 1) + dir_body;
-							if (IsDirective (dir)) {
+							if (IsDirective (dir))
 								res = ILTables.Directives [dir] as ILToken;
-							} else {
+							else {
 								reader.Unread (dir_body.ToCharArray ());
 								reader.RestoreLocation ();
 								res = ILToken.Dot;
 							}
-						} else {
+						} else
 							res = ILToken.Dot;
-						}
 						
 						break;
 					}
 				}
 
 				// Numbers && Hexbytes
-				if (num_builder.Start (ch)) {
-					if ((ch == '-') && !(char.IsDigit ((char) reader.Peek ()))) {
-						res = ILToken.Dash;
+				if (num_builder.Start (ch))
+				if ((ch == '-') && !(char.IsDigit ((char) reader.Peek ()))) {
+					res = ILToken.Dash;
+					break;
+				} else {
+					reader.Unread (ch);
+					num_builder.Build ();
+					if (num_builder.ResultToken != ILToken.Invalid) {
+						res.CopyFrom (num_builder.ResultToken);
 						break;
-					} else {
-						reader.Unread (ch);
-						num_builder.Build ();
-						if (num_builder.ResultToken != ILToken.Invalid) {
-							res.CopyFrom (num_builder.ResultToken);
-							break;
-						}
 					}
 				}
 
@@ -185,9 +182,8 @@ namespace Mono.ILAsm {
 					if (punct == ILToken.Colon && reader.Peek () == ':') {
 						reader.Read ();
 						res = ILToken.DoubleColon;
-					} else {
+					} else
 						res = punct;
-					}
 					break;
 				}
 
@@ -311,9 +307,9 @@ namespace Mono.ILAsm {
 
 			last = -1;
 			while ((ch = reader.Read ()) != -1) {
-				if (IsIdChar ((char) ch) || ch == '.') {
+				if (IsIdChar ((char) ch) || ch == '.')
 					idsb.Append ((char) ch);
-				} else {
+				else {
 					reader.Unread (ch);
 					// Never end an id on a DOT
 					if (last == '.') {

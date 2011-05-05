@@ -73,29 +73,26 @@ namespace Mono.ILAsm {
 				if (ch == '.')
 					dec_found = true;
 				if (!is_hex (peek) && !(peek == '.' && !dec_found) && !is_e (peek) &&
-					!(is_sign (peek) && is_real)) {
+					!(is_sign (peek) && is_real))
 					break;
-				}
 			} while (ch != -1);
 
 			var num = num_builder.ToString ();
 
 			// Check for hexbytes
-			if (num.Length == 2) {
-				if (char.IsLetter (num [0]) || char.IsLetter (num [1])) {
-					ResultToken.token = Token.HEXBYTE;
-					ResultToken.val = byte.Parse (num, NumberStyles.HexNumber);
-					return num;
-				}
+			if (num.Length == 2)
+			if (char.IsLetter (num [0]) || char.IsLetter (num [1])) {
+				ResultToken.token = Token.HEXBYTE;
+				ResultToken.val = byte.Parse (num, NumberStyles.HexNumber);
+				return num;
 			}
 
 			if (ch == '.' && peek == '.') {
 				num = num.Substring (0, num.Length - 1);
 				reader.Unread ('.');
 				dec_found = false;
-			} else if (ch == '.') {
+			} else if (ch == '.')
 				num += '0';
-			}
 
 			if (!dec_found && !is_real) {
 				try {
@@ -184,7 +181,7 @@ namespace Mono.ILAsm {
 			
 			return num;
 		}
-		
+
 		public ILToken ResultToken { get; private set; }
 	}
 }

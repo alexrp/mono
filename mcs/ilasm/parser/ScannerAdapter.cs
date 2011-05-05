@@ -8,7 +8,7 @@ namespace Mono.ILAsm {
 		{
 			this.BaseStream = tokens;
 		}
-		
+
 		public ITokenStream BaseStream { get; private set; }
 
 		//
@@ -19,12 +19,12 @@ namespace Mono.ILAsm {
 		{
 			return (BaseStream.NextToken != ILToken.EOF);
 		}
-		
+
 		public int token ()
 		{
 			return BaseStream.LastToken.TokenId;
 		}
-		
+
 		public object value ()
 		{
 			return BaseStream.LastToken.Value;

@@ -18,34 +18,27 @@ namespace Mono.ILAsm {
 			Quiet = false;
 		}
 
-
 		public static int ErrorCount { get; private set; }
-
 
 		public static bool Quiet { get; set; }
 
-
 		public static string FilePath { get; internal set; }
-
 
 		public static void AssembleFile (string file, string listing,
 						string target, string output)
 		{
-			if (quiet) {
+			if (quiet)
 				return;
-			}
 			
 			Console.WriteLine ("Assembling '{0}' , {1}, to {2} --> '{3}'", file,
 				GetListing (listing), target, output);
 			Console.WriteLine ();
 		}
 
-
 		public static void Error (string message)
 		{
 			Error (null, message);
 		}
-
 
 		public static void Error (Location location, string message)
 		{
@@ -53,40 +46,33 @@ namespace Mono.ILAsm {
 			throw new ILAsmException (FilePath, location, message);
 		}
 
-
 		public static void Warning (string message)
 		{
 			Warning (null, message);
 		}
 
-
 		public static void Warning (Location location, string message)
 		{
 			var location_str = " : ";
-			if (location != null) {
+			if (location != null)
 				location_str = " (" + location.line + ", " + location.column + ") : ";
-			}
 
 			Console.Error.WriteLine (String.Format ("{0}{1}Warning -- {2}",
 				(FilePath != null ? FilePath : ""), location_str, message));
 		}
 
-
 		public static void Message (string message)
 		{
-			if (quiet) {
+			if (quiet)
 				return;
-			}
 			
 			Console.WriteLine (message);
 		}
 
-
 		private static string GetListing (string listing)
 		{
-			if (listing == null) {
+			if (listing == null)
 				return "no listing file";
-			}
 			
 			return listing;
 		}
