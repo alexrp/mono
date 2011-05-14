@@ -49,7 +49,7 @@ namespace Mono.ILAsm {
 			private bool show_parser;
 			private bool scan_only;
 			private bool debugging_info;
-			private CodeGen codegen;
+			private CodeGenerator codegen;
 			private bool key_container;
 			private string key_name;
 			private StrongName sn;
@@ -69,7 +69,7 @@ namespace Mono.ILAsm {
 					output_file = CreateOutputFileName ();
 
 				try {
-					codegen = new CodeGen (output_file, target == Target.Dll, debugging_info);
+					codegen = new CodeGenerator (output_file, target == Target.Dll, debugging_info);
 					foreach (var file_path in il_file_list) {
 						Report.FilePath = file_path;
 						ProcessFile (file_path);
@@ -88,7 +88,7 @@ namespace Mono.ILAsm {
 					if ((key_name != null) && !codegen.IsThisAssembly (null)) {
 						LoadKey ();
 						// this overrides any attribute or .publickey directive in the source
-						codegen.ThisAssembly.SetPublicKey (sn.PublicKey);
+						codegen.CurrentAssembly.Name.PublicKey = sn.PublicKey;
 					}
 
 					try {

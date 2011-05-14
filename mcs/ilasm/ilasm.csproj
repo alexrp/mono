@@ -45,6 +45,9 @@
     <Reference Include="Mono.Cecil, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Cecil.Mdb, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+      <HintPath>..\class\lib\net_2_0\Mono.Cecil.Mdb.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Include="errors\abs_method4.il" />
@@ -231,6 +234,7 @@
     <Compile Include="ILAsmException.cs" />
     <Compile Include="InternalErrorException.cs" />
     <Compile Include="codegen\CodeGenerator.cs" />
+    <Compile Include="codegen\TypeManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
