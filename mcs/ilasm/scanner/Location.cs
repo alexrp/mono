@@ -65,7 +65,7 @@ namespace Mono.ILAsm {
 			this.column = other.column;
 		}
 
-		public virtual object Clone ()
+		public object Clone ()
 		{
 			return new Location (this);
 		}
