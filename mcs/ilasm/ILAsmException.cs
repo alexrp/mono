@@ -25,12 +25,12 @@ namespace Mono.ILAsm {
 		}
 
 		public ILAsmException (string message, Location location)
-			: this (message, location, null)
+			: this (message, location, (string)null)
 		{
 		}
 
 		public ILAsmException (string message)
-			: this (message, null)
+			: this (message, (Location)null)
 		{
 		}
 
@@ -42,12 +42,12 @@ namespace Mono.ILAsm {
 		}
 
 		public ILAsmException (string message, Location location, Exception inner)
-			: base (message, location, null, inner)
+			: this (message, location, (string)null, inner)
 		{
 		}
 
 		public ILAsmException (string message, Exception inner)
-			: base (message, null, null, inner)
+			: this (message, (Location)null, (string)null, inner)
 		{
 		}
 

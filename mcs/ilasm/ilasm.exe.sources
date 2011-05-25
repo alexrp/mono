@@ -3,7 +3,6 @@ Report.cs
 AssemblyInfo.cs
 ILAsmException.cs
 InternalErrorException.cs
-parser/ScannerAdapter.cs
 scanner/ILReader.cs
 scanner/ILTokenizingException.cs
 scanner/ILTables.cs
@@ -15,4 +14,7 @@ scanner/Location.cs
 scanner/NumberHelper.cs
 scanner/StringHelperBase.cs
 scanner/StringHelper.cs
+parser/ScannerAdapter.cs
+codegen/CodeGenerator.cs
+codegen/TypeManager.cs
 ../build/common/Consts.cs

@@ -29,9 +29,14 @@ namespace Mono.ILAsm {
 			}
 		}
 		
-		public CodeGenerator (string moduleName, bool dll)
+		public CodeGenerator (string moduleName, bool dll, bool debuggingInfo)
 		{
 			TypeManager = new TypeManager ();
+		}
+		
+		public bool IsThisAssembly(AssemblyNameReference name)
+		{
+			return name.FullName == CurrentAssembly.Name.FullName;
 		}
 		
 		public void Write ()

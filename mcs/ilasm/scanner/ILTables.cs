@@ -3,14 +3,15 @@
 //
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Reflection.Emit;
+using Mono.Cecil.Cil;
 
 namespace Mono.ILAsm {
 	public static class ILTables {
 		static ILTables ()
 		{
-			var directives = new Hashtable (300);
+			var directives = new Dictionary<string, ILToken> (300);
 			
 			directives [".addon"] = new ILToken (Token.D_ADDON, ".addon");
 			directives [".algorithm"] = new ILToken (Token.D_ALGORITHM, ".algorithm");
@@ -77,7 +78,7 @@ namespace Mono.ILAsm {
 			
 			Directives = directives;
 			
-			var keywords = new Hashtable (300);
+			var keywords = new Dictionary<string, ILToken> (300);
 			
 			keywords ["at"] = new ILToken (Token.K_AT, "at");
 			keywords ["as"] = new ILToken (Token.K_AS, "as");
@@ -270,10 +271,251 @@ namespace Mono.ILAsm {
 			keywords ["strict"] = new ILToken (Token.K_STRICT, "strict");
 			
 			Keywords = keywords;
+			
+			var opCodes = new Dictionary<string, ILToken> (300);
+			
+			opCodes ["nop"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Nop);
+			opCodes ["break"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Break);
+			opCodes ["ldarg.0"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldarg_0);
+			opCodes ["ldarg.1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldarg_1);
+			opCodes ["ldarg.2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldarg_2);
+			opCodes ["ldarg.3"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldarg_3);
+			opCodes ["ldloc.0"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldloc_0);
+			opCodes ["ldloc.1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldloc_1);
+			opCodes ["ldloc.2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldloc_2);
+			opCodes ["ldloc.3"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldloc_3);
+			opCodes ["stloc.0"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stloc_0);
+			opCodes ["stloc.1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stloc_1);
+			opCodes ["stloc.2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stloc_2);
+			opCodes ["stloc.3"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stloc_3);
+			opCodes ["ldnull"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldnull);
+			opCodes ["ldc.i4.m1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_M1);
+			opCodes ["ldc.i4.M1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_M1);
+			opCodes ["ldc.i4.0"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_0);
+			opCodes ["ldc.i4.1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_1);
+			opCodes ["ldc.i4.2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_2);
+			opCodes ["ldc.i4.3"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_3);
+			opCodes ["ldc.i4.4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_4);
+			opCodes ["ldc.i4.5"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_5);
+			opCodes ["ldc.i4.6"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_6);
+			opCodes ["ldc.i4.7"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_7);
+			opCodes ["ldc.i4.8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldc_I4_8);
+			opCodes ["dup"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Dup);
+			opCodes ["pop"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Pop);
+			opCodes ["ret"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ret);
+			opCodes ["ldind.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I1);
+			opCodes ["ldind.u1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_U1);
+			opCodes ["ldind.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I2);
+			opCodes ["ldind.u2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_U2);
+			opCodes ["ldind.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I4);
+			opCodes ["ldind.u4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_U4);
+			opCodes ["ldind.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I8);
+			opCodes ["ldind.u8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I8);
+			opCodes ["ldind.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_I);
+			opCodes ["ldind.r4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_R4);
+			opCodes ["ldind.r8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_R8);
+			opCodes ["ldind.ref"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldind_Ref);
+			opCodes ["stind.ref"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_Ref);
+			opCodes ["stind.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_I1);
+			opCodes ["stind.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_I2);
+			opCodes ["stind.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_I4);
+			opCodes ["stind.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_I8);
+			opCodes ["stind.r4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_R4);
+			opCodes ["stind.r8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_R8);
+			opCodes ["add"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Add);
+			opCodes ["sub"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Sub);
+			opCodes ["mul"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Mul);
+			opCodes ["div"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Div);
+			opCodes ["div.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Div_Un);
+			opCodes ["rem"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Rem);
+			opCodes ["rem.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Rem_Un);
+			opCodes ["and"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.And);
+			opCodes ["or"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Or);
+			opCodes ["xor"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Xor);
+			opCodes ["shl"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Shl);
+			opCodes ["shr"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Shr);
+			opCodes ["shr.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Shr_Un);
+			opCodes ["neg"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Neg);
+			opCodes ["not"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Not);
+			opCodes ["conv.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_I1);
+			opCodes ["conv.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_I2);
+			opCodes ["conv.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_I4);
+			opCodes ["conv.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_I8);
+			opCodes ["conv.r4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_R4);
+			opCodes ["conv.r8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_R8);
+			opCodes ["conv.u4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U4);
+			opCodes ["conv.u8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U8);
+			opCodes ["conv.r.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_R_Un);
+			opCodes ["throw"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Throw);
+			opCodes ["conv.ovf.i1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I1_Un);
+			opCodes ["conv.ovf.i2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I2_Un);
+			opCodes ["conv.ovf.i4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I4_Un);
+			opCodes ["conv.ovf.i8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I8_Un);
+			opCodes ["conv.ovf.u1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U1_Un);
+			opCodes ["conv.ovf.u2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U2_Un);
+			opCodes ["conv.ovf.u4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U4_Un);
+			opCodes ["conv.ovf.u8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U8_Un);
+			opCodes ["conv.ovf.i.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I_Un);
+			opCodes ["conv.ovf.u.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U_Un);
+			opCodes ["ldlen"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldlen);
+			opCodes ["ldelem.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I1);
+			opCodes ["ldelem.u1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_U1);
+			opCodes ["ldelem.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I2);
+			opCodes ["ldelem.u2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_U2);
+			opCodes ["ldelem.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I4);
+			opCodes ["ldelem.u4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_U4);
+			opCodes ["ldelem.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I8);
+			opCodes ["ldelem.u8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I8);
+			opCodes ["ldelem.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_I);
+			opCodes ["ldelem.r4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_R4);
+			opCodes ["ldelem.r8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_R8);
+			opCodes ["ldelem.ref"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ldelem_Ref);
+			opCodes ["stelem.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_I);
+			opCodes ["stelem.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_I1);
+			opCodes ["stelem.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_I2);
+			opCodes ["stelem.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_I4);
+			opCodes ["stelem.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_I8);
+			opCodes ["stelem.r4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_R4);
+			opCodes ["stelem.r8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_R8);
+			opCodes ["stelem.ref"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stelem_Ref);
+			opCodes ["conv.ovf.i1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I1);
+			opCodes ["conv.ovf.u1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U1);
+			opCodes ["conv.ovf.i2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I2);
+			opCodes ["conv.ovf.u2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U2);
+			opCodes ["conv.ovf.i4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I4);
+			opCodes ["conv.ovf.u4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U4);
+			opCodes ["conv.ovf.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I8);
+			opCodes ["conv.ovf.u8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U8);
+			opCodes ["conv.ovf.u1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U1_Un);
+			opCodes ["conv.ovf.u2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U2_Un);
+			opCodes ["conv.ovf.u4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U4_Un);
+			opCodes ["conv.ovf.u8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U8_Un);
+			opCodes ["conv.ovf.i1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I1_Un);
+			opCodes ["conv.ovf.i2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I2_Un);
+			opCodes ["conv.ovf.i4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I4_Un);
+			opCodes ["conv.ovf.i8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I8_Un);
+			opCodes ["ckfinite"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ckfinite);
+			opCodes ["conv.u2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U2);
+			opCodes ["conv.u1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U1);
+			opCodes ["conv.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_I);
+			opCodes ["conv.ovf.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I);
+			opCodes ["conv.ovf.u"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U);
+			opCodes ["add.ovf"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Add_Ovf);
+			opCodes ["add.ovf.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Add_Ovf_Un);
+			opCodes ["mul.ovf"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Mul_Ovf);
+			opCodes ["mul.ovf.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Mul_Ovf_Un);
+			opCodes ["sub.ovf"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Sub_Ovf);
+			opCodes ["sub.ovf.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Sub_Ovf_Un);
+			opCodes ["endfinally"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Endfinally);
+			opCodes ["endfault"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Endfinally);
+			opCodes ["stind.i"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Stind_I);
+			opCodes ["conv.u"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U);
+			opCodes ["arglist"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Arglist);
+			opCodes ["ceq"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ceq);
+			opCodes ["cgt"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Cgt);
+			opCodes ["cgt.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Cgt_Un);
+			opCodes ["clt"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Clt);
+			opCodes ["clt.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Clt_Un);
+			opCodes ["localloc"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Localloc);
+			opCodes ["endfilter"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Endfilter);
+			opCodes ["volatile."] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Volatile);
+			opCodes ["tail."] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Tail);
+			opCodes ["cpblk"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Cpblk);
+			opCodes ["initblk"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Initblk);
+			opCodes ["rethrow"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Rethrow);
+			opCodes ["refanytype"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Refanytype);
+			opCodes ["readonly."] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Readonly);
+			opCodes ["ldarg"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Ldarg);
+			opCodes ["ldarga"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Ldarga);
+			opCodes ["starg"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Starg);
+			opCodes ["ldarg.s"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Ldarg_S);
+			opCodes ["ldarga.s"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Ldarga_S);
+			opCodes ["starg.s"] = new ILToken (Token.INSTR_PARAM, Cecil.Cil.OpCodes.Starg_S);
+			opCodes ["ldloc"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Ldloc);
+			opCodes ["ldloca"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Ldloca);
+			opCodes ["stloc"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Stloc);
+			opCodes ["ldloc.s"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Ldloc_S);
+			opCodes ["ldloca.s"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Ldloca_S);
+			opCodes ["stloc.s"] = new ILToken (Token.INSTR_LOCAL, Cecil.Cil.OpCodes.Stloc_S);
+			opCodes ["ldc.i4.s"] = new ILToken (Token.INSTR_I, Cecil.Cil.OpCodes.Ldc_I4_S);
+			opCodes ["ldc.i4"] = new ILToken (Token.INSTR_I, Cecil.Cil.OpCodes.Ldc_I4);
+			opCodes ["unaligned."] = new ILToken (Token.INSTR_I, Cecil.Cil.OpCodes.Unaligned);
+			opCodes ["cpobj"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Cpobj);
+			opCodes ["ldobj"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Ldobj);
+			opCodes ["castclass"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Castclass);
+			opCodes ["isinst"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Isinst);
+			opCodes ["unbox"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Unbox);
+			opCodes ["unbox.any"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Unbox_Any);
+			opCodes ["stobj"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Stobj);
+			opCodes ["box"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Box);
+			opCodes ["newarr"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Newarr);
+			opCodes ["ldelema"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Ldelema);
+			opCodes ["refanyval"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Refanyval);
+			opCodes ["mkrefany"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Mkrefany);
+			opCodes ["initobj"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Initobj);
+			opCodes ["sizeof"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Sizeof);
+			opCodes ["stelem"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Stelem_Any);
+			opCodes ["ldelem"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Ldelem_Any);
+			opCodes ["stelem.any"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Stelem_Any);
+			opCodes ["ldelem.any"] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Ldelem_Any);
+			opCodes ["constrained."] = new ILToken (Token.INSTR_TYPE, Cecil.Cil.OpCodes.Constrained);
+			opCodes ["jmp"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Jmp);
+			opCodes ["call"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Call);
+			opCodes ["callvirt"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Callvirt);
+			opCodes ["newobj"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Newobj);
+			opCodes ["ldftn"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Ldftn);
+			opCodes ["ldvirtftn"] = new ILToken (Token.INSTR_METHOD, Cecil.Cil.OpCodes.Ldvirtftn);
+			opCodes ["ldfld"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Ldfld);
+			opCodes ["ldflda"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Ldflda);
+			opCodes ["stfld"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Stfld);
+			opCodes ["ldsfld"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Ldsfld);
+			opCodes ["ldsflda"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Ldsflda);
+			opCodes ["stsfld"] = new ILToken (Token.INSTR_FIELD, Cecil.Cil.OpCodes.Stsfld);
+			opCodes ["br"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Br);
+			opCodes ["brfalse"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brfalse);
+			opCodes ["brzero"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brfalse);
+			opCodes ["brnull"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brfalse);
+			opCodes ["brtrue"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brtrue);
+			opCodes ["beq"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Beq);
+			opCodes ["bge"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bge);
+			opCodes ["bgt"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bgt);
+			opCodes ["ble"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Ble);
+			opCodes ["blt"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Blt);
+			opCodes ["bne.un"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bne_Un);
+			opCodes ["bge.un"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bge_Un);
+			opCodes ["bgt.un"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bgt_Un);
+			opCodes ["ble.un"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Ble_Un);
+			opCodes ["blt.un"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Blt_Un);
+			opCodes ["leave"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Leave);
+			opCodes ["br.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Br_S);
+			opCodes ["brfalse.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brfalse_S);
+			opCodes ["brtrue.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Brtrue_S);
+			opCodes ["beq.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Beq_S);
+			opCodes ["bge.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bge_S);
+			opCodes ["bgt.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bgt_S);
+			opCodes ["ble.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Ble_S);
+			opCodes ["blt.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Blt_S);
+			opCodes ["bne.un.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bne_Un_S);
+			opCodes ["bge.un.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bge_Un_S);
+			opCodes ["bgt.un.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Bgt_Un_S);
+			opCodes ["ble.un.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Ble_Un_S);
+			opCodes ["blt.un.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Blt_Un_S);
+			opCodes ["leave.s"] = new ILToken (Token.INSTR_BRTARGET, Cecil.Cil.OpCodes.Leave_S);
+			opCodes ["ldstr"] = new ILToken (Token.INSTR_STRING, Cecil.Cil.OpCodes.Ldstr);
+			opCodes ["ldc.r4"] = new ILToken (Token.INSTR_R, Cecil.Cil.OpCodes.Ldc_R4);
+			opCodes ["ldc.r8"] = new ILToken (Token.INSTR_R, Cecil.Cil.OpCodes.Ldc_R8);
+			opCodes ["ldc.i8"] = new ILToken (Token.INSTR_I8, Cecil.Cil.OpCodes.Ldc_I8);
+			opCodes ["switch"] = new ILToken (Token.INSTR_SWITCH, Cecil.Cil.OpCodes.Switch);
+			opCodes ["calli"] = new ILToken (Token.INSTR_SIG, Cecil.Cil.OpCodes.Calli);
+			opCodes ["ldtoken"] = new ILToken (Token.INSTR_TOK, Cecil.Cil.OpCodes.Ldtoken);
+			
+			OpCodes = OpCodes;
 		}
 
-		public static Hashtable Directives { get; private set; }
+		public static Dictionary<string, ILToken> Directives { get; private set; }
 
-		public static Hashtable Keywords { get; private set; }
+		public static Dictionary<string, ILToken> Keywords { get; private set; }
+		
+		public static Dictionary<string, ILToken> OpCodes { get; private set; }
 	}
 }

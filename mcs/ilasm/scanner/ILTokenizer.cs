@@ -3,7 +3,7 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Mono.ILAsm {
@@ -20,8 +20,6 @@ namespace Mono.ILAsm {
 
 	public class ILTokenizer : ITokenStream {
 		private const string id_chars = "_$@?.`";
-		private static readonly Hashtable keywords;
-		private static readonly Hashtable directives;
 		private ILToken last_token;
 		private readonly ILReader reader;
 		private readonly StringHelper str_builder;
@@ -29,12 +27,6 @@ namespace Mono.ILAsm {
 		internal bool in_byte_array;
 
 		public event NewTokenEvent NewTokenEvent;
-
-		static ILTokenizer ()
-		{
-			keywords = ILTables.Keywords;
-			directives = ILTables.Directives;
-		}
 
 		public ILTokenizer (StreamReader reader)
 		{
@@ -203,7 +195,7 @@ namespace Mono.ILAsm {
 							if (IsIdChar ((char) next)) {
 								string opTail = BuildId ();
 								var full_str = string.Format ("{0}.{1}", val, opTail);
-								opCode = InstrTable.GetToken (full_str);
+								opCode = ILTables.OpCodes [full_str];
 
 								if (opCode == null) {
 									if (str_builder.TokenId != Token.ID) {
@@ -223,7 +215,7 @@ namespace Mono.ILAsm {
 								}
 							} else if (char.IsWhiteSpace ((char) next)) {
 								// Handle 'tail.' and 'unaligned.'
-								opCode = InstrTable.GetToken (val + ".");
+								opCode = ILTables.OpCodes [val + "."];
 								if (opCode != null) {
 									res = opCode;
 									break;
@@ -234,7 +226,7 @@ namespace Mono.ILAsm {
 							}
 						}
 						
-						opCode = InstrTable.GetToken (val);
+						opCode = ILTables.OpCodes [val];
 						if (opCode != null) {
 							res = opCode;
 							break;
@@ -286,7 +278,7 @@ namespace Mono.ILAsm {
 
 		public static bool IsOpCode (string name)
 		{
-			return InstrTable.IsInstr (name);
+			return ILTables.OpCodes.ContainsKey (name);
 		}
 
 		public static bool IsDirective (string name)
@@ -295,7 +287,7 @@ namespace Mono.ILAsm {
 			bool res = (ch == '.' || ch == '#');
 
 			if (res)
-				res = directives.Contains (name);
+				res = ILTables.Directives.ContainsKey (name);
 
 			return res;
 		}
@@ -328,7 +320,7 @@ namespace Mono.ILAsm {
 
 		public static bool IsKeyword (string name)
 		{
-			return keywords.Contains (name);
+			return ILTables.Keywords.ContainsKey (name);
 		}
 
 		private void OnNewToken (ILToken token)

@@ -27,6 +27,6 @@ namespace Mono.ILAsm {
 
 		public abstract string Build ();
 
-		public int TokenId { get; private set; }
+		public int TokenId { get; protected set; }
 	}
 }

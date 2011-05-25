@@ -176,7 +176,6 @@ namespace Mono.ILAsm {
 				}
 
 				var parser = new ILParser (codegen, scanner);
-				codegen.BeginSourceFile (filePath);
 				try {
 					if (show_parser)
 						parser.yyparse (new ScannerAdapter (scanner), new yydebug.yyDebugSimple ());
@@ -184,17 +183,13 @@ namespace Mono.ILAsm {
 						parser.yyparse (new ScannerAdapter (scanner), null);
 				} catch (ILTokenizingException ilte) {
 					Report.Error (ilte.Location, "syntax error at token '" + ilte.Token + "'");
-				} catch (Mono.ILASM.yyParser.yyException ye) {
+				} catch (Mono.ILAsm.yyParser.yyException ye) {
 					Report.Error (scanner.Reader.Location, ye.Message);
 				} catch (ILAsmException ie) {
-					ie.FilePath = filePath;
-					ie.Location = scanner.Reader.Location;
-					throw;
+					throw new ILAsmException (ie.Message, scanner.Reader.Location, filePath, ie);
 				} catch (Exception) {
 					Console.Write ("{0} ({1}, {2}): ", filePath, scanner.Reader.Location.line, scanner.Reader.Location.column);
 					throw;
-				} finally {
-					codegen.EndSourceFile ();
 				}
 			}
 

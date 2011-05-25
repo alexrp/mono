@@ -16,8 +16,8 @@ using System.Security.Permissions;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
-	public sealed class ILParser {
-		private CodeGen codegen;
+	public class ILParser {
+		private CodeGenerator codegen;
 		private bool is_value_class;
 		private bool is_enum_class;
 		private bool pinvoke_info;
@@ -113,20 +113,14 @@ namespace Mono.ILAsm {
 			return new PermPair ((Mono.Cecil.SecurityAction) action, iper);
 		}
 
-		public ILParser (CodeGen codegen, ILTokenizer tokenizer)
+		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
 		{
 			this.codegen = codegen;
 			this.tokenizer = tokenizer;
 		}
 
-		public CodeGen CodeGen {
+		public CodeGenerator CodeGenerator {
 			get { return codegen; }
-		}
-
-		private BaseTypeRef GetTypeRef (BaseTypeRef b)
-		{
-			//FIXME: Caching required..
-			return b.Clone ();
 		}
 
 %}

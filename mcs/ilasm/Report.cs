@@ -27,7 +27,7 @@ namespace Mono.ILAsm {
 		public static void AssembleFile (string file, string listing,
 						string target, string output)
 		{
-			if (quiet)
+			if (Quiet)
 				return;
 			
 			Console.WriteLine ("Assembling '{0}' , {1}, to {2} --> '{3}'", file,
@@ -63,7 +63,7 @@ namespace Mono.ILAsm {
 
 		public static void Message (string message)
 		{
-			if (quiet)
+			if (Quiet)
 				return;
 			
 			Console.WriteLine (message);
