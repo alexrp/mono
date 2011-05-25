@@ -1,8 +1,12 @@
-Driver.cs
-Report.cs
 AssemblyInfo.cs
+Driver.cs
 ILAsmException.cs
 InternalErrorException.cs
+Report.cs
+../build/common/Consts.cs
+codegen/CodeGenerator.cs
+codegen/TypeManager.cs
+parser/ScannerAdapter.cs
 scanner/ILReader.cs
 scanner/ILTokenizingException.cs
 scanner/ILTables.cs
@@ -14,7 +18,3 @@ scanner/Location.cs
 scanner/NumberHelper.cs
 scanner/StringHelperBase.cs
 scanner/StringHelper.cs
-parser/ScannerAdapter.cs
-codegen/CodeGenerator.cs
-codegen/TypeManager.cs
-../build/common/Consts.cs
