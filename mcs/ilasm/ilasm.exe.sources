@@ -12,7 +12,6 @@ scanner/ILTokenizingException.cs
 scanner/ILTables.cs
 scanner/ILToken.cs
 scanner/ILTokenizer.cs
-scanner/InstrToken.cs
 scanner/ITokenStream.cs
 scanner/Location.cs
 scanner/NumberHelper.cs

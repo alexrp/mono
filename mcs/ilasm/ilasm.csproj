@@ -222,7 +222,6 @@
     <Compile Include="scanner\ILToken.cs" />
     <Compile Include="scanner\ILTokenizer.cs" />
     <Compile Include="scanner\ILTokenizingException.cs" />
-    <Compile Include="scanner\InstrToken.cs" />
     <Compile Include="scanner\ITokenStream.cs" />
     <Compile Include="scanner\Location.cs" />
     <Compile Include="scanner\NumberHelper.cs" />
