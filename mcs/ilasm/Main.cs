@@ -24,7 +24,7 @@ namespace Mono.ILAsm {
 				parser.yyparse (new ScannerAdapter (scanner), new yydebug.yyDebugSimple ());
 
 				var cg = parser.CodeGen;
-				int n = cg.ClassCount;
+				var n = cg.ClassCount;
 				cg.Emit ();
 			}
 

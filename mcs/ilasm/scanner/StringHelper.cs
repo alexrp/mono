@@ -29,7 +29,7 @@ namespace Mono.ILAsm {
 
 		private static bool IsIdChar (int c)
 		{
-			char ch = (char) c;
+			var ch = (char) c;
 			return (char.IsLetterOrDigit (ch) || id_chars.IndexOf (ch) != -1);
 		}
 
@@ -38,12 +38,12 @@ namespace Mono.ILAsm {
 			if (TokenId == Token.UNKNOWN)
 				return String.Empty;
 			
-			int ch = 0;
+			var ch = 0;
 			var reader = host.Reader;
 			var idsb = new StringBuilder ();
 			
 			if (TokenId == Token.SQSTRING || TokenId == Token.QSTRING) {
-				int term = (TokenId == Token.SQSTRING) ? '\'' : '"';
+				var term = (TokenId == Token.SQSTRING) ? '\'' : '"';
 				reader.Read (); // skip quote
 				for (ch = reader.Read (); ch != -1; ch = reader.Read ()) {
 					if (ch == term)
@@ -53,17 +53,17 @@ namespace Mono.ILAsm {
 						ch = reader.Read ();
 
 						/*
-							* Long string can be broken across multiple lines
-							* by using '\' as the last char in line.
-							* Any white space chars between '\' and the first
-							* char on the next line are ignored.
-							*/
+						 * Long string can be broken across multiple lines
+						 * by using '\' as the last char in line.
+						 * Any white space chars between '\' and the first
+						 * char on the next line are ignored.
+						 */
 						if (ch == '\n') {
 							reader.SkipWhitespace ();
 							continue;
 						}
 
-						int escaped = Escape (reader, ch);
+						var escaped = Escape (reader, ch);
 						if (escaped == -1) {
 							reader.Unread (ch);
 							ch = '\\';
@@ -92,7 +92,7 @@ namespace Mono.ILAsm {
 			if (ch >= '0' && ch <= '7') {
 				var octal = new StringBuilder ();
 				octal.Append ((char) ch);
-				int possible_octal_char = reader.Peek ();
+				var possible_octal_char = reader.Peek ();
 				if (possible_octal_char >= '0' && possible_octal_char <= '7') {
 					octal.Append ((char) reader.Read ());
 					possible_octal_char = reader.Peek ();
@@ -102,7 +102,7 @@ namespace Mono.ILAsm {
 				
 				res = Convert.ToInt32 (octal.ToString (), 8);
 			} else {
-				int id = "abfnrtv\"'\\".IndexOf ((char) ch);
+				var id = "abfnrtv\"'\\".IndexOf ((char) ch);
 				if (id != -1)
 					res = "\a\b\f\n\r\t\v\"'\\" [id];
 			}

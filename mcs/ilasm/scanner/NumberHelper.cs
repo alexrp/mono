@@ -49,8 +49,8 @@ namespace Mono.ILAsm {
 			var nstyles = NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint |
 				NumberStyles.AllowLeadingSign;
 
-			int ch = reader.Read ();
-			int peek = reader.Peek ();
+			var ch = reader.Read ();
+			var peek = reader.Peek ();
 			reader.Unread (ch);
 
 			if (ch == '0' && (peek == 'x' || peek == 'X'))
@@ -137,7 +137,7 @@ namespace Mono.ILAsm {
 			var nstyles = NumberStyles.HexNumber;
 			int peek;
 
-			int ch = reader.Read ();
+			var ch = reader.Read ();
 			if (ch != '0')
 				throw new ILTokenizingException (reader.Location, ((char) ch).ToString ());
 
@@ -156,10 +156,9 @@ namespace Mono.ILAsm {
 
 				if (num_builder.Length == 32)
 					throw new ILTokenizingException (reader.Location, num_builder.ToString ());
-
 			} while (ch != -1);
 
-			string num = num_builder.ToString ();
+			var num = num_builder.ToString ();
 
 			try {
 				var i = (long) ulong.Parse (num, nstyles);
@@ -171,7 +170,7 @@ namespace Mono.ILAsm {
 				//	ResultToken.val = (int) i;
 				//}
 			} catch {
-				string tnum = num;
+				var tnum = num;
 				reader.Unread (num.ToCharArray ());
 				reader.RestoreLocation ();
 				num = string.Empty;

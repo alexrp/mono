@@ -90,7 +90,7 @@ namespace Mono.ILAsm {
 
 		public override int GetHashCode ()
 		{
-			int h = token;
+			var h = token;
 			if (val != null)
 				h ^= val.GetHashCode ();
 			
@@ -99,12 +99,12 @@ namespace Mono.ILAsm {
 
 		public override string ToString ()
 		{
-			return (token.ToString () + " : " + (val != null ? val.ToString () : "<null>"));
+			return token.ToString () + " : " + (val != null ? val.ToString () : "<null>");
 		}
 
 		public override bool Equals (object o)
 		{
-			bool res = (o != null);
+			var res = o != null;
 
 			if (res) {
 				res = object.ReferenceEquals (this, o);
@@ -112,7 +112,7 @@ namespace Mono.ILAsm {
 					res = o is ILToken;
 					if (res) {
 						var that = o as ILToken;
-						res = (this.token == that.token) && (this.val.Equals (that.val));
+						res = this.token == that.token && this.val.Equals (that.val);
 					}
 				}
 			}
@@ -122,12 +122,12 @@ namespace Mono.ILAsm {
 
 		private static bool EqImpl (ILToken t1, ILToken t2)
 		{
-			bool res = false;
+			var res = false;
 			
-			if ((t1 as object) != null)
+			if (t1 as object != null)
 				res = t1.Equals (t2);
 			else
-				res = ((t2 as object) == null);
+				res = (t2 as object == null);
 
 			return res;
 		}
@@ -144,7 +144,7 @@ namespace Mono.ILAsm {
 
 		public static ILToken GetPunctuation (int ch)
 		{
-			int id = "{}[](),:;=*&+/!<>".IndexOf ((char) ch);
+			var id = "{}[](),:;=*&+/!<>".IndexOf ((char) ch);
 			ILToken res = null;
 
 			if (id != -1)

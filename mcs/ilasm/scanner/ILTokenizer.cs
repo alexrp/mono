@@ -55,7 +55,7 @@ namespace Mono.ILAsm {
 			
 			int ch;
 			int next;
-			ILToken res = ILToken.EOF.Clone () as ILToken;
+			var res = ILToken.EOF.Clone () as ILToken;
 			
 			while ((ch = reader.Read ()) != -1) {
 				// Comments
@@ -113,7 +113,7 @@ namespace Mono.ILAsm {
 				// Ellipsis
 				if (ch == '.' && reader.Peek () == '.') {
 					reader.MarkLocation ();
-					int ch2 = reader.Read ();
+					var ch2 = reader.Read ();
 					if (reader.Peek () == '.') {
 						res = ILToken.Ellipsis;
 						reader.Read ();
@@ -138,7 +138,7 @@ namespace Mono.ILAsm {
 					} else {
 						if (str_builder.Start (next) && str_builder.TokenId == Token.ID) {
 							reader.MarkLocation ();
-							string dir_body = str_builder.Build ();
+							var dir_body = str_builder.Build ();
 							var dir = new string ((char) ch, 1) + dir_body;
 							if (IsDirective (dir))
 								res = ILTables.Directives [dir] as ILToken;
@@ -182,7 +182,7 @@ namespace Mono.ILAsm {
 				// ID | QSTRING | SQSTRING | INSTR_* | KEYWORD
 				if (str_builder.Start (ch)) {
 					reader.Unread (ch);
-					string val = str_builder.Build ();
+					var val = str_builder.Build ();
 					
 					if (str_builder.TokenId == Token.ID) {
 						ILToken opCode;
@@ -193,7 +193,7 @@ namespace Mono.ILAsm {
 							next = reader.Peek ();
 							
 							if (IsIdChar ((char) next)) {
-								string opTail = BuildId ();
+								var opTail = BuildId ();
 								var full_str = string.Format ("{0}.{1}", val, opTail);
 								opCode = ILTables.OpCodes [full_str];
 
@@ -283,8 +283,8 @@ namespace Mono.ILAsm {
 
 		public static bool IsDirective (string name)
 		{
-			char ch = name [0];
-			bool res = (ch == '.' || ch == '#');
+			var ch = name [0];
+			var res = (ch == '.' || ch == '#');
 
 			if (res)
 				res = ILTables.Directives.ContainsKey (name);
@@ -295,7 +295,8 @@ namespace Mono.ILAsm {
 		private string BuildId ()
 		{
 			var idsb = new StringBuilder ();
-			int ch, last;
+			int ch;
+			int last;
 
 			last = -1;
 			while ((ch = reader.Read ()) != -1) {

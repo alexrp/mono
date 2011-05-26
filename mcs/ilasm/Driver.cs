@@ -310,7 +310,7 @@ namespace Mono.ILAsm {
 
 			private string GetCommand (string str, out string command_arg)
 			{
-				int end_index = str.IndexOfAny (new char[] {':', '='}, 1);
+				var end_index = str.IndexOfAny (new char[] {':', '='}, 1);
 				var command = str.Substring (1, end_index == -1 ? str.Length - 1 : end_index - 1);
 
 				if (end_index != -1)
@@ -327,7 +327,7 @@ namespace Mono.ILAsm {
 			private string CreateOutputFileName ()
 			{
 				var file_name = (string) il_file_list [0];
-				int ext_index = file_name.LastIndexOf ('.');
+				var ext_index = file_name.LastIndexOf ('.');
 
 				if (ext_index == -1)
 					ext_index = file_name.Length;
@@ -360,7 +360,7 @@ namespace Mono.ILAsm {
 
 			private void Version ()
 			{
-				string version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
+				var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
 				Console.WriteLine ("Mono ILAsm compiler version {0}", version);
 				Environment.Exit (0);
 			}

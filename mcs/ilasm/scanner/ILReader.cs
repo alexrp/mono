@@ -51,7 +51,7 @@ namespace Mono.ILAsm {
 
 		public int Read ()
 		{
-			int read = DoRead ();
+			var read = DoRead ();
 			
 			if (read == '\n')
 				location.NewLine ();
@@ -78,7 +78,7 @@ namespace Mono.ILAsm {
 
 		public void Unread (char[] chars)
 		{
-			for (int i=chars.Length-1; i>=0; i--)
+			for (var i = chars.Length-1; i >= 0; i--)
 				Unread (chars [i]);
 		}
 
@@ -89,7 +89,7 @@ namespace Mono.ILAsm {
 
 		public void SkipWhitespace ()
 		{
-			int ch = Read ();
+			var ch = Read ();
 			
 			for (; ch != -1 && char.IsWhiteSpace((char) ch); ch = Read ())
 				;
@@ -101,7 +101,7 @@ namespace Mono.ILAsm {
 		public string ReadToWhitespace ()
 		{
 			var sb = new StringBuilder ();
-			int ch = Read ();
+			var ch = Read ();
 			
 			for (; ch != -1 && !Char.IsWhiteSpace((char) ch); sb.Append ((char) ch), ch = Read ())
 				;
