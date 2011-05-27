@@ -1,6 +1,7 @@
 ../build/common/Consts.cs
 AssemblyInfo.cs
 Driver.cs
+Error.cs
 Extensions.cs
 ILAsmException.cs
 InternalErrorException.cs

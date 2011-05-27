@@ -2762,6 +2762,8 @@ module_head		: D_MODULE
 					codegen.CurrentModule.Name = (string) $2;
 					codegen.HasModuleDirective = true;
 				}
+				else if ((string) $2 != codegen.CurrentModule.Name)
+					Report.Warning (tokenizer.Location, ".module directive with different name ignored.");
 			}
 			| D_MODULE K_EXTERN comp_name
 			{

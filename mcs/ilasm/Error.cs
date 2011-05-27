@@ -26,7 +26,7 @@
 using System;
 
 namespace Mono.ILAsm {
-	public enum Error : byte {
+	public enum Error : short {
 		InternalError = 0,
 		FileNotFound = 1,
 		SyntaxError = 2,

@@ -15,7 +15,7 @@ namespace Mono.ILAsm {
 	public class ILAsmException : Exception {
 		public Error Error { get; private set; }
 		
-		public Location Location { get; private set; }
+		public Location Location { get; set; }
 
 		public string FilePath { get; private set; }
 

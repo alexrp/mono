@@ -17,9 +17,9 @@ namespace Mono.ILAsm {
 		
 		public bool HasEntryPoint { get; internal set; }
 		
-		public CodeGenerator (string moduleName, bool dll, bool debuggingInfo)
+		public CodeGenerator (string moduleName, Target target, bool debuggingInfo)
 		{
-			var kind = dll ? ModuleKind.Dll : ModuleKind.Console;
+			var kind = target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName, kind);
 		}
 		

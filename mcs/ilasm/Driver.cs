@@ -43,8 +43,7 @@ namespace Mono.ILAsm {
 			if (output_file == null)
 				output_file = CreateOutputFileName (il_file_list, target);
 			
-			var codegen = new CodeGenerator (output_file,
-				target == Target.Dll, debugging_info);
+			var codegen = new CodeGenerator (output_file, target, debugging_info);
 			StrongName sn = null;
 			
 			try {
@@ -118,7 +117,10 @@ namespace Mono.ILAsm {
 				Report.Error (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
 			} catch (yyParser.yyException ye) {
 				Report.Error (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
-			} catch (ILAsmException) {
+			} catch (ILAsmException ie) {
+				// We update it here, because manually specifying this
+				// everywhere in the parser gets tiresome.
+				ie.Location = scanner.Reader.Location;
 				throw;
 			} catch (Exception ex) {
 				throw new ILAsmException (Error.InternalError, ex.Message, scanner.Reader.Location, filePath, ex);
