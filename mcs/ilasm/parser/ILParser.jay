@@ -2804,7 +2804,7 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
 				if (codegen.HasAssemblyDirective)
-					Report.Error("Multiple .assembly directives.");
+					Report.Error(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
 
 				var attr = (AssemblyAttributes) $2;
 				if ((attr & AssemblyAttributes.Retargetable) != 0)

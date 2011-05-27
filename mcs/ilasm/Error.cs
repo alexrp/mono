@@ -1,5 +1,5 @@
 // 
-// Main.cs
+// Error.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,21 +24,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Globalization;
-using System.Threading;
 
 namespace Mono.ILAsm {
-	internal static class Program {
-		public static int Main (string[] args)
-		{
-			// Do everything in Invariant
-			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-			
-			if (!new Driver (args).Run ())
-				return 1;
-
-			Report.Message ("Operation completed successfully.");
-			return 0;
-		}
+	public enum Error : byte {
+		InternalError = 0,
+		FileNotFound = 1,
+		SyntaxError = 2,
+		NoEntryPoint = 3,
+		MultipleEntryPoints = 4,
+		MultipleAssemblyDirectives = 5,
 	}
 }

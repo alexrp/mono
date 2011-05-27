@@ -15,13 +15,13 @@ namespace Mono.ILAsm {
 		public string Token { get; private set; }
 
 		public ILTokenizingException (Location location, string token)
-			: base (token, location)
+			: base (Error.SyntaxError, token, location)
 		{
 			Token = token;
 		}
 
 		public ILTokenizingException (Location location, string token, Exception inner)
-			: base (token, location, inner)
+			: base (Error.SyntaxError, token, location, inner)
 		{
 		}
 

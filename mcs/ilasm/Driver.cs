@@ -19,7 +19,7 @@ using System.Threading;
 using Mono.Security;
 
 namespace Mono.ILAsm {
-	public sealed class DriverMain {
+	public sealed class Driver {
 		private readonly List<string> il_file_list = new List<string> ();
 		private string output_file;
 		private Target target;
@@ -30,7 +30,7 @@ namespace Mono.ILAsm {
 		private bool key_container;
 		private string key_name;
 
-		public DriverMain (string[] args)
+		public Driver (string[] args)
 		{
 			ParseArgs (args);
 		}
@@ -56,7 +56,7 @@ namespace Mono.ILAsm {
 				if (scan_only)
 					return true;
 				if (target != Target.Dll && !codegen.HasEntryPoint)
-					Report.Error ("No entry point found.");
+					Report.Error (Error.NoEntryPoint, "No entry point found.");
 				
 				if (key_name != null) {
 					sn = LoadKey (key_container, key_name);
@@ -72,7 +72,7 @@ namespace Mono.ILAsm {
 					throw;
 				}
 			} catch (Exception ex) {
-				Error ("{0}{1}{2}", ex.ToString (), Environment.NewLine,
+				WriteError ("{0}{1}{2}", ex.ToString (), Environment.NewLine,
 					ex.StackTrace);
 				return false;
 			}
@@ -82,7 +82,7 @@ namespace Mono.ILAsm {
 					Report.Message ("Signing assembly with the specified strong name key pair...");
 					Sign (sn, output_file);
 				} catch (Exception ex) {
-					Error ("Could not sign assembly: {0}", ex.Message);
+					WriteError ("Could not sign assembly: {0}", ex.Message);
 					return false;
 				}
 
@@ -92,7 +92,7 @@ namespace Mono.ILAsm {
 		private void ProcessFile (CodeGenerator codegen, string filePath)
 		{
 			if (!File.Exists (filePath)) {
-				Report.Error ("File does not exist: {0}", filePath);
+				Report.Error (Error.FileNotFound, "File does not exist: {0}", filePath);
 				Environment.Exit (2);
 			}
 			
@@ -115,13 +115,13 @@ namespace Mono.ILAsm {
 				parser.yyparse (new ScannerAdapter (scanner),
 					show_parser ? new yydebug.yyDebugSimple () : null);
 			} catch (ILTokenizingException ilte) {
-				Report.Error (ilte.Location, "Syntax error at token '" + ilte.Token + "'");
+				Report.Error (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
 			} catch (yyParser.yyException ye) {
-				Report.Error (scanner.Reader.Location, ye.Message);
+				Report.Error (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
 			} catch (ILAsmException) {
 				throw;
 			} catch (Exception ex) {
-				throw new ILAsmException (ex.Message, scanner.Reader.Location, filePath, ex);
+				throw new ILAsmException (Error.InternalError, ex.Message, scanner.Reader.Location, filePath, ex);
 			}
 		}
 
@@ -239,7 +239,7 @@ namespace Mono.ILAsm {
 				(target == Target.Dll ? ".dll" : ".exe");
 		}
 
-		private static void Error (string message, params object[] args)
+		private static void WriteError (string message, params object[] args)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.Error.WriteLine (string.Format (message, args));

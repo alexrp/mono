@@ -14,12 +14,12 @@ namespace Mono.ILAsm {
 	[Serializable]
 	internal class InternalErrorException : ILAsmException {
 		public InternalErrorException (string message)
-			: base (message)
+			: base (Error.InternalError, message)
 		{
 		}
 
 		public InternalErrorException (string message, Exception inner)
-			: base (message, inner)
+			: base (Error.InternalError, message, inner)
 		{
 		}
 

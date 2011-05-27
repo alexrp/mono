@@ -3,7 +3,6 @@ using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public sealed class CodeGenerator {
-		bool has_entry_point;
 		public ModuleDefinition CurrentModule { get; private set; }
 		
 		public string CurrentNamespace { get; internal set; }
@@ -16,17 +15,7 @@ namespace Mono.ILAsm {
 		
 		public MethodDefinition CurrentMethod { get; internal set; }
 		
-		public bool HasEntryPoint {
-			get {
-				return has_entry_point;
-			}
-			set {
-				if (has_entry_point)
-					Report.Error ("Multiple .entrypoint directives.");
-				
-				has_entry_point = value;
-			}
-		}
+		public bool HasEntryPoint { get; internal set; }
 		
 		public CodeGenerator (string moduleName, bool dll, bool debuggingInfo)
 		{

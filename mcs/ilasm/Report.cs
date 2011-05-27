@@ -25,14 +25,14 @@ namespace Mono.ILAsm {
 			Console.WriteLine ();
 		}
 
-		public static void Error (string message, params object[] args)
+		public static void Error (Error error, string message, params object[] args)
 		{
-			Error (null, message, args);
+			Error (error, null, message, args);
 		}
 
-		public static void Error (Location location, string message, params object[] args)
+		public static void Error (Error error, Location location, string message, params object[] args)
 		{
-			throw new ILAsmException (FilePath, location, string.Format (message, args));
+			throw new ILAsmException (error, FilePath, location, string.Format (message, args));
 		}
 
 		public static void Warning (string message, params object[] args)

@@ -28,7 +28,7 @@ using System.Collections.Generic;
 
 namespace Mono.ILAsm {
 	public static class Extensions {
-		public static TValue TryGet<TKey, TValue>(this IDictionary<TKey, TValue> dict,
+		public static TValue TryGet<TKey, TValue> (this IDictionary<TKey, TValue> dict,
 			TKey key)
 			where TValue : class
 		{

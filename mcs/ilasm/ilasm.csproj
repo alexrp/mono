@@ -75,6 +75,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Target.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Error.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
