@@ -260,8 +260,8 @@ namespace Mono.ILAsm {
 			private static void Error (string message, params object[] args)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine (string.Format (message, args));
-				Console.WriteLine ("***** FAILURE *****");
+				Console.Error.WriteLine (string.Format (message, args));
+				Console.Error.WriteLine ("***** FAILURE *****");
 				Console.ResetColor ();
 			}
 

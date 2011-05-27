@@ -38,7 +38,7 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestFullAssemblyDirective ()
 		{
-			OpenILAsm ().Input ("assembly-002.il").Argument ("dll").Unmute().Run ().Expect (AssemblerResult.Success);
+			OpenILAsm ().Input ("assembly-002.il").Argument ("dll").Run ().Expect (AssemblerResult.Success);
 		}
 	}
 }
