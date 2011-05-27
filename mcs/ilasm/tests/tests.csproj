@@ -34,6 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="Mono.Cecil, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+      <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=2.4.8.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
       <HintPath>..\..\class\lib\net_2_0\nunit.framework.dll</HintPath>
     </Reference>
@@ -47,6 +50,7 @@
     <Compile Include="CommandLineTests.cs" />
     <Compile Include="ModuleTests.cs" />
     <Compile Include="AssemblyTests.cs" />
+    <Compile Include="Extensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

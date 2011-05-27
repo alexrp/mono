@@ -4,7 +4,9 @@ Driver.cs
 Extensions.cs
 ILAsmException.cs
 InternalErrorException.cs
+Program.cs
 Report.cs
+Target.cs
 codegen/CodeGenerator.cs
 parser/ScannerAdapter.cs
 scanner/ILReader.cs

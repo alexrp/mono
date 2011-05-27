@@ -1,5 +1,5 @@
 // 
-// ModuleTests.cs
+// Main.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,20 +24,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
+using System.Globalization;
+using System.Threading;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ModuleTests : AssemblerTester {
-		[Test]
-		public void TestModuleDirective ()
+namespace Mono.ILAsm {
+	internal static class Program {
+		public static int Main (string[] args)
 		{
-			OpenILAsm ()
-				.Input ("module-001.il")
-				.Run ()
-				.Expect (AssemblerResult.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test001");
+			// Do everything in Invariant
+			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+			
+			if (!new DriverMain (args).Run ())
+				return 1;
+
+			Report.Message ("Operation completed successfully.");
+			return 0;
 		}
 	}
 }

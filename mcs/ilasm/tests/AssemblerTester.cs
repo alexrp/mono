@@ -26,15 +26,16 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using Mono.Cecil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	public abstract class AssemblerTester {
 		protected sealed class Assembler {
 			private readonly Process process;
-			
+			private string output_file_name;
+			private bool dll = true;
 			private string arguments = string.Empty;
-			
 			private bool silence = true;
 			
 			public Assembler (Process process)
@@ -44,14 +45,37 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler Input (params string[] fileNames)
 			{
+				if (output_file_name == null) {
+					var name = fileNames [0];
+					var ext_idx = name.LastIndexOf ('.');
+					
+					if (ext_idx == -1)
+						ext_idx = name.Length;
+					
+					output_file_name = name.Substring (0, ext_idx);
+				}
+				
 				foreach (var file in fileNames)
 					arguments += "../../tests/" + file;
 				
 				return this;
 			}
 			
+			public Assembler Dll ()
+			{
+				dll = true;
+				return this;
+			}
+			
+			public Assembler Exe ()
+			{
+				dll = false;
+				return this;
+			}
+			
 			public Assembler Output (string fileName)
 			{
+				output_file_name = fileName;
 				arguments += string.Format (" /output:{0}", fileName);
 				return this;
 			}
@@ -77,14 +101,19 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler Argument (string argument)
 			{
-				return Argument (argument, ArgumentType.Dash);
+				return Argument (argument, ArgumentType.Slash);
+			}
+			
+			public Assembler Argument (string argument, ArgumentType type, string value)
+			{
+				Argument (argument, type);
+				arguments += ":" + value;
+				return this;
 			}
 			
 			public Assembler Argument (string argument, string value)
 			{
-				Argument (argument);
-				arguments += ":" + value;
-				return this;
+				return Argument (argument, ArgumentType.Slash, value);
 			}
 			
 			public Assembler Mute ()
@@ -104,24 +133,55 @@ namespace Mono.ILAsm.Tests {
 				if (silence)
 					process.StartInfo.RedirectStandardOutput = true;
 				
+				arguments += dll ? " /dll" : " /exe";
+				
 				process.StartInfo.Arguments = arguments;
 				process.Start ();
 				process.WaitForExit ();
-				return new AssemblerOutput ((AssemblerResult) process.ExitCode);
+				return new AssemblerOutput (output_file_name, dll, (AssemblerResult) process.ExitCode);
 			}
 		}
 		
 		protected sealed class AssemblerOutput {
-			public AssemblerOutput (AssemblerResult result)
+			public AssemblerOutput (string fileName, bool dll, AssemblerResult result)
 			{
 				Result = result;
+				file_name = fileName;
+				target_dll = dll;
 			}
 			
 			public AssemblerResult Result { get; private set; }
 			
-			public void Expect (AssemblerResult result)
+			private readonly string file_name;
+			
+			private readonly bool target_dll;
+			
+			public AssemblerOutput Expect (AssemblerResult result)
 			{
 				Assert.AreEqual (result, Result);
+				return this;
+			}
+			
+			public AssembledModule GetModule ()
+			{
+				return new AssembledModule ("../../tests/" + file_name + (target_dll ? ".dll" : ".exe"));
+			}
+		}
+		
+		public delegate bool ModulePredicate (ModuleDefinition module);
+		
+		protected sealed class AssembledModule {
+			public AssembledModule (string fileName)
+			{
+				Module = ModuleDefinition.ReadModule (fileName);
+			}
+			
+			public ModuleDefinition Module { get; private set; }
+			
+			public AssembledModule Expect (ModulePredicate predicate)
+			{
+				Assert.IsTrue (predicate (Module));
+				return this;
 			}
 		}
 		

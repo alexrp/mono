@@ -1,5 +1,5 @@
 // 
-// ModuleTests.cs
+// Target.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,20 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ModuleTests : AssemblerTester {
-		[Test]
-		public void TestModuleDirective ()
-		{
-			OpenILAsm ()
-				.Input ("module-001.il")
-				.Run ()
-				.Expect (AssemblerResult.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test001");
-		}
+namespace Mono.ILAsm {
+	public enum Target : byte {
+		Exe,
+		Dll,
 	}
 }

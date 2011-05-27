@@ -1,5 +1,5 @@
 // 
-// ModuleTests.cs
+// Extensions.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,20 +24,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ModuleTests : AssemblerTester {
-		[Test]
-		public void TestModuleDirective ()
+	public static class Extensions {
+		public static bool ListEquals<T> (this IList<T> list, IList<T> other)
 		{
-			OpenILAsm ()
-				.Input ("module-001.il")
-				.Run ()
-				.Expect (AssemblerResult.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test001");
+			if (list.Count != other.Count)
+				return false;
+			
+			for (var i = 0; i < list.Count; i++)
+				if (!list [i].Equals (other [i]))
+					return false;
+			
+			return true;
+		}
+		
+		public static IList<T> Pad<T> (this IList<T> list, T value, int count)
+		{
+			for (var i = 0; i < count; i++)
+				list.Add (value);
+			
+			return list;
 		}
 	}
 }

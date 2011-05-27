@@ -11,7 +11,7 @@
     <FileAlignment>512</FileAlignment>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <StartupObject>Mono.ILAsm.Driver</StartupObject>
+    <StartupObject>Mono.ILAsm.Program</StartupObject>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\class\mono.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -73,6 +73,8 @@
     <Compile Include="InternalErrorException.cs" />
     <Compile Include="codegen\CodeGenerator.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Target.cs" />
+    <Compile Include="Program.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
