@@ -9,6 +9,8 @@ namespace Mono.ILAsm {
 		
 		public ModuleDefinition CurrentModule { get; set; }
 		
+		public bool HasModuleDirective { get; set; }
+		
 		public TypeDefinition CurrentType { get; set; }
 		
 		public MethodDefinition CurrentMethod { get; set; }

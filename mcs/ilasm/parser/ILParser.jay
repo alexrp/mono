@@ -2756,7 +2756,12 @@ sec_action		: K_REQUEST
 module_head		: D_MODULE
 			| D_MODULE comp_name
 			{
-				codegen.CurrentModule.Name = (string) $2;
+				if (!codegen.HasModuleDirective) {
+					// Microsoft's ilasm only takes into account the
+					// first .module directive
+					codegen.CurrentModule.Name = (string) $2;
+					codegen.HasModuleDirective = true;
+				}
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
