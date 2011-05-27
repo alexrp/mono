@@ -61,6 +61,7 @@ Global
 		$0.TextStylePolicy = $10
 		$10.inheritsSet = null
 		$10.scope = text/x-csrc
+		description = Mono IL Assembler
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

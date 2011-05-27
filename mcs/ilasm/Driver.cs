@@ -317,7 +317,7 @@ namespace Mono.ILAsm {
 			{
 				var n = Environment.NewLine;
 				
-				Console.WriteLine ("Mono ILAsm compiler{0}" +
+				Console.WriteLine ("Mono IL Assembler{0}" +
 					"ilasm [options] <source files>{0}" +
 					"   --about             About the Mono ILAsm compiler.{0}" +
 					"   --version           Print the version number of the Mono ILAsm compiler.{0}" +
@@ -353,7 +353,7 @@ namespace Mono.ILAsm {
 			private static void Version ()
 			{
 				var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
-				Console.WriteLine ("Mono ILAsm compiler version {0}", version);
+				Console.WriteLine ("Mono IL Assembler version {0}", version);
 				
 				Environment.Exit (0);
 			}
