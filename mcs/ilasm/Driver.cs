@@ -56,7 +56,7 @@ namespace Mono.ILAsm {
 			public bool Run ()
 			{
 				if (il_file_list.Count == 0)
-					Usage (false);
+					Usage (false, true);
 
 				if (output_file == null)
 					output_file = CreateOutputFileName ();
@@ -221,10 +221,10 @@ namespace Mono.ILAsm {
 
 						break;
 					case "?":
-						Usage (false);
+						Usage (false, false);
 						break;
 					case "mono_?":
-						Usage (true);
+						Usage (true, false);
 						break;
 					case "mono_scanonly":
 						scan_only = true;
@@ -259,8 +259,10 @@ namespace Mono.ILAsm {
 
 			private static void Error (string message, params object[] args)
 			{
+				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine (string.Format (message, args));
 				Console.WriteLine ("***** FAILURE *****");
+				Console.ResetColor ();
 			}
 
 			private static StrongName LoadKey (bool keyContainer, string keyName)
@@ -313,7 +315,7 @@ namespace Mono.ILAsm {
 				return command.ToLower ();
 			}
 
-			private static void Usage (bool dev)
+			private static void Usage (bool dev, bool error)
 			{
 				var n = Environment.NewLine;
 				
@@ -339,7 +341,7 @@ namespace Mono.ILAsm {
 						"   /mono_showparser    Show parser debug output.{0}",
 						n);
 				
-				Environment.Exit (1);
+				Environment.Exit (error ? 1 : 0);
 			}
 
 			private static void About ()

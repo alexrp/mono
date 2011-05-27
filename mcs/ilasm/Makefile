@@ -3,7 +3,7 @@ include ../build/rules.make
 
 PROGRAM = ilasm.exe
 BUILT_SOURCES = ILParser.cs
-LOCAL_MCS_FLAGS = /keyfile:../class/mono.snk /lib:../class/lib/$(PROFILE) /r:../class/lib/$(PROFILE)/Mono.Cecil.dll /r:../class/lib/$(PROFILE)/Mono.Cecil.Mdb.dll /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll
+LOCAL_MCS_FLAGS = /keyfile:../class/mono.snk /lib:../class/lib/$(PROFILE) /r:Mono.Cecil.dll /r:Mono.Cecil.Mdb.dll /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll
 
 EXTRA_DISTFILES = \
 	parser/ILParser.jay	\
@@ -23,3 +23,8 @@ ILParser.cs: parser/ILParser.jay $(topdir)/jay/skeleton.cs
 jay: ILParser.cs
 
 include ../build/executable.make
+
+run-test: $(PROGRAM)
+	$(MCS) /debug+ /define:"DEBUG;TRACE;NET_4_0" /target:library /keyfile:../class/mono.snk /out:tests/bin/Debug/tests.dll /r:nunit.framework.dll @tests/tests.dll.sources
+	cp ../class/lib/$(PROFILE)/ilasm.exe tests/bin/Debug/ilasm.exe
+	nunit-console ilasm.nunit

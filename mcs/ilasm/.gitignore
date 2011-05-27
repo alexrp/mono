@@ -1,6 +1,8 @@
 /ILParser.cs
 bin/*
 obj/*
+*/bin/*
+*/obj/*
 *.user
 *.suo
 *.userprefs
