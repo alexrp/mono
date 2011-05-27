@@ -48,7 +48,7 @@ namespace Mono.ILAsm {
 					location.column + ": ";
 			
 			Console.ForegroundColor = ConsoleColor.Yellow;
-			Console.Error.WriteLine (string.Format ("{0}Warning: {1}",
+			Console.WriteLine (string.Format ("{0}Warning: {1}",
 				location_str, string.Format (message, args)));
 			Console.ResetColor ();
 		}
