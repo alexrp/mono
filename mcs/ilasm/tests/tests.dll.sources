@@ -1,4 +1,5 @@
 tests/CommandLineTests.cs
+tests/AssemblyTests.cs
 tests/AssemblerTester.cs
 tests/AssemblyInfo.cs
 tests/ModuleTests.cs

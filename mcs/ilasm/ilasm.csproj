@@ -81,4 +81,7 @@
   <ItemGroup>
     <Folder Include="codegen\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="parser\ILParser.jay" />
+  </ItemGroup>
 </Project>

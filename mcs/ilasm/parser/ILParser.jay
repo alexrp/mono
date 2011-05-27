@@ -2843,13 +2843,14 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			| D_LOCALE ASSIGN bytes_list
 			{
 				// I assume this is UTF-16. I really have no clue, though,
-				//and it isn't documented...
+				// and it isn't documented...
 				var text = Encoding.Unicode.GetString ((byte[]) $3);
 				codegen.CurrentModule.Assembly.Name.Culture = text;
 			}
 			| D_HASH K_ALGORITHM int32
 			{
-				codegen.CurrentModule.Assembly.Name.Hash = (byte[]) $2;
+				codegen.CurrentModule.Assembly.Name.HashAlgorithm =
+					(AssemblyHashAlgorithm) (int) $3;
 			}
 			/*
 			| customattr_decl

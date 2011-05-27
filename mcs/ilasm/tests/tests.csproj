@@ -46,6 +46,7 @@
     <Compile Include="AssemblerTester.cs" />
     <Compile Include="CommandLineTests.cs" />
     <Compile Include="ModuleTests.cs" />
+    <Compile Include="AssemblyTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -56,5 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="tests\module-001.il" />
+    <None Include="tests\assembly-001.il" />
+    <None Include="tests\assembly-002.il" />
   </ItemGroup>
 </Project>
