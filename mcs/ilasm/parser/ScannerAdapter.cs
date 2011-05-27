@@ -17,7 +17,7 @@ namespace Mono.ILAsm {
 		
 		public bool advance ()
 		{
-			return (BaseStream.NextToken != ILToken.EOF);
+			return BaseStream.NextToken != ILToken.EOF;
 		}
 
 		public int token ()

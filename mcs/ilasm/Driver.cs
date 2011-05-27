@@ -4,6 +4,7 @@
 //
 // Author(s):
 //  Jackson Harper (Jackson@LatitudeGeo.com)
+//  Alex Rønne Petersen <alex@alexrp.com>
 //
 // (C) 2003 Jackson Harper, All rights reserved
 // Copyright (C) 2004 Novell, Inc (http://www.novell.com)
@@ -12,7 +13,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading;
@@ -21,152 +21,105 @@ using Mono.Security;
 namespace Mono.ILAsm {
 	public sealed class Driver {
 		private enum Target : byte {
+			Exe,
 			Dll,
-			Exe
 		}
 
 		public static int Main (string[] args)
 		{
 			// Do everything in Invariant
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-
-			var driver = new DriverMain (args);
-			if (!driver.Run ())
+			
+			if (!new DriverMain (args).Run ())
 				return 1;
 
-			Report.Message ("Operation completed successfully");
+			Report.Message ("Operation completed successfully.");
 			return 0;
 		}
 
 		private sealed class DriverMain {
-			private List<string> il_file_list;
+			private readonly List<string> il_file_list = new List<string> ();
 			private string output_file;
-			private Target target = Target.Exe;
-			private string target_string;
+			private Target target;
 			private bool show_tokens;
-			//private bool show_method_def;
-			//private bool show_method_ref;
 			private bool show_parser;
 			private bool scan_only;
 			private bool debugging_info;
-			private CodeGenerator codegen;
 			private bool key_container;
 			private string key_name;
-			private StrongName sn;
 
 			public DriverMain (string[] args)
 			{
-				il_file_list = new List<string> ();
 				ParseArgs (args);
 			}
 
 			public bool Run ()
 			{
 				if (il_file_list.Count == 0)
-					Usage ();
+					Usage (false);
 
 				if (output_file == null)
 					output_file = CreateOutputFileName ();
-
+				
+				var codegen = new CodeGenerator (output_file,
+					target == Target.Dll, debugging_info);
+				StrongName sn = null;
+				
 				try {
-					codegen = new CodeGenerator (output_file, target == Target.Dll, debugging_info);
 					foreach (var file_path in il_file_list) {
 						Report.FilePath = file_path;
-						ProcessFile (file_path);
+						ProcessFile (codegen, file_path);
 					}
 					
 					if (scan_only)
 						return true;
-
-					if (Report.ErrorCount > 0)
-						return false;
-
 					if (target != Target.Dll && !codegen.HasEntryPoint)
 						Report.Error ("No entry point found.");
-
-					// if we have a key and aren't assembling a netmodule
-					if ((key_name != null) && !codegen.IsThisAssembly (null)) {
-						LoadKey ();
+					
+					if (key_name != null) {
+						sn = LoadKey (key_container, key_name);
 						// this overrides any attribute or .publickey directive in the source
-						codegen.CurrentAssembly.Name.PublicKey = sn.PublicKey;
+						codegen.CurrentModule.Assembly.Name.PublicKey =
+							sn.PublicKey;
 					}
 
 					try {
-						codegen.Write ();
-					} catch {
+						codegen.Write (output_file);
+					} catch (Exception) {
 						File.Delete (output_file);
 						throw;
 					}
-				} catch (ILAsmException e) {
-					Error (e.ToString ());
-					return false;
 				} catch (Exception ex) {
-					Error ("Error: " + ex.Message);
-					return false;
-				} 
-
-				try {
-					if (sn != null) {
-						Report.Message ("Signing assembly with the specified strong name key pair");
-						return Sign (output_file);
-					}
-				} catch {
+					Error ("{0}{1}{2}", ex.ToString (), Environment.NewLine,
+						ex.StackTrace);
 					return false;
 				}
+				
+				if (sn != null)
+					try {
+						Report.Message ("Signing assembly with the specified strong name key pair...");
+						Sign (sn, output_file);
+					} catch (Exception ex) {
+						Error ("Could not sign assembly: {0}", ex.Message);
+						return false;
+					}
 
 				return true;
 			}
 
-			private void Error (string message)
-			{
-				Console.WriteLine (message + Environment.NewLine);
-				Console.WriteLine ("***** FAILURE *****" + Environment.NewLine);
-			}
-
-			private void LoadKey ()
-			{
-				if (key_container) {
-					var csp = new CspParameters ();
-					csp.KeyContainerName = key_name;
-					var rsa = new RSACryptoServiceProvider (csp);
-					sn = new StrongName (rsa);
-				} else {
-					byte[] data = null;
-					using (var fs = File.OpenRead (key_name)) {
-						data = new byte [fs.Length];
-						fs.Read (data, 0, data.Length);
-						fs.Close ();
-					}
-					sn = new StrongName (data);
-				}
-			}
-
-			private bool Sign (string fileName)
-			{
-				// note: if the file cannot be signed (no public key in it) then
-				// we do not show an error, or a warning, if the key file doesn't
-				// exist
-				return sn.Sign (fileName);
-			}
-
-			private void ProcessFile (string filePath)
+			private void ProcessFile (CodeGenerator codegen, string filePath)
 			{
 				if (!File.Exists (filePath)) {
-					Console.WriteLine ("File does not exist: {0}", filePath);
+					Report.Error ("File does not exist: {0}", filePath);
 					Environment.Exit (2);
 				}
 				
-				Report.AssembleFile (filePath, null, target_string, output_file);
+				Report.AssembleFile (filePath, target.ToString ().ToUpper (), output_file);
 				var reader = File.OpenText (filePath);
 				var scanner = new ILTokenizer (reader);
 
 				if (show_tokens)
 					scanner.NewTokenEvent += new NewTokenEvent (ShowToken);
-
-				//if (show_method_def)
-				//        MethodTable.MethodDefinedEvent += new MethodDefinedEvent (ShowMethodDef);
-				//if (show_method_ref)
-				//       MethodTable.MethodReferencedEvent += new MethodReferencedEvent (ShowMethodRef);
 
 				if (scan_only) {
 					ILToken tok;
@@ -177,50 +130,31 @@ namespace Mono.ILAsm {
 
 				var parser = new ILParser (codegen, scanner);
 				try {
-					if (show_parser)
-						parser.yyparse (new ScannerAdapter (scanner), new yydebug.yyDebugSimple ());
-					else
-						parser.yyparse (new ScannerAdapter (scanner), null);
+					parser.yyparse (new ScannerAdapter (scanner),
+						show_parser ? new yydebug.yyDebugSimple () : null);
 				} catch (ILTokenizingException ilte) {
-					Report.Error (ilte.Location, "syntax error at token '" + ilte.Token + "'");
-				} catch (Mono.ILAsm.yyParser.yyException ye) {
+					Report.Error (ilte.Location, "Syntax error at token '" + ilte.Token + "'");
+				} catch (yyParser.yyException ye) {
 					Report.Error (scanner.Reader.Location, ye.Message);
-				} catch (ILAsmException ie) {
-					throw new ILAsmException (ie.Message, scanner.Reader.Location, filePath, ie);
-				} catch (Exception) {
-					Console.Write ("{0} ({1}, {2}): ", filePath, scanner.Reader.Location.line, scanner.Reader.Location.column);
+				} catch (ILAsmException) {
 					throw;
+				} catch (Exception ex) {
+					throw new ILAsmException (ex.Message, scanner.Reader.Location, filePath, ex);
 				}
 			}
 
-			public void ShowToken (object sender, NewTokenEventArgs args)
+			private string CreateOutputFileName ()
 			{
-				Console.WriteLine ("token: '{0}'", args.Token);
-			}
-		
-			/*
-			public void ShowMethodDef (object sender, MethodDefinedEventArgs args)
-			{
-				Console.WriteLine ("***** Method defined *****");
-				Console.WriteLine ("-- signature:   {0}", args.Signature);
-				Console.WriteLine ("-- name:        {0}", args.Name);
-				Console.WriteLine ("-- return type: {0}", args.ReturnType);
-				Console.WriteLine ("-- is in table: {0}", args.IsInTable);
-				Console.WriteLine ("-- method atts: {0}", args.MethodAttributes);
-				Console.WriteLine ("-- impl atts:   {0}", args.ImplAttributes);
-				Console.WriteLine ("-- call conv:   {0}", args.CallConv);
+				var file_name = il_file_list [0];
+				var ext_index = file_name.LastIndexOf ('.');
+
+				if (ext_index == -1)
+					ext_index = file_name.Length;
+
+				return file_name.Substring (0, ext_index) +
+					(target == Target.Dll ? ".dll" : ".exe");
 			}
 
-			public void ShowMethodRef (object sender, MethodReferencedEventArgs args)
-			{
-				Console.WriteLine ("***** Method referenced *****");
-				Console.WriteLine ("-- signature:   {0}", args.Signature);
-				Console.WriteLine ("-- name:        {0}", args.Name);
-				Console.WriteLine ("-- return type: {0}", args.ReturnType);
-				Console.WriteLine ("-- is in table: {0}", args.IsInTable);
-			}
-			*/
-		
 			private void ParseArgs (string[] args)
 			{
 				string command_arg;
@@ -230,29 +164,32 @@ namespace Mono.ILAsm {
 						continue;
 					}
 					
-					switch (GetCommand (str, out command_arg)) {
+					var cmd = GetCommand (str, out command_arg);
+					switch (cmd) {
 					case "out":
-					case "output":
+					case "output":	
 						output_file = command_arg;
 						break;
 					case "exe":
 						target = Target.Exe;
-						target_string = "exe";
 						break;
 					case "dll":
 						target = Target.Dll;
-						target_string = "dll";
 						break;
 					case "quiet":
 						Report.Quiet = true;
 						break;
 					case "debug":
 					case "deb":
+						// TODO: support impl and opt
 						debugging_info = true;
 						break;
 					// Stubs to stay commandline compatible with MS
-					case "listing":
 					case "nologo":
+						break;
+					case "noautoinherit":
+					case "nocorstub":
+					case "stripreloc":
 					case "clock":
 					case "error":
 					case "subsystem":
@@ -260,6 +197,18 @@ namespace Mono.ILAsm {
 					case "alignment":
 					case "base":
 					case "resource":
+					case "pdb":
+					case "optimize":
+					case "fold":
+					case "include":
+					case "stack":
+					case "enc":
+					case "mdv":
+					case "msv":
+					case "itanium":
+					case "x64":
+					case "pe64":
+						Report.Warning ("Unimplemented command line option: {0}", cmd);
 						break;
 					case "key":
 						if (command_arg.Length > 0)
@@ -271,19 +220,19 @@ namespace Mono.ILAsm {
 							key_name = command_arg;
 
 						break;
-					case "scan_only":
+					case "?":
+						Usage (false);
+						break;
+					case "mono_?":
+						Usage (true);
+						break;
+					case "mono_scanonly":
 						scan_only = true;
 						break;
-					case "show_tokens":
+					case "mono_showtokens":
 						show_tokens = true;
 						break;
-					//case "show_method_def":
-					//        show_method_def = true;
-					//        break;
-					//case "show_method_ref":
-					//        show_method_ref = true;
-					//        break;
-					case "show_parser":
+					case "mono_showparser":
 						show_parser = true;
 						break;
 					case "-about":
@@ -308,10 +257,53 @@ namespace Mono.ILAsm {
 				}
 			}
 
-			private string GetCommand (string str, out string command_arg)
+			private static void Error (string message, params object[] args)
 			{
-				var end_index = str.IndexOfAny (new char[] {':', '='}, 1);
-				var command = str.Substring (1, end_index == -1 ? str.Length - 1 : end_index - 1);
+				Console.WriteLine (string.Format (message, args));
+				Console.WriteLine ("***** FAILURE *****");
+			}
+
+			private static StrongName LoadKey (bool keyContainer, string keyName)
+			{
+				StrongName sn;
+				
+				if (keyContainer) {
+					var csp = new CspParameters ();
+					csp.KeyContainerName = keyName;
+					var rsa = new RSACryptoServiceProvider (csp);
+					
+					sn = new StrongName (rsa);
+				} else {
+					byte[] data = null;
+					using (var fs = File.OpenRead (keyName)) {
+						data = new byte [fs.Length];
+						fs.Read (data, 0, data.Length);
+						fs.Close ();
+					}
+					
+					sn = new StrongName (data);
+				}
+				
+				return sn;
+			}
+
+			private static bool Sign (StrongName sn, string fileName)
+			{
+				// note: if the file cannot be signed (no public key in it) then
+				// we do not show an error, or a warning, if the key file doesn't
+				// exist
+				return sn.Sign (fileName);
+			}
+
+			public static void ShowToken (object sender, NewTokenEventArgs args)
+			{
+				Console.WriteLine ("Token: {0}", args.Token);
+			}
+
+			private static string GetCommand (string str, out string command_arg)
+			{
+				var end_index = str.IndexOfAny (new char[] { ':', '=' }, 1);
+				var command = str.Substring (1, (end_index == -1 ? str.Length : end_index) - 1);
 
 				if (end_index != -1)
 					command_arg = str.Substring (end_index + 1);
@@ -321,47 +313,48 @@ namespace Mono.ILAsm {
 				return command.ToLower ();
 			}
 
-			/// <summary>
-			/// Get the first file name and makes it into an output file name
-			/// </summary>
-			private string CreateOutputFileName ()
+			private static void Usage (bool dev)
 			{
-				var file_name = (string) il_file_list [0];
-				var ext_index = file_name.LastIndexOf ('.');
-
-				if (ext_index == -1)
-					ext_index = file_name.Length;
-
-				return String.Format ("{0}.{1}", file_name.Substring (0, ext_index), target_string);
-			}
-
-			private void Usage ()
-			{
+				var n = Environment.NewLine;
+				
 				Console.WriteLine ("Mono ILAsm compiler{0}" +
 					"ilasm [options] <source files>{0}" +
-					"   --about            About the Mono ILAsm compiler.{0}" +
-					"   --version          Print the version number of the Mono ILAsm compiler.{0}" +
-					"   /output:file_name  Specifies output file.{0}" +
-					"   /exe               Compile to executable.{0}" +
-					"   /dll               Compile to library.{0}" +
-					"   /debug             Include debug information.{0}" +
-					"   /key:keyfile       Strong name using the specified key file.{0}" +
-					"   /key:@container    Strong name using the specified key container.{0}" +
-					"Options can be of the form -option or /option{0}", Environment.NewLine);
+					"   --about             About the Mono ILAsm compiler.{0}" +
+					"   --version           Print the version number of the Mono ILAsm compiler.{0}" +
+					"   /output:file_name   Specifies output file.{0}" +
+					"   /exe                Compile to executable.{0}" +
+					"   /dll                Compile to library.{0}" +
+					"   /debug              Include debug information.{0}" +
+					"   /key:key_file       Strong name using the specified key file.{0}" +
+					"   /key:@key_container Strong name using the specified key container.{0}" +
+					"Options can be of the form -option or /option.{0}",
+					n);
+				
+				if (!dev)
+					Console.WriteLine ("Pass /mono_? for developer options.", n);
+				else
+					Console.WriteLine ("Developer options:{0}" +
+						"   /mono_scanonly      Only perform tokenization.{0}" +
+						"   /mono_showtokens    Show tokens as they're scanned.{0}" +
+						"   /mono_showparser    Show parser debug output.{0}",
+						n);
+				
 				Environment.Exit (1);
 			}
 
-			private void About ()
+			private static void About ()
 			{
 				Console.WriteLine ("For more information on Mono, visit the project Web site{0}" +
-					"   http://www.go-mono.com{0}{0}", Environment.NewLine);
+					"   http://www.go-mono.com{0}", Environment.NewLine);
+				
 				Environment.Exit (0);
 			}
 
-			private void Version ()
+			private static void Version ()
 			{
 				var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
 				Console.WriteLine ("Mono ILAsm compiler version {0}", version);
+				
 				Environment.Exit (0);
 			}
 		}

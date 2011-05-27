@@ -1,5 +1,5 @@
 // 
-// TypeManager.cs
+// Extensions.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,11 +24,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 
 namespace Mono.ILAsm {
-	public sealed class TypeManager {
-		public TypeManager ()
+	public static class Extensions {
+		public static TValue TryGet<TKey, TValue>(this IDictionary<TKey, TValue> dict,
+			TKey key)
+			where TValue : class
 		{
+			TValue value;
+			if (dict.TryGetValue (key, out value))
+				return value;
+			
+			return null;
 		}
 	}
 }

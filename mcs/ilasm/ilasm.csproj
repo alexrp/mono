@@ -214,7 +214,6 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Driver.cs" />
     <Compile Include="ILParser.cs" />
-    <None Include="Main.cs" />
     <Compile Include="parser\ScannerAdapter.cs" />
     <Compile Include="Report.cs" />
     <Compile Include="scanner\ILReader.cs" />
@@ -233,7 +232,7 @@
     <Compile Include="ILAsmException.cs" />
     <Compile Include="InternalErrorException.cs" />
     <Compile Include="codegen\CodeGenerator.cs" />
-    <Compile Include="codegen\TypeManager.cs" />
+    <Compile Include="Extensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

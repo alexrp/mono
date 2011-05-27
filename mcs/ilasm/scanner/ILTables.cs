@@ -84,9 +84,6 @@ namespace Mono.ILAsm {
 			keywords ["as"] = new ILToken (Token.K_AS, "as");
 			keywords ["implicitcom"] = new ILToken (Token.K_IMPLICITCOM, "implicitcom");
 			keywords ["implicitres"] = new ILToken (Token.K_IMPLICITRES, "implicitres");
-			keywords ["noappdomain"] = new ILToken (Token.K_NOAPPDOMAIN, "noappdomain");
-			keywords ["noprocess"] = new ILToken (Token.K_NOPROCESS, "noprocess");
-			keywords ["nomachine"] = new ILToken (Token.K_NOMACHINE, "nomachine");
 			keywords ["extern"] = new ILToken (Token.K_EXTERN, "extern");
 			keywords ["instance"] = new ILToken (Token.K_INSTANCE, "instance");
 			keywords ["explicit"] = new ILToken (Token.K_EXPLICIT, "explicit");
@@ -509,7 +506,7 @@ namespace Mono.ILAsm {
 			opCodes ["calli"] = new ILToken (Token.INSTR_SIG, Cecil.Cil.OpCodes.Calli);
 			opCodes ["ldtoken"] = new ILToken (Token.INSTR_TOK, Cecil.Cil.OpCodes.Ldtoken);
 			
-			OpCodes = OpCodes;
+			OpCodes = opCodes;
 		}
 
 		public static Dictionary<string, ILToken> Directives { get; private set; }

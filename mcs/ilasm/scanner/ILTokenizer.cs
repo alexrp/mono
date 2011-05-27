@@ -141,7 +141,7 @@ namespace Mono.ILAsm {
 							var dir_body = str_builder.Build ();
 							var dir = new string ((char) ch, 1) + dir_body;
 							if (IsDirective (dir))
-								res = ILTables.Directives [dir] as ILToken;
+								res = ILTables.Directives.TryGet (dir);
 							else {
 								reader.Unread (dir_body.ToCharArray ());
 								reader.RestoreLocation ();
@@ -195,7 +195,7 @@ namespace Mono.ILAsm {
 							if (IsIdChar ((char) next)) {
 								var opTail = BuildId ();
 								var full_str = string.Format ("{0}.{1}", val, opTail);
-								opCode = ILTables.OpCodes [full_str];
+								opCode = ILTables.OpCodes.TryGet (full_str);
 
 								if (opCode == null) {
 									if (str_builder.TokenId != Token.ID) {
@@ -215,7 +215,7 @@ namespace Mono.ILAsm {
 								}
 							} else if (char.IsWhiteSpace ((char) next)) {
 								// Handle 'tail.' and 'unaligned.'
-								opCode = ILTables.OpCodes [val + "."];
+								opCode = ILTables.OpCodes.TryGet (val + ".");
 								if (opCode != null) {
 									res = opCode;
 									break;
@@ -226,14 +226,14 @@ namespace Mono.ILAsm {
 							}
 						}
 						
-						opCode = ILTables.OpCodes [val];
+						opCode = ILTables.OpCodes.TryGet (val);
 						if (opCode != null) {
 							res = opCode;
 							break;
 						}
 						
 						if (IsKeyword (val)) {
-							res = ILTables.Keywords [val] as ILToken;
+							res = ILTables.Keywords.TryGet (val);
 							break;
 						}
 					}
@@ -292,6 +292,11 @@ namespace Mono.ILAsm {
 			return res;
 		}
 
+		public static bool IsKeyword (string name)
+		{
+			return ILTables.Keywords.ContainsKey (name);
+		}
+
 		private string BuildId ()
 		{
 			var idsb = new StringBuilder ();
@@ -317,11 +322,6 @@ namespace Mono.ILAsm {
 			}
 
 			return idsb.ToString ();
-		}
-
-		public static bool IsKeyword (string name)
-		{
-			return ILTables.Keywords.ContainsKey (name);
 		}
 
 		private void OnNewToken (ILToken token)

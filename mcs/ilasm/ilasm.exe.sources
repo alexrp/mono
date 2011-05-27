@@ -1,11 +1,11 @@
 AssemblyInfo.cs
 Driver.cs
+Extensions.cs
 ILAsmException.cs
 InternalErrorException.cs
 Report.cs
 ../build/common/Consts.cs
 codegen/CodeGenerator.cs
-codegen/TypeManager.cs
 parser/ScannerAdapter.cs
 scanner/ILReader.cs
 scanner/ILTokenizingException.cs

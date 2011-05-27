@@ -1,29 +1,25 @@
 %{
 //
-// Mono::ILASM::ILParser
+// Mono.ILAsm.ILParser
 // 
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
 // (C) 2003 Jackson Harper, All rights reserved
+// (C) 2011 Alex Rønne Petersen <alex@alexrp.com>
 //
 
 using System;
 using System.IO;
-using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
+using System.Text;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public class ILParser {
 		private CodeGenerator codegen;
-		private bool is_value_class;
-		private bool is_enum_class;
-		private bool pinvoke_info;
-		private string pinvoke_mod;
-		private string pinvoke_meth;
-		private PInvokeAttributes pinvoke_attr;
 		private ILTokenizer tokenizer;
 		private static int yacc_verbose_flag = 0;
 
@@ -35,6 +31,10 @@ namespace Mono.ILAsm {
 
 		public CodeGenerator CodeGenerator {
 			get { return codegen; }
+		}
+
+		public ILTokenizer Tokenizer {
+			get { return tokenizer; }
 		}
 
 %}
@@ -158,9 +158,6 @@ namespace Mono.ILAsm {
 %token K_AS
 %token K_IMPLICITCOM
 %token K_IMPLICITRES
-%token K_NOAPPDOMAIN
-%token K_NOPROCESS
-%token K_NOMACHINE
 %token K_EXTERN
 %token K_INSTANCE
 %token K_EXPLICIT
@@ -327,6 +324,11 @@ namespace Mono.ILAsm {
 %token K_ENABLEJITTRACKING
 %token K_DISABLEJITOPTIMIZER
 %token K_RETARGETABLE
+%token K_LEGACY
+%token K_LIBRARY
+%token K_X86
+%token K_IA64
+%token K_AMD64
 %token K_PRESERVESIG
 %token K_BEFOREFIELDINIT
 %token K_ALIGNMENT
@@ -355,41 +357,45 @@ decls			:
 			| decls decl
 			;
 
-decl			: class_all
+decl			:
+			/*
+			class_all
 			| namespace_all
 			| method_all
 			| field_decl
 			| data_decl
+			*/
 			| vtfixup_decl
+			/*
 			| file_decl
+			*/
 			| assembly_all
+			/*
 			| assemblyref_all
 			| exptype_all
 			| manifestres_all
+			*/
 			| module_head
+			/*
 			| sec_decl
 			| customattr_decl
 			{
 				if (codegen.CurrentCustomAttrTarget != null)
 					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
 			}
+			*/
 			| D_SUBSYSTEM int32
 			{
-				codegen.SetSubSystem ((int) $2);
+				codegen.CurrentModule.Kind = (ModuleKind) $2;
 			}
 			| D_CORFLAGS int32
 			{
-				codegen.SetCorFlags ((int) $2);
+				codegen.CurrentModule.Attributes = (ModuleAttributes) $2;
 			}
+			// TODO: Find a way to set these with Cecil.
 			| D_FILE K_ALIGNMENT int32
 			| D_IMAGEBASE int64
-			{
-				codegen.SetImageBase ((long) $2);
-			}
 			| D_STACKRESERVE int64
-			{
-				codegen.SetStackReserve ((long)	$2);
-			}
 			| extsource_spec
 			| language_decl
 			;
@@ -405,8 +411,7 @@ language_decl		: D_LANGUAGE SQSTRING
 			| D_LANGUAGE SQSTRING COMMA SQSTRING COMMA SQSTRING
 			;
 
-vtfixup_decl		: D_VTFIXUP OPEN_BRACKET int32 CLOSE_BRACKET 
-			  vtfixup_attr K_AT id
+vtfixup_decl		: D_VTFIXUP OPEN_BRACKET int32 CLOSE_BRACKET vtfixup_attr K_AT id
 			;
 
 vtfixup_attr		:
@@ -416,6 +421,7 @@ vtfixup_attr		:
 			| vtfixup_attr K_CALLMOSTDERIVED
 			;
 
+/*
 namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
 			{
 				codegen.CurrentNameSpace = null;
@@ -457,30 +463,30 @@ class_attr		:
 				is_enum_class = false;
 				$$ = new TypeAttributes ();
 			}
-			| class_attr K_PUBLIC			{ $$ = (TypeAttributes)$1 | TypeAttributes.Public; }
-			| class_attr K_PRIVATE			{ $$ = (TypeAttributes)$1 | TypeAttributes.Private; }
-			| class_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedPrivate; }
-			| class_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedPublic; }
-			| class_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedFamily; }
-			| class_attr K_NESTED K_ASSEMBLY	{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedAssembly;}
-			| class_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedFamAndAssem; }
-			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes)$1 | TypeAttributes.NestedFamOrAssem; }
+			| class_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
+			| class_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.Private; }
+			| class_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPrivate; }
+			| class_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPublic; }
+			| class_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamily; }
+			| class_attr K_NESTED K_ASSEMBLY	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedAssembly;}
+			| class_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamAndAssem; }
+			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamOrAssem; }
 			| class_attr K_VALUE			{ is_value_class = true; }
 			| class_attr K_ENUM			{ is_enum_class = true; is_value_class = true; }
-			| class_attr K_INTERFACE		{ $$ = (TypeAttributes)$1 | TypeAttributes.Interface; }
-			| class_attr K_SEALED			{ $$ = (TypeAttributes)$1 | TypeAttributes.Sealed; }
-			| class_attr K_ABSTRACT			{ $$ = (TypeAttributes)$1 | TypeAttributes.Abstract; }
+			| class_attr K_INTERFACE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Interface; }
+			| class_attr K_SEALED			{ $$ = (TypeAttributes) $1 | TypeAttributes.Sealed; }
+			| class_attr K_ABSTRACT			{ $$ = (TypeAttributes) $1 | TypeAttributes.Abstract; }
 			| class_attr K_AUTO
-			| class_attr K_SEQUENTIAL		{ $$ = (TypeAttributes)$1 | TypeAttributes.SequentialLayout; }
-			| class_attr K_EXPLICIT			{ $$ = (TypeAttributes)$1 | TypeAttributes.ExplicitLayout; }
+			| class_attr K_SEQUENTIAL		{ $$ = (TypeAttributes) $1 | TypeAttributes.SequentialLayout; }
+			| class_attr K_EXPLICIT			{ $$ = (TypeAttributes) $1 | TypeAttributes.ExplicitLayout; }
 			| class_attr K_ANSI
-			| class_attr K_UNICODE			{ $$ = (TypeAttributes)$1 | TypeAttributes.UnicodeClass; }
-			| class_attr K_AUTOCHAR			{ $$ = (TypeAttributes)$1 | TypeAttributes.AutoClass; }
-			| class_attr K_IMPORT			{ $$ = (TypeAttributes)$1 | TypeAttributes.Import; }
-			| class_attr K_SERIALIZABLE		{ $$ = (TypeAttributes)$1 | TypeAttributes.Serializable; }
-			| class_attr K_BEFOREFIELDINIT		{ $$ = (TypeAttributes)$1 | TypeAttributes.BeforeFieldInit; }
-			| class_attr K_SPECIALNAME		{ $$ = (TypeAttributes)$1 | TypeAttributes.SpecialName; }
-			| class_attr K_RTSPECIALNAME		{ $$ = (TypeAttributes)$1 | TypeAttributes.RTSpecialName; }
+			| class_attr K_UNICODE			{ $$ = (TypeAttributes) $1 | TypeAttributes.UnicodeClass; }
+			| class_attr K_AUTOCHAR			{ $$ = (TypeAttributes) $1 | TypeAttributes.AutoClass; }
+			| class_attr K_IMPORT			{ $$ = (TypeAttributes) $1 | TypeAttributes.Import; }
+			| class_attr K_SERIALIZABLE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Serializable; }
+			| class_attr K_BEFOREFIELDINIT		{ $$ = (TypeAttributes) $1 | TypeAttributes.BeforeFieldInit; }
+			| class_attr K_SPECIALNAME		{ $$ = (TypeAttributes) $1 | TypeAttributes.SpecialName; }
+			| class_attr K_RTSPECIALNAME		{ $$ = (TypeAttributes) $1 | TypeAttributes.RTSpecialName; }
 			;
 
 extends_clause		:
@@ -693,14 +699,16 @@ class_refs		: class_ref
 				class_list.Add ($3);
 			}
 			;
+*/
 
 slashed_name		: comp_name
 			| slashed_name SLASH comp_name
 			{
-				$$ = String.Format ("{0}/{1}", $1, $3);
+				$$ = string.Format ("{0}/{1}", $1, $3);
 			}
 			;
 
+/*
 class_ref		: OPEN_BRACKET slashed_name CLOSE_BRACKET slashed_name
 			{
 				if (codegen.IsThisAssembly ((string) $2))
@@ -2743,28 +2751,27 @@ sec_action		: K_REQUEST
 				$$ = Mono.Cecil.SecurityAction.NonCasInheritance;
 			}
 			;
+*/
 
 module_head		: D_MODULE
 			| D_MODULE comp_name
 			{
-				codegen.SetModuleName ((string) $2);
+				codegen.CurrentModule.Name = (string) $2;
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
-				codegen.ExternTable.AddModule ((string) $3);
 			}
 			;
 
+/*
 file_decl		: D_FILE file_attr comp_name file_entry D_HASH ASSIGN bytes_list file_entry
 			{
-				codegen.SetFileRef (new FileRef ((string) $3, (byte []) $7, (bool) $2, (bool) $8)); 
 			}
 			| D_FILE file_attr comp_name file_entry
 			{
-				// TODO: We need to compute the hash ourselves. :-(
-				//AssemblyName an = AssemblyName.GetName ((string) $3);
 			}
 			;
+*/
 
 file_attr 		:
 			{
@@ -2787,28 +2794,33 @@ file_entry		:
 			;
 
 assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
-			{
-				codegen.CurrentCustomAttrTarget = null;
-				codegen.CurrentDeclSecurityTarget = null;
-			}
 			;
 
-assembly_head		: D_ASSEMBLY asm_attr slashed_name
+assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
-				codegen.SetThisAssembly ((string) $3, (Mono.Cecil.AssemblyAttributes) $2);
-				codegen.CurrentCustomAttrTarget = codegen.ThisAssembly;
-				codegen.CurrentDeclSecurityTarget = codegen.ThisAssembly;
+				var attr = (AssemblyAttributes) $2;
+				if ((attr & AssemblyAttributes.Retargetable) != 0)
+					codegen.CurrentModule.Assembly.Name.IsRetargetable = true;
+
+				codegen.CurrentModule.Assembly.Name.Name = (string) $3;
 			}
 			;
 
 asm_attr		:
 			{
-				$$ = new Mono.Cecil.AssemblyAttributes ();
+				$$ = new AssemblyAttributes ();
 			}
 			| asm_attr K_RETARGETABLE
 			{
-				$$ = ((Mono.Cecil.AssemblyAttributes) $1) | Mono.Cecil.AssemblyAttributes.Retargetable;
+				$$ = ((AssemblyAttributes) $1) | AssemblyAttributes.Retargetable;
 			}
+			// TODO: What on earth do we do with these?! Some look like corflags, others
+			// look more like target architectures... They also aren't documented...
+			| asm_attr K_LEGACY K_LIBRARY
+			| asm_attr K_CIL
+			| asm_attr K_X86
+			| asm_attr K_IA64
+			| asm_attr K_AMD64
 			;
 
 assembly_decls		:
@@ -2817,21 +2829,29 @@ assembly_decls		:
 
 assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			{
-				codegen.ThisAssembly.SetPublicKey ((byte []) $3);
+				codegen.CurrentModule.Assembly.Name.PublicKey = (byte[]) $3;
 			}
 			| D_VER int32 COLON int32 COLON int32 COLON int32
 			{
-				codegen.ThisAssembly.SetVersion ((int) $2, (int) $4, (int) $6, (int) $8);
+				codegen.CurrentModule.Assembly.Name.Version =
+					new Version ((int) $2, (int) $4, (int) $6, (int) $8);
 			}
 			| D_LOCALE comp_qstring
 			{
-				codegen.ThisAssembly.SetLocale ((string) $2);
+				codegen.CurrentModule.Assembly.Name.Culture = (string) $2;
 			}
 			| D_LOCALE ASSIGN bytes_list
+			{
+				// I assume this is UTF-16. I really have no clue, though,
+				//and it isn't documented...
+				var text = Encoding.Unicode.GetString ((byte[]) $3);
+				codegen.CurrentModule.Assembly.Name.Culture = text;
+			}
 			| D_HASH K_ALGORITHM int32
 			{
-				codegen.ThisAssembly.SetHashAlgorithm ((int) $3);
+				codegen.CurrentModule.Assembly.Name.Hash = (byte[]) $2;
 			}
+			/*
 			| customattr_decl
 			{
 				codegen.ThisAssembly.AddCustomAttribute ((CustomAttr) $1);
@@ -2840,8 +2860,10 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			{
 				AddSecDecl ($1, true);
 			}
+			*/
 			;
 
+/*
 asm_or_ref_decl		: D_PUBLICKEY ASSIGN bytes_list
 			| D_VER int32 COLON int32 COLON int32 COLON int32
 			| D_LOCALE comp_qstring
@@ -2854,19 +2876,9 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 
 assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr slashed_name
 			{
-				System.Reflection.AssemblyName asmb_name =
-					new System.Reflection.AssemblyName ();
-				asmb_name.Name = (string) $4;
-				codegen.BeginAssemblyRef ((string) $4, asmb_name,
-					(Mono.Cecil.AssemblyAttributes) $3);
 			}
 			| D_ASSEMBLY K_EXTERN asm_attr slashed_name K_AS slashed_name
 			{
-				System.Reflection.AssemblyName asmb_name =
-					new System.Reflection.AssemblyName ();
-				asmb_name.Name = (string) $4;
-				codegen.BeginAssemblyRef ((string) $6, asmb_name,
-					(Mono.Cecil.AssemblyAttributes) $3);
 			}
 			;
 
@@ -2876,24 +2888,19 @@ assemblyref_decls	:
 
 assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			{
-				codegen.CurrentAssemblyRef.SetVersion ((int) $2, (int) $4, (int) $6, (int) $8);
 			}
 			| D_PUBLICKEY ASSIGN bytes_list
 			{
-				codegen.CurrentAssemblyRef.SetPublicKey ((byte []) $3);
 			}
 			| D_PUBLICKEYTOKEN ASSIGN bytes_list
 			{
-				codegen.CurrentAssemblyRef.SetPublicKeyToken ((byte []) $3);
 			}
 			| D_LOCALE comp_qstring
 			{
-				codegen.CurrentAssemblyRef.SetLocale ((string) $2);
 			}
 			| D_LOCALE ASSIGN bytes_list
 			| D_HASH ASSIGN bytes_list
 			{
-				codegen.CurrentAssemblyRef.SetHash ((byte []) $3);
 			}
 			| customattr_decl
 			{
@@ -2963,18 +2970,20 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 			| D_ASSEMBLY K_EXTERN slashed_name
 			| customattr_decl
 			;
+*/
 
 comp_qstring		: QSTRING
 			| comp_qstring PLUS QSTRING
 			{
-				$$ = String.Format ("{0}{1}", $1, $3);
+				$$ = string.Format ("{0}{1}", $1, $3);
 			}
 			;
 
 int32			: INT64
 			{
-				long l = (long) $1;
-				byte[] intb = BitConverter.GetBytes (l);
+				var l = (long) $1;
+				var intb = BitConverter.GetBytes (l);
+
 				$$ = BitConverter.ToInt32 (intb, BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			;
@@ -2985,24 +2994,27 @@ int64			: INT64
 float64			: FLOAT64
 			| K_FLOAT32 OPEN_PARENS INT32 CLOSE_PARENS
 			{
-				int i = (int) $3;
-				byte[] intb = BitConverter.GetBytes (i);
+				var i = (int) $3;
+				var intb = BitConverter.GetBytes (i);
+
 				$$ = (double) BitConverter.ToSingle (intb, 0);
 			}
 			| K_FLOAT32 OPEN_PARENS INT64 CLOSE_PARENS
 			{
-				long l = (long) $3;
-				byte[] intb = BitConverter.GetBytes (l);
+				var l = (long) $3;
+				var intb = BitConverter.GetBytes (l);
 				$$ = (double) BitConverter.ToSingle (intb, BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			| K_FLOAT64 OPEN_PARENS INT64 CLOSE_PARENS
 			{
-				byte[] intb = BitConverter.GetBytes ((long) $3);
+				var intb = BitConverter.GetBytes ((long) $3);
+
 				$$ = BitConverter.ToDouble (intb, 0);
 			}
 			| K_FLOAT64 OPEN_PARENS INT32 CLOSE_PARENS
 			{
-				byte[] intb = BitConverter.GetBytes ((int) $3);
+				var intb = BitConverter.GetBytes ((int) $3);
+
 				$$ = (double) BitConverter.ToSingle (intb, 0);
 			}
 			;
@@ -3017,6 +3029,7 @@ bytes_list		: OPEN_PARENS
 			  bytes CLOSE_PARENS
 			{
 				$$ = $3;
+
 				tokenizer.in_byte_array  = false;
 			}
 			;
@@ -3027,20 +3040,22 @@ bytes			:
 			}
 			| hexbytes
 			{
-				ArrayList byte_list = (ArrayList) $1;
-				$$ = byte_list.ToArray (typeof (byte));
+				var byte_list = (List<byte>) $1;
+
+				$$ = byte_list.ToArray ();
 			}
 			;
 
 hexbytes		: hexbyte
 			{
-				ArrayList byte_list = new ArrayList ();
+				var byte_list = new List<byte> ();
 				byte_list.Add (Convert.ToByte ($1));
+
 				$$ = byte_list;
 			}
 			| hexbytes hexbyte
 			{
-				ArrayList byte_list = (ArrayList) $1;
+				var byte_list = (List<byte>) $1;
 				byte_list.Add (Convert.ToByte ($2));
 			}
 			;

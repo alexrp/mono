@@ -5,11 +5,7 @@ namespace Mono.ILAsm {
 	public sealed class CodeGenerator {
 		bool has_entry_point;
 		
-		public TypeManager TypeManager { get; private set; }
-		
 		public string CurrentNamespace { get; set; }
-		
-		public AssemblyDefinition CurrentAssembly { get; set; }
 		
 		public ModuleDefinition CurrentModule { get; set; }
 		
@@ -31,16 +27,13 @@ namespace Mono.ILAsm {
 		
 		public CodeGenerator (string moduleName, bool dll, bool debuggingInfo)
 		{
-			TypeManager = new TypeManager ();
+			var kind = dll ? ModuleKind.Dll : ModuleKind.Console;
+			CurrentModule = ModuleDefinition.CreateModule (moduleName, kind);
 		}
 		
-		public bool IsThisAssembly(AssemblyNameReference name)
+		public void Write (string outputFile)
 		{
-			return name.FullName == CurrentAssembly.Name.FullName;
-		}
-		
-		public void Write ()
-		{
+			CurrentModule.Write (outputFile);
 		}
 	}
 }

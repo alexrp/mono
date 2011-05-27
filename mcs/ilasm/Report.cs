@@ -12,69 +12,53 @@ using System.IO;
 
 namespace Mono.ILAsm {
 	public abstract class Report {
-		static Report ()
-		{
-			ErrorCount = 0;
-			Quiet = false;
-		}
-
-		public static int ErrorCount { get; private set; }
-
 		public static bool Quiet { get; set; }
 
 		public static string FilePath { get; internal set; }
 
-		public static void AssembleFile (string file, string listing,
-						string target, string output)
+		public static void AssembleFile (string file, string target, string output)
 		{
 			if (Quiet)
 				return;
 			
-			Console.WriteLine ("Assembling '{0}' , {1}, to {2} --> '{3}'", file,
-				GetListing (listing), target, output);
+			Console.WriteLine ("Assembling {0} to {1} -> {2}...", file, target, output);
 			Console.WriteLine ();
 		}
 
-		public static void Error (string message)
+		public static void Error (string message, params object[] args)
 		{
-			Error (null, message);
+			Error (null, message, args);
 		}
 
-		public static void Error (Location location, string message)
+		public static void Error (Location location, string message, params object[] args)
 		{
-			ErrorCount++;
-			throw new ILAsmException (FilePath, location, message);
+			throw new ILAsmException (FilePath, location, string.Format (message, args));
 		}
 
-		public static void Warning (string message)
+		public static void Warning (string message, params object[] args)
 		{
-			Warning (null, message);
+			Warning (null, message, args);
 		}
 
-		public static void Warning (Location location, string message)
+		public static void Warning (Location location, string message, params object[] args)
 		{
-			var location_str = " : ";
+			var location_str = string.Empty;
 			if (location != null)
-				location_str = " (" + location.line + ", " + location.column + ") : ";
-
-			Console.Error.WriteLine (String.Format ("{0}{1}Warning -- {2}",
-				(FilePath != null ? FilePath : ""), location_str, message));
+				location_str = FilePath + ":" + location.line + "," +
+					location.column + ": ";
+			
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.Error.WriteLine (string.Format ("{0}Warning: {1}",
+				location_str, string.Format (message, args)));
+			Console.ResetColor ();
 		}
 
-		public static void Message (string message)
+		public static void Message (string message, params object[] args)
 		{
 			if (Quiet)
 				return;
 			
 			Console.WriteLine (message);
-		}
-
-		private static string GetListing (string listing)
-		{
-			if (listing == null)
-				return "no listing file";
-			
-			return listing;
 		}
 	}
 }
