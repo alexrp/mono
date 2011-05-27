@@ -22,7 +22,7 @@ namespace Mono.ILAsm {
 			}
 			set {
 				if (has_entry_point)
-					Report.Error ("Multiple .entrypoint declarations.");
+					Report.Error ("Multiple .entrypoint directives.");
 				
 				has_entry_point = value;
 			}
