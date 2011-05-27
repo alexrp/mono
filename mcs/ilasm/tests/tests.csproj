@@ -45,6 +45,7 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="AssemblerTester.cs" />
     <Compile Include="CommandLineTests.cs" />
+    <Compile Include="ModuleTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -52,5 +53,8 @@
       <Project>{3F8EC7C8-7F63-4341-AE4F-859CED50CE07}</Project>
       <Name>ilasm</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="tests\module-001.il" />
   </ItemGroup>
 </Project>

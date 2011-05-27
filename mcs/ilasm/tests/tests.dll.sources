@@ -1,5 +1,4 @@
-../build/common/Consts.cs
+tests/CommandLineTests.cs
 tests/AssemblerTester.cs
 tests/AssemblyInfo.cs
-tests/CommandLineTests.cs
-
+tests/ModuleTests.cs

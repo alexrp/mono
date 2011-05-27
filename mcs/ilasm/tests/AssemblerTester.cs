@@ -45,7 +45,7 @@ namespace Mono.ILAsm.Tests {
 			public Assembler Input (params string[] fileNames)
 			{
 				foreach (var file in fileNames)
-					arguments += " " + file;
+					arguments += "../../tests/" + file;
 				
 				return this;
 			}
