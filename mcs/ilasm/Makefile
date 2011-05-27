@@ -3,7 +3,7 @@ include ../build/rules.make
 
 PROGRAM = ilasm.exe
 BUILT_SOURCES = ILParser.cs
-LOCAL_MCS_FLAGS = /lib:../class/lib/$(PROFILE) /r:../class/lib/$(PROFILE)/Mono.Cecil.dll /r:../class/lib/$(PROFILE)/Mono.Cecil.Mdb.dll /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll
+LOCAL_MCS_FLAGS = /keyfile:../class/mono.snk /lib:../class/lib/$(PROFILE) /r:../class/lib/$(PROFILE)/Mono.Cecil.dll /r:../class/lib/$(PROFILE)/Mono.Cecil.Mdb.dll /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll
 
 EXTRA_DISTFILES = \
 	parser/ILParser.jay	\
