@@ -1,5 +1,5 @@
 // 
-// AssemblyTests.cs
+// assembly-003.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -23,28 +23,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class AssemblyTests : AssemblerTester {
-		[Test]
-		public void TestEmptyAssemblyDirective ()
-		{
-			OpenILAsm ().Input ("assembly-001.il").Argument ("dll").Run ().Expect (AssemblerResult.Success);
-		}
-		
-		[Test]
-		public void TestFullAssemblyDirective ()
-		{
-			OpenILAsm ().Input ("assembly-002.il").Argument ("dll").Run ().Expect (AssemblerResult.Success);
-		}
-		
-		[Test]
-		public void TestRawLocale ()
-		{
-			OpenILAsm ().Input ("assembly-003.il").Argument ("dll").Run ().Expect (AssemblerResult.Success);
-		}
-	}
+
+.assembly assembly003
+{
+	.locale = (65 00 6E 00 2D 00 55 00 53 00)
 }
+
+.module test003
