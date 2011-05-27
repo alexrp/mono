@@ -37,6 +37,7 @@ namespace Mono.ILAsm.Tests {
 			private bool dll = true;
 			private string arguments = string.Empty;
 			private bool silence = true;
+			private bool expect_error;
 			
 			public Assembler (Process process)
 			{
@@ -128,10 +129,19 @@ namespace Mono.ILAsm.Tests {
 				return this;
 			}
 			
+			public Assembler ExpectError ()
+			{
+				expect_error = true;
+				return this;
+			}
+			
 			public AssemblerOutput Run ()
 			{
 				if (silence)
 					process.StartInfo.RedirectStandardOutput = true;
+				
+				if (expect_error)
+					process.StartInfo.RedirectStandardError = true;
 				
 				arguments += dll ? " /dll" : " /exe";
 				

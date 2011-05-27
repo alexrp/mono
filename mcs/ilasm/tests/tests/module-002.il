@@ -1,5 +1,5 @@
 // 
-// assembly-003.il
+// module-002.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,9 +24,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-.assembly assembly003
-{
-	.locale = (65 00 6E 00 2D 00 55 00 53 00)
-}
-
-.module test003
+.module test002
+.module test002asdf

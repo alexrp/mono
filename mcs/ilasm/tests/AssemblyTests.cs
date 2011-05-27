@@ -69,5 +69,15 @@ namespace Mono.ILAsm.Tests {
 				.GetModule ()
 				.Expect (x => x.Assembly.Name.Culture == "en-US");
 		}
+		
+		[Test]
+		public void TestMultipleAssemblyDirectives ()
+		{
+			OpenILAsm ()
+				.Input ("assembly-004.il")
+				.ExpectError ()
+				.Run ()
+				.Expect (AssemblerResult.Error);
+		}
 	}
 }

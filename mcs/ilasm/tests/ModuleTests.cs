@@ -39,5 +39,16 @@ namespace Mono.ILAsm.Tests {
 				.GetModule ()
 				.Expect (x => x.Name == "test001");
 		}
+		
+		[Test]
+		public void TestMultipleModuleDirectives ()
+		{
+			OpenILAsm ()
+				.Input ("module-002.il")
+				.Run ()
+				.Expect (AssemblerTester.AssemblerResult.Success)
+				.GetModule ()
+				.Expect (x => x.Name == "test002");
+		}
 	}
 }

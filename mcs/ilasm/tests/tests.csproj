@@ -64,5 +64,7 @@
     <None Include="tests\assembly-001.il" />
     <None Include="tests\assembly-002.il" />
     <None Include="tests\assembly-003.il" />
+    <None Include="tests\assembly-004.il" />
+    <None Include="tests\module-002.il" />
   </ItemGroup>
 </Project>
