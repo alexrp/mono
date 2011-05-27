@@ -2803,11 +2803,15 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
+				if (codegen.HasAssemblyDirective)
+					Report.Error("Multiple .assembly directives.");
+
 				var attr = (AssemblyAttributes) $2;
 				if ((attr & AssemblyAttributes.Retargetable) != 0)
 					codegen.CurrentModule.Assembly.Name.IsRetargetable = true;
 
 				codegen.CurrentModule.Assembly.Name.Name = (string) $3;
+				codegen.HasAssemblyDirective = true;
 			}
 			;
 
@@ -2910,8 +2914,6 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			}
 			| customattr_decl
 			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
 			}
 			;
 

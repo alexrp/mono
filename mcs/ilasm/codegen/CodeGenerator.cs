@@ -4,16 +4,17 @@ using Mono.Cecil;
 namespace Mono.ILAsm {
 	public sealed class CodeGenerator {
 		bool has_entry_point;
+		public ModuleDefinition CurrentModule { get; private set; }
 		
-		public string CurrentNamespace { get; set; }
+		public string CurrentNamespace { get; internal set; }
 		
-		public ModuleDefinition CurrentModule { get; set; }
+		public bool HasModuleDirective { get; internal set; }
 		
-		public bool HasModuleDirective { get; set; }
+		public bool HasAssemblyDirective { get; internal set; }
 		
-		public TypeDefinition CurrentType { get; set; }
+		public TypeDefinition CurrentType { get; internal set; }
 		
-		public MethodDefinition CurrentMethod { get; set; }
+		public MethodDefinition CurrentMethod { get; internal set; }
 		
 		public bool HasEntryPoint {
 			get {
