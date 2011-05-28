@@ -32,19 +32,28 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestUsage ()
 		{
-			ILAsm ().Argument ("?").Run ().Expect (null);
+			ILAsm ()
+				.Argument ("?")
+				.Run ()
+				.Expect (null);
 		}
 		
 		[Test]
 		public void TestAbout ()
 		{
-			ILAsm ().Argument ("about", ArgumentType.DoubleDash).Run ().Expect (null);
+			ILAsm ()
+				.Argument ("about", ArgumentType.DoubleDash)
+				.Run ()
+				.Expect (null);
 		}
 		
 		[Test]
 		public void TestVersion ()
 		{
-			ILAsm ().Argument ("version", ArgumentType.DoubleDash).Run ().Expect (null);
+			ILAsm ()
+				.Argument ("version", ArgumentType.DoubleDash)
+				.Run ()
+				.Expect (null);
 		}
 	}
 }
