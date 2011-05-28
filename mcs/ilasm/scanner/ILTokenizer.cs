@@ -16,7 +16,7 @@ namespace Mono.ILAsm {
 		}
 	}
 
-	public class ILTokenizer : ITokenStream {
+	public class ILTokenizer {
 		private const string id_chars = "_$@?.`";
 		private ILToken last_token;
 		private readonly StringHelper str_builder;
@@ -236,12 +236,6 @@ namespace Mono.ILAsm {
 			return res;
 		}
 
-		public ILToken NextToken {
-			get {
-				return GetNextToken ();
-			}
-		}
-
 		public ILToken LastToken {
 			get {
 				return last_token;
@@ -271,12 +265,11 @@ namespace Mono.ILAsm {
 		public static bool IsDirective (string name)
 		{
 			var ch = name [0];
-			var res = (ch == '.' || ch == '#');
 
-			if (res)
-				res = ILTables.Directives.ContainsKey (name);
+			if (ch == '.' || ch == '#')
+				return ILTables.Directives.ContainsKey (name);
 
-			return res;
+			return false;
 		}
 
 		public static bool IsKeyword (string name)

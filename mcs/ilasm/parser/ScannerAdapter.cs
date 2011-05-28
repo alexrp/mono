@@ -4,12 +4,12 @@ using System;
 
 namespace Mono.ILAsm {
 	public sealed class ScannerAdapter : yyParser.yyInput {
-		public ScannerAdapter (ITokenStream tokens)
+		public ScannerAdapter (ILTokenizer tokens)
 		{
 			this.BaseStream = tokens;
 		}
 
-		public ITokenStream BaseStream { get; private set; }
+		public ILTokenizer BaseStream { get; private set; }
 
 		//
 		// yyParser.yyInput interface
@@ -17,7 +17,7 @@ namespace Mono.ILAsm {
 		
 		public bool advance ()
 		{
-			return BaseStream.NextToken != ILToken.EOF;
+			return BaseStream.GetNextToken () != ILToken.EOF;
 		}
 
 		public int token ()

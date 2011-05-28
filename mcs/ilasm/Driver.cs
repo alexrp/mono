@@ -116,7 +116,7 @@ namespace Mono.ILAsm {
 
 			if (scan_only) {
 				ILToken tok;
-				while ((tok = scanner.NextToken) != ILToken.EOF)
+				while ((tok = scanner.GetNextToken ()) != ILToken.EOF)
 					Console.WriteLine (tok);
 				return ExitCode.Success;
 			}

@@ -7,38 +7,27 @@ using System.Collections;
 
 namespace Mono.ILAsm {
 	public sealed class ILReader {
-		private readonly StreamReader reader;
 		private readonly Stack putback_stack;
-		private Location location;
 		private Location marked_location;
 
 		public ILReader (StreamReader reader)
 		{
-			this.reader = reader;
+			BaseReader = reader;
+			Location = new Location ();
 			putback_stack = new Stack ();
-
-			location = new Location ();
 			marked_location = Location.Unknown;
 		}
 
-		public Location Location {
-			get {
-				return location;
-			}
-		}
+		public Location Location { get; private set; }
 
-		public StreamReader BaseReader {
-			get {
-				return reader;
-			}
-		}
+		public StreamReader BaseReader { get; private set; }
 
 		private int DoRead ()
 		{
 			if (putback_stack.Count > 0) 
 				return (char) putback_stack.Pop ();
 
-			return reader.Read ();
+			return BaseReader.Read ();
 		}
 
 		private int DoPeek ()
@@ -46,7 +35,7 @@ namespace Mono.ILAsm {
 			if (putback_stack.Count > 0)
 				return (char) putback_stack.Peek ();
 
-			return reader.Peek ();
+			return BaseReader.Peek ();
 		}
 
 		public int Read ()
@@ -54,9 +43,9 @@ namespace Mono.ILAsm {
 			var read = DoRead ();
 			
 			if (read == '\n')
-				location.NewLine ();
+				Location.NewLine ();
 			else
-				location.NextColumn ();
+				Location.NextColumn ();
 			
 			return read;
 		}
@@ -71,9 +60,9 @@ namespace Mono.ILAsm {
 			putback_stack.Push (c);
 
 			if ('\n' == c)
-				location.PreviousLine ();
+				Location.PreviousLine ();
 
-			location.PreviousColumn ();
+			Location.PreviousColumn ();
 		}
 
 		public void Unread (char[] chars)
@@ -115,15 +104,15 @@ namespace Mono.ILAsm {
 		public void MarkLocation ()
 		{
 			if (marked_location == Location.Unknown)
-				marked_location = new Location (location);
+				marked_location = new Location (Location);
 			else
-				marked_location.CopyFrom (location);
+				marked_location.CopyFrom (Location);
 		}
 
 		public void RestoreLocation ()
 		{
 			if (marked_location != Location.Unknown)
-				location.CopyFrom (marked_location);
+				Location.CopyFrom (marked_location);
 		}
 	}
 }
