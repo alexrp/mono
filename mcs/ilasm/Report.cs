@@ -107,7 +107,8 @@ namespace Mono.ILAsm {
 					location.Column + ": ";
 			
 			Console.ForegroundColor = ConsoleColor.Yellow;
-			WarningOutput.WriteLine (string.Format ("{0}Warning: {1}", location_str, msg));
+			WarningOutput.WriteLine (string.Format ("{0}Warning ILW{1}: {2}", location_str,
+				((int) warning).ToString ("0000"), msg));
 			Console.ResetColor ();
 		}
 

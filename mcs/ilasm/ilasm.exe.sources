@@ -5,7 +5,6 @@ Error.cs
 ExitCode.cs
 Extensions.cs
 ILAsmException.cs
-InternalErrorException.cs
 Program.cs
 Report.cs
 Target.cs

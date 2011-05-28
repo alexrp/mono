@@ -69,7 +69,6 @@
     <Compile Include="scanner\StringHelper.cs" />
     <Compile Include="scanner\StringHelperBase.cs" />
     <Compile Include="ILAsmException.cs" />
-    <Compile Include="InternalErrorException.cs" />
     <Compile Include="codegen\CodeGenerator.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Target.cs" />

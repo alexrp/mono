@@ -84,10 +84,12 @@ namespace Mono.ILAsm {
 							ex.Message);
 						return ExitCode.Error;
 					}
+			} catch (ILAsmException ie) {
+				WriteError (ie.ToString ());
+				return ExitCode.Error;
 			} catch (Exception ex) {
 				// An internal error has occurred...
 				WriteError ("{0}{1}{2}", ex.ToString (), Environment.NewLine, ex.StackTrace);
-				WriteError ("***** FAILURE *****");
 				return ExitCode.Error;
 			}
 
@@ -129,10 +131,6 @@ namespace Mono.ILAsm {
 				Report.WriteError (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
 			} catch (yyParser.yyException ye) {
 				Report.WriteError (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
-			} catch (ILAsmException) {
-				throw;
-			} catch (Exception ex) {
-				throw new InternalErrorException (ex.Message, ex);
 			}
 			
 			return ExitCode.Success;
@@ -267,6 +265,7 @@ namespace Mono.ILAsm {
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Report.ErrorOutput.WriteLine (string.Format (message, args));
+			Report.ErrorOutput.WriteLine ("***** FAILURE *****");
 			Console.ResetColor ();
 		}
 
