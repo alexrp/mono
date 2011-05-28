@@ -199,7 +199,8 @@ namespace Mono.ILAsm {
 				case "itanium":
 				case "x64":
 				case "pe64":
-					Report.WriteWarning ("Unimplemented command line option: {0}", cmd);
+					Report.WriteWarning (Warning.InternalWarning,
+						"Unimplemented command line option: {0}", cmd);
 					break;
 				case "key":
 					if (command_arg.Length > 0)

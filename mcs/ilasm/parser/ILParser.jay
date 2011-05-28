@@ -2763,7 +2763,7 @@ module_head		: D_MODULE
 					codegen.HasModuleDirective = true;
 				}
 				else if ((string) $2 != codegen.CurrentModule.Name)
-					Report.WriteWarning (tokenizer.Reader.Location,
+					Report.WriteWarning (Warning.ModuleDirectiveIgnored, tokenizer.Reader.Location,
 						".module directive with different name ignored.");
 			}
 			| D_MODULE K_EXTERN comp_name

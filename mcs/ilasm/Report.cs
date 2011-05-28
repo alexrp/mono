@@ -21,22 +21,28 @@ namespace Mono.ILAsm {
 	}
 	
 	public class WarningEventArgs : MessageEventArgs {
+		public Warning Warning { get; private set; }
+		
 		public Location Location { get; private set; }
 		
-		public WarningEventArgs (Location location, string message)
+		public WarningEventArgs (Warning warning, Location location, string message)
 			: base (message)
 		{
+			Warning = warning;
 			Location = location;
 		}
 	}
 	
-	public class ErrorEventArgs : WarningEventArgs {
+	public class ErrorEventArgs : MessageEventArgs {
 		public Error Error { get; private set; }
 		
+		public Location Location { get; private set; }
+		
 		public ErrorEventArgs (Error error, Location location, string message)
-			: base (location, message)
+			: base (message)
 		{
 			Error = error;
+			Location = location;
 		}
 	}
 	
@@ -82,18 +88,18 @@ namespace Mono.ILAsm {
 			throw new ILAsmException (error, FilePath, location, msg);
 		}
 
-		internal static void WriteWarning (string message, params object[] args)
+		internal static void WriteWarning (Warning warning, string message, params object[] args)
 		{
-			WriteWarning (null, message, args);
+			WriteWarning (warning, null, message, args);
 		}
 
-		internal static void WriteWarning (Location location, string message, params object[] args)
+		internal static void WriteWarning (Warning warning, Location location, string message, params object[] args)
 		{
 			var msg = string.Format (message, args);
 			
 			var evnt = Warning;
 			if (evnt != null)
-				evnt (null, new WarningEventArgs (location, msg));
+				evnt (null, new WarningEventArgs (warning, location, msg));
 			
 			var location_str = string.Empty;
 			if (location != null)

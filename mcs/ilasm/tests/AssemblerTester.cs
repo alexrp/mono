@@ -36,15 +36,30 @@ namespace Mono.ILAsm.Tests {
 		protected sealed class Assembler {
 			readonly Driver driver;
 			readonly List<string> arguments = new List<string> ();
-			bool expect_error;
-			bool expect_warning;
+			Error? expected_error;
+			Warning? expected_warning;
+			Error? resulting_error;
+			Warning? resulting_warning;
 			
 			public Assembler ()
 			{
 				driver = new Driver ();
 				driver.Target = Target.Dll;
 				driver.Output = TextWriter.Null;
+				
 				Report.Quiet = true;
+				Report.Warning += OnWarning;
+				Report.Error += OnError;
+			}
+			
+			private void OnWarning (object sender, WarningEventArgs e)
+			{
+				resulting_warning = e.Warning;
+			}
+			
+			private void OnError (object sender, ErrorEventArgs e)
+			{
+				resulting_error = e.Error;
 			}
 			
 			public Assembler Input (params string[] fileNames)
@@ -126,31 +141,40 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler ExpectError (Error error)
 			{
-				expect_error = true;
+				expected_error = error;
 				return this;
 			}
 			
-			public Assembler ExpectWarning ()
+			public Assembler ExpectWarning (Warning warning)
 			{
-				expect_warning = true;
+				expected_warning = warning;
 				return this;
 			}
 			
 			public AssemblerOutput Run ()
 			{
-				if (expect_error)
-					Report.ErrorOutput = TextWriter.Null;
-				
-				if (expect_warning)
+				if (expected_warning != null)
 					Report.WarningOutput = TextWriter.Null;
+				
+				if (expected_error != null)
+					Report.ErrorOutput = TextWriter.Null;
 				
 				var result = driver.Run (arguments.ToArray ());
 				
 				// Reset stuff to defaults.
 				driver.Output = Console.Out;
+				
 				Report.Quiet = false;
+				Report.Warning -= OnWarning;
+				Report.Error -= OnError;
 				Report.ErrorOutput = Console.Error;
 				Report.WarningOutput = Console.Out;
+				
+				if (expected_warning != null)
+					Assert.AreEqual ((Warning) expected_warning, resulting_warning);
+				
+				if (expected_error != null)
+					Assert.AreEqual ((Error) expected_error, resulting_error);
 				
 				return new AssemblerOutput (driver.OutputFileName, result);
 			}

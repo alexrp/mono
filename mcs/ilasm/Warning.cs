@@ -1,5 +1,5 @@
 // 
-// ModuleTests.cs
+// Warning.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,32 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ModuleTests : AssemblerTester {
-		[Test]
-		public void TestModuleDirective ()
-		{
-			ILAsm ()
-				.Input ("module-001.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test001");
-		}
-		
-		[Test]
-		public void TestMultipleModuleDirectives ()
-		{
-			ILAsm ()
-				.Input ("module-002.il")
-				.ExpectWarning (Warning.ModuleDirectiveIgnored)
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test002");
-		}
+namespace Mono.ILAsm {
+	public enum Warning : short {
+		InternalWarning = 0,
+		ModuleDirectiveIgnored = 1,
 	}
 }
