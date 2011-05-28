@@ -3,76 +3,60 @@
 using System;
 
 namespace Mono.ILAsm {
-	public sealed class Location : ICloneable {
-		internal int line;
-		internal int column;
+	public sealed class Location {
+		public int Line { get; private set; }
 
-		public int Line {
-			get { return line; }
-		}
+		public int Column { get; private set; }
 
-		public int Column {
-			get { return column; }
-		}
-
-		public static Location Unknown {
-			get { return new Location (-1, -1); }
-		}
+		public static readonly Location Unknown = new Location (-1, -1);
 
 		public Location ()
 		{
-			line = 1;
-			column = 1;
+			Line = 1;
+			Column = 1;
 		}
 
 		public Location (int line, int column)
 		{
-			this.line = line;
-			this.column = column;
+			Line = line;
+			Column = column;
 		}
 
 		public Location (Location that)
 		{
-			this.line = that.line;
-			this.column = that.column;
+			Line = that.Line;
+			Column = that.Column;
 		}
 
-		public void NewLine ()
+		public Location NewLine ()
 		{
-			++line;
-			column = 1;
+			return new Location (Line + 1, 1);
 		}
 
-		public void PreviousLine ()
+		public Location PreviousLine ()
 		{
-			--line;
-			column = 1;
+			return new Location (Line - 1, 1);
 		}
 
-		public void NextColumn ()
+		public Location NextColumn ()
 		{
-			++column;
+			return new Location (Line, Column + 1);
 		}
 
-		public void PreviousColumn ()
+		public Location PreviousColumn ()
 		{
-			--column;
+			return new Location (Line, Column - 1);
 		}
 
 		public void CopyFrom (Location other)
 		{
-			this.line = other.line;
-			this.column = other.column;
-		}
-
-		public object Clone ()
-		{
-			return new Location (this);
+			Line = other.Line;
+			Column = other.Column;
 		}
 
 		public override string ToString ()
 		{
-			return "line (" + line + ") column (" + column + ")";
+			return "line (" + Line + ") column (" + Column + ")";
 		}
 	}
 }

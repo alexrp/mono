@@ -24,17 +24,17 @@ namespace Mono.ILAsm {
 			return res;
 		}
 
-		private bool is_hex (int e)
+		private bool IsHex (int e)
 		{
 			return (e >= '0' && e <= '9') || (e >= 'A' && e <= 'F') || (e >= 'a' && e <= 'f');
 		}
 
-		private bool is_sign (int ch)
+		private bool IsSign (int ch)
 		{
 			return ((ch == '+') || (ch == '-'));
 		}
 
-		private bool is_e (int ch)
+		private bool IsE (int ch)
 		{
 			return ((ch == 'e') || (ch == 'E'));
 		}
@@ -56,7 +56,7 @@ namespace Mono.ILAsm {
 			if (ch == '0' && (peek == 'x' || peek == 'X'))
 				return BuildHex ();
 
-			if (is_sign (reader.Peek ()))
+			if (IsSign (reader.Peek ()))
 				num_builder.Append ((char) reader.Read ());
 
 			do {
@@ -64,7 +64,7 @@ namespace Mono.ILAsm {
 				peek = reader.Peek ();
 				num_builder.Append ((char) ch);
 
-				if (is_e (ch)) {
+				if (IsE (ch)) {
 					if (is_real)
 						throw new ILTokenizingException (reader.Location, num_builder.ToString ());
 
@@ -72,8 +72,8 @@ namespace Mono.ILAsm {
 				}
 				if (ch == '.')
 					dec_found = true;
-				if (!is_hex (peek) && !(peek == '.' && !dec_found) && !is_e (peek) &&
-					!(is_sign (peek) && is_real))
+				if (!IsHex (peek) && !(peek == '.' && !dec_found) && !IsE (peek) &&
+					!(IsSign (peek) && is_real))
 					break;
 			} while (ch != -1);
 
@@ -151,7 +151,7 @@ namespace Mono.ILAsm {
 				peek = reader.Peek ();
 				num_builder.Append ((char) ch);
 
-				if (!is_hex ((char) peek))
+				if (!IsHex ((char) peek))
 					break;
 
 				if (num_builder.Length == 32)

@@ -43,9 +43,9 @@ namespace Mono.ILAsm {
 			var read = DoRead ();
 			
 			if (read == '\n')
-				Location.NewLine ();
+				Location = Location.NewLine ();
 			else
-				Location.NextColumn ();
+				Location = Location.NextColumn ();
 			
 			return read;
 		}
@@ -60,9 +60,9 @@ namespace Mono.ILAsm {
 			putback_stack.Push (c);
 
 			if ('\n' == c)
-				Location.PreviousLine ();
+				Location = Location.PreviousLine ();
 
-			Location.PreviousColumn ();
+			Location = Location.PreviousColumn ();
 		}
 
 		public void Unread (char[] chars)
@@ -103,16 +103,13 @@ namespace Mono.ILAsm {
 
 		public void MarkLocation ()
 		{
-			if (marked_location == Location.Unknown)
-				marked_location = new Location (Location);
-			else
-				marked_location.CopyFrom (Location);
+			marked_location = new Location (Location);
 		}
 
 		public void RestoreLocation ()
 		{
 			if (marked_location != Location.Unknown)
-				Location.CopyFrom (marked_location);
+				Location = new Location (marked_location);
 		}
 	}
 }

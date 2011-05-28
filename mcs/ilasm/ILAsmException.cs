@@ -64,8 +64,8 @@ namespace Mono.ILAsm {
 		{
 			var location_str = string.Empty;
 			if (Location != null)
-				location_str = FilePath + ":" + Location.line + "," +
-					Location.column + ": ";
+				location_str = FilePath + ":" + Location.Line + "," +
+					Location.Column + ": ";
 
 			return string.Format ("{0}Error IL{1}: {2}",
 				location_str, ((int) Error).ToString ("0000"), Message);
