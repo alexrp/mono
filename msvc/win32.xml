@@ -1797,12 +1797,14 @@
 	<Assembly name="ilasm" destination="{destdir}\lib\mono\2.0\ilasm.exe">
 		<OutputType>exe</OutputType>
 		<References>
-		<Reference>Mono.CompilerServices.SymbolWriter</Reference>
+		<Reference>Mono.Cecil</Reference>
+		<Reference>Mono.Cecil.Mdb</Reference>
 		<Reference>Mono.Security</Reference>
 		</References>
 		<SourcePath>{sourcedir}\mono\mcs\ilasm</SourcePath>
 		<NoConfig>false</NoConfig>
-		<DefineConstants>NET_1_1,NET_2_0</DefineConstants>
+		<DefineConstants>NET_2_0</DefineConstants>
+		<KeyFile>{sourcedir}\mono\mcs\class\mono.snk</KeyFile>
 		<Debug>true</Debug>
 		<Sources>
 			<Source>ILParser.cs</Source>
