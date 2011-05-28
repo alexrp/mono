@@ -96,7 +96,6 @@ static const AssemblyVersionMap framework_assemblies [] = {
 	{"Mono.Xml.Ext", 0},
 	{"Novell.Directory.Ldap", 0},
 	{"Npgsql", 0},
-	{"PEAPI", 0},
 	{"System", 0},
 	{"System.ComponentModel.DataAnnotations", 2},
 	{"System.Configuration", 0},

@@ -927,18 +927,6 @@
 			<Source type="list">System.Design.dll.sources</Source>
 		</Sources>
 	</Assembly>
-	<Assembly name="PEAPI" destination="{destdir}\lib\mono\2.0\PEAPI.dll">
-		<References>
-			<Reference>mscorlib</Reference>
-			<Reference>System</Reference>
-		</References>
-		<OutputType>library</OutputType>
-		<DefineConstants>NET_1_1;NET_2_0</DefineConstants>
-		<SourcePath>{sourcedir}\mono\mcs\class\PEAPI\</SourcePath>
-		<Sources>
-			<Source type="list">PEAPI.dll.sources</Source>
-		</Sources>
-	</Assembly>
 	<Assembly name="Npgsql" destination="{destdir}\lib\mono\2.0\Npgsql.dll">
 		<References>
 			<Reference>mscorlib</Reference>
@@ -1632,7 +1620,6 @@
 	<Sign assembly="{destdir}\lib\mono\2.0\Microsoft.VisualC.dll" key="{sourcedir}\mono\mcs\class\mono.snk" />
 	<Sign assembly="{destdir}\lib\mono\2.0\Cscompmgd.dll" key="{sourcedir}\mono\mcs\class\mono.snk" />
 	<Sign assembly="{destdir}\lib\mono\2.0\System.Design.dll" key="{sourcedir}\mono\mcs\class\mono.snk" />
-	<Sign assembly="{destdir}\lib\mono\2.0\PEAPI.dll" key="{sourcedir}\mono\mcs\class\mono.snk" />
 	<Sign assembly="{destdir}\lib\mono\2.0\Npgsql.dll" key="{sourcedir}\mono\mcs\class\Npgsql\Npgsql\Npgsql.snk" />
 	<Sign assembly="{destdir}\lib\mono\2.0\ICSharpCode.SharpZipLib.dll" key="{sourcedir}\mono\mcs\class\ICSharpCode.SharpZipLib\SharpZipLib.key" />
 	<Sign assembly="{destdir}\lib\mono\2.0\Commons.Xml.Relaxng.dll" key="{sourcedir}\mono\mcs\class\mono.snk" />
@@ -1714,7 +1701,6 @@
 	<Gac>{destdir}\lib\mono\2.0\Microsoft.VisualC.dll</Gac>
 	<Gac>{destdir}\lib\mono\2.0\Cscompmgd.dll</Gac>
 	<Gac>{destdir}\lib\mono\2.0\System.Design.dll</Gac>
-	<Gac>{destdir}\lib\mono\2.0\PEAPI.dll</Gac>
 	<Gac>{destdir}\lib\mono\2.0\Npgsql.dll</Gac>
 	<Gac>{destdir}\lib\mono\2.0\ICSharpCode.SharpZipLib.dll</Gac>
 	<Gac>{destdir}\lib\mono\2.0\Commons.Xml.Relaxng.dll</Gac>
@@ -1811,7 +1797,6 @@
 	<Assembly name="ilasm" destination="{destdir}\lib\mono\2.0\ilasm.exe">
 		<OutputType>exe</OutputType>
 		<References>
-			<Reference>PEAPI</Reference>
 		<Reference>Mono.CompilerServices.SymbolWriter</Reference>
 		<Reference>Mono.Security</Reference>
 		</References>

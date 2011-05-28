@@ -285,8 +285,6 @@ static gboolean ignore_frame (MonoMethod *method)
 			return TRUE;
 		else if (strncmp (klass->image->assembly_name, "System.", 7) == 0)
 			return TRUE;
-		else if (strcmp (klass->image->assembly_name, "PEAPI") == 0)
-			return TRUE;
 	}
 
 	return FALSE;

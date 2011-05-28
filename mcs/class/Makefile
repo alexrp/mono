@@ -62,7 +62,6 @@ common_dirs := \
 	Microsoft.VisualC		\
 	Cscompmgd			\
 	System.Design			\
-	PEAPI				\
 	Npgsql				\
 	Commons.Xml.Relaxng		\
 	Novell.Directory.Ldap		\

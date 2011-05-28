@@ -57,7 +57,6 @@
     <MSBuild Projects="class\Microsoft.VisualC\Microsoft.VisualC.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
     <MSBuild Projects="class\Cscompmgd\Cscompmgd.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
     <MSBuild Projects="class\System.Design\System.Design.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
-    <MSBuild Projects="class\PEAPI\PEAPI.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
     <MSBuild Projects="class\Npgsql\Npgsql.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
     <MSBuild Projects="class\ICSharpCode.SharpZipLib\ICSharpCode.SharpZipLib.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>
     <MSBuild Projects="class\Commons.Xml.Relaxng\Commons.Xml.Relaxng.csproj" Targets="Build" Properties="Configuration=net_2_0;Platform=AnyCPU"/>

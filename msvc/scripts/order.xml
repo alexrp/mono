@@ -840,16 +840,6 @@
       <fx_version>2.0</fx_version>
       <response>./../../build/deps/System.Design_test_net_2_0.dll.response</response>
     </project>
-    <project dir="class/PEAPI" library="PEAPI-net_2_0">
-      <boot>false</boot>
-      <mcs>MONO_PATH=./../../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../../class/lib/build/mcs.exe</mcs>
-      <flags>/codepage:65001 -optimize -d:NET_1_1 -d:NET_2_0 -nowarn:1699 -nostdlib -lib:./../../class/lib/net_2_0 -r:mscorlib.dll -debug /noconfig /r:mscorlib.dll /r:System.dll -nowarn:414,618</flags>
-      <output>PEAPI.dll</output>
-      <built_sources></built_sources>
-      <library_output>./../../class/lib/net_2_0/PEAPI.dll</library_output>
-      <fx_version>2.0</fx_version>
-      <response>PEAPI.dll.sources</response>
-    </project>
     <project dir="class/Npgsql" library="Npgsql-net_2_0">
       <boot>false</boot>
       <mcs>MONO_PATH=./../../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../../class/lib/build/mcs.exe</mcs>
@@ -1842,9 +1832,15 @@
     </project>
     <project dir="ilasm" library="ilasm-net_2_0">
       <boot></boot>
+<<<<<<< HEAD
       <mcs>MONO_PATH=./../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../class/lib/build/mcs.exe</mcs>
       <flags>/codepage:65001 /lib:../class/lib/net_2_0 /r:../class/lib/net_2_0/PEAPI.dll /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll -optimize -d:NET_1_1 -d:NET_2_0 -nowarn:1699 -nostdlib -lib:./../class/lib/net_2_0 -r:mscorlib.dll -debug /noconfig</flags>
       <output>ilasm.exe</output>
+=======
+      <mcs>MONO_PATH=./../class/lib/build: /cvs/mono/runtime/mono-wrapper ./../class/lib/build/mcs.exe</mcs>
+      <flags>/codepage:65001 /lib:../class/lib/net_2_0 /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll -optimize -d:NET_1_1 -d:NET_2_0 -nowarn:1699 -nostdlib -lib:./../class/lib/net_2_0 -r:mscorlib.dll -debug /noconfig</flags>
+      <output>./../class/lib/net_2_0/ilasm.exe</output>
+>>>>>>> Removing PEAPI.
       <built_sources></built_sources>
       <library_output>./../class/lib/net_2_0/ilasm.exe</library_output>
       <fx_version>2.0</fx_version>
@@ -2730,6 +2726,7 @@
       <fx_version>4.0</fx_version>
       <response>System.Design.dll.sources</response>
     </project>
+<<<<<<< HEAD
     <project dir="class/System.Design" library="System.Design-tests-net_4_0">
       <boot>false</boot>
       <mcs>MONO_PATH=./../../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../../class/lib/build/mcs.exe</mcs>
@@ -2750,6 +2747,8 @@
       <fx_version>4.0</fx_version>
       <response>PEAPI.dll.sources</response>
     </project>
+=======
+>>>>>>> Removing PEAPI.
     <project dir="class/Npgsql" library="Npgsql-net_4_0">
       <boot>false</boot>
       <mcs>MONO_PATH=./../../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../../class/lib/build/mcs.exe</mcs>
@@ -3860,11 +3859,19 @@
       <fx_version>mcs.exe.sources</fx_version>
       <response></response>
     </project>
+<<<<<<< HEAD
     <project dir="class/corlib" library="corlib-net_4_5">
       <boot>true</boot>
       <mcs>MONO_PATH=./../../class/lib/build: /home/marek/git/mono/runtime/mono-wrapper ./../../class/lib/build/mcs.exe</mcs>
       <flags>/codepage:65001 -unsafe -nostdlib -nowarn:612,618 -d:INSIDE_CORLIB -d:LIBC -optimize -d:NET_1_1 -d:NET_2_0 -d:NET_3_0 -d:NET_3_5 -d:NET_4_0 -d:NET_4_5 -nowarn:1699 -nostdlib -lib:./../../class/lib/net_4_5 -debug /noconfig -resource:resources/collation.core.bin -resource:resources/collation.tailoring.bin -resource:resources/collation.cjkCHS.bin -resource:resources/collation.cjkCHT.bin -resource:resources/collation.cjkJA.bin -resource:resources/collation.cjkKO.bin -resource:resources/collation.cjkKOlv2.bin --runtime:v4</flags>
       <output>mscorlib.dll</output>
+=======
+    <project dir="ilasm" library="ilasm-net_4_0">
+      <boot></boot>
+      <mcs>MONO_PATH=./../class/lib/build: /cvs/mono/runtime/mono-wrapper ./../class/lib/build/mcs.exe</mcs>
+      <flags>/codepage:65001 /lib:../class/lib/net_4_0 /r:Mono.CompilerServices.SymbolWriter.dll /r:Mono.Security.dll -optimize -d:NET_1_1 -d:NET_2_0 -d:NET_3_0 -d:NET_3_5 -d:NET_4_0 -nowarn:1699 -nostdlib -lib:./../class/lib/net_4_0 -r:mscorlib.dll -debug /noconfig</flags>
+      <output>./../class/lib/net_4_0/ilasm.exe</output>
+>>>>>>> Removing PEAPI.
       <built_sources></built_sources>
       <library_output>./../../class/lib/net_4_5/tmp/mscorlib.dll</library_output>
       <fx_version>4.5</fx_version>

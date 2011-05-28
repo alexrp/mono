@@ -1078,7 +1078,6 @@ Requires:       mono-winforms == %version-%release
 Provides:       mono-biarchcompat
 Obsoletes:      mono-biarchcompat
 %endif
-Provides:       mono(PEAPI) = 1.0.5000.0
 Provides:       mono(resgen) = 1.0.5000.0
 
 %description -n mono-devel
@@ -1185,7 +1184,6 @@ Mono development tools.
 %_prefix/lib/mono/2.0/Microsoft.Common.tasks
 %_prefix/lib/mono/2.0/Microsoft.VisualBasic.targets
 %_prefix/lib/mono/2.0/Mono.Debugger.Soft.dll
-%_prefix/lib/mono/2.0/PEAPI.dll
 %_prefix/lib/mono/2.0/genxs.exe*
 %_prefix/lib/mono/2.0/ilasm.exe*
 %_prefix/lib/mono/2.0/mkbundle.exe*
@@ -1218,7 +1216,7 @@ Mono development tools.
 %_prefix/lib/mono/4.0/Microsoft.Common.tasks
 %_prefix/lib/mono/4.0/Microsoft.VisualBasic.targets
 %_prefix/lib/mono/4.0/Mono.Debugger.Soft.dll
-%_prefix/lib/mono/4.0/PEAPI.dll
+%_prefix/lib/mono/4.0/Mono.CodeContracts.dll
 %_prefix/lib/mono/4.5/Microsoft.Build.dll
 %_prefix/lib/mono/4.5/Microsoft.Build.Engine.dll
 %_prefix/lib/mono/4.5/Microsoft.Build.Framework.dll
@@ -1226,7 +1224,6 @@ Mono development tools.
 %_prefix/lib/mono/4.5/Microsoft.Build.Utilities.v4.0.dll
 %_prefix/lib/mono/4.5/Mono.Debugger.Soft.dll
 %_prefix/lib/mono/4.5/Mono.CodeContracts.dll
-%_prefix/lib/mono/4.5/PEAPI.dll
 %_prefix/lib/mono/4.5/caspol.exe*
 %_prefix/lib/mono/4.5/cccheck.exe*
 %_prefix/lib/mono/4.5/ccrewrite.exe*
@@ -1267,7 +1264,6 @@ Mono development tools.
 %_prefix/lib/mono/gac/Microsoft.Build.Utilities.v4.0
 %_prefix/lib/mono/gac/Mono.CodeContracts
 %_prefix/lib/mono/gac/Mono.Debugger.Soft
-%_prefix/lib/mono/gac/PEAPI
 %_prefix/lib/mono/xbuild
 %_prefix/lib/mono/xbuild-frameworks
 
