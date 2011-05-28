@@ -148,25 +148,25 @@ namespace Mono.ILAsm.Tests {
 				process.StartInfo.Arguments = arguments;
 				process.Start ();
 				process.WaitForExit ();
-				return new AssemblerOutput (output_file_name, dll, (AssemblerResult) process.ExitCode);
+				return new AssemblerOutput (output_file_name, dll, (ExitCode) process.ExitCode);
 			}
 		}
 		
 		protected sealed class AssemblerOutput {
-			public AssemblerOutput (string fileName, bool dll, AssemblerResult result)
+			public AssemblerOutput (string fileName, bool dll, ExitCode result)
 			{
 				Result = result;
 				file_name = fileName;
 				target_dll = dll;
 			}
 			
-			public AssemblerResult Result { get; private set; }
+			public ExitCode Result { get; private set; }
 			
 			private readonly string file_name;
 			
 			private readonly bool target_dll;
 			
-			public AssemblerOutput Expect (AssemblerResult result)
+			public AssemblerOutput Expect (ExitCode result)
 			{
 				Assert.AreEqual (result, Result);
 				return this;
@@ -199,12 +199,6 @@ namespace Mono.ILAsm.Tests {
 			Slash = 0,
 			Dash = 1,
 			DoubleDash = 2,
-		}
-		
-		protected enum AssemblerResult : byte {
-			Success = 0,
-			Error = 1,
-			Abort = 2,
 		}
 		
 		protected Assembler OpenILAsm ()

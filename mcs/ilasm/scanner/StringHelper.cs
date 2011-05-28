@@ -36,7 +36,7 @@ namespace Mono.ILAsm {
 		public override string Build ()
 		{
 			if (TokenId == Token.UNKNOWN)
-				return String.Empty;
+				return string.Empty;
 			
 			var ch = 0;
 			var reader = host.Reader;
@@ -45,6 +45,7 @@ namespace Mono.ILAsm {
 			if (TokenId == Token.SQSTRING || TokenId == Token.QSTRING) {
 				var term = (TokenId == Token.SQSTRING) ? '\'' : '"';
 				reader.Read (); // skip quote
+				
 				for (ch = reader.Read (); ch != -1; ch = reader.Read ()) {
 					if (ch == term)
 						break;
@@ -93,9 +94,11 @@ namespace Mono.ILAsm {
 				var octal = new StringBuilder ();
 				octal.Append ((char) ch);
 				var possible_octal_char = reader.Peek ();
+				
 				if (possible_octal_char >= '0' && possible_octal_char <= '7') {
 					octal.Append ((char) reader.Read ());
 					possible_octal_char = reader.Peek ();
+					
 					if (possible_octal_char >= '0' && possible_octal_char <= '7')
 						octal.Append ((char) reader.Read ());
 				}

@@ -12,14 +12,14 @@ using System.Runtime.Serialization;
 
 namespace Mono.ILAsm {
 	[Serializable]
-	internal class InternalErrorException : ILAsmException {
+	internal class InternalErrorException : Exception {
 		public InternalErrorException (string message)
-			: base (Error.InternalError, message)
+			: base (message)
 		{
 		}
 
 		public InternalErrorException (string message, Exception inner)
-			: base (Error.InternalError, message, inner)
+			: base (message, inner)
 		{
 		}
 

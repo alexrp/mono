@@ -30,15 +30,15 @@ namespace Mono.ILAsm {
 		private bool key_container;
 		private string key_name;
 
-		public Driver (string[] args)
+		public ExitCode? Run (string[] args)
 		{
-			ParseArgs (args);
-		}
-
-		public bool Run ()
-		{
-			if (il_file_list.Count == 0)
-				Usage (false, true);
+			if (!ParseArgs (args))
+				return null;
+			
+			if (il_file_list.Count == 0) {
+				Usage (false);
+				return ExitCode.Error;
+			}
 
 			if (output_file == null)
 				output_file = CreateOutputFileName (il_file_list, target);
@@ -48,65 +48,68 @@ namespace Mono.ILAsm {
 			
 			try {
 				foreach (var file_path in il_file_list) {
-					Report.FilePath = file_path;
-					ProcessFile (codegen, file_path);
+					var fileResult = ProcessFile (codegen, file_path);
+					if (fileResult != ExitCode.Success)
+						return fileResult;
 				}
 				
 				if (scan_only)
-					return true;
+					return 0;
 				if (target != Target.Dll && !codegen.HasEntryPoint)
-					Report.Error (Error.NoEntryPoint, "No entry point found.");
+					Report.WriteError (Error.NoEntryPoint, "No entry point found.");
 				
 				if (key_name != null) {
 					sn = LoadKey (key_container, key_name);
 					// this overrides any attribute or .publickey directive in the source
-					codegen.CurrentModule.Assembly.Name.PublicKey =
-						sn.PublicKey;
+					codegen.CurrentModule.Assembly.Name.PublicKey = sn.PublicKey;
 				}
-
-				try {
-					codegen.Write (output_file);
-				} catch (Exception) {
-					File.Delete (output_file);
-					throw;
-				}
+				
+				codegen.Write (output_file);
+				
+				if (sn != null)
+					try {
+						Report.WriteMessage ("Signing assembly with the specified strong name key pair...");
+						Sign (sn, output_file);
+					} catch (Exception ex) {
+						Report.WriteError (Error.SigningFailed, "Could not sign assembly: {0}",
+							ex.Message);
+						return ExitCode.Error;
+					}
 			} catch (Exception ex) {
-				WriteError ("{0}{1}{2}", ex.ToString (), Environment.NewLine,
-					ex.StackTrace);
-				return false;
+				// An internal error has occurred...
+				WriteError ("{0}{1}{2}", ex.ToString (), Environment.NewLine, ex.StackTrace);
+				WriteError ("***** FAILURE *****");
+				return ExitCode.Error;
 			}
-			
-			if (sn != null)
-				try {
-					Report.Message ("Signing assembly with the specified strong name key pair...");
-					Sign (sn, output_file);
-				} catch (Exception ex) {
-					WriteError ("Could not sign assembly: {0}", ex.Message);
-					return false;
-				}
 
-			return true;
+			return ExitCode.Success;
 		}
 
-		private void ProcessFile (CodeGenerator codegen, string filePath)
+		private ExitCode ProcessFile (CodeGenerator codegen, string filePath)
 		{
 			if (!File.Exists (filePath)) {
-				Report.Error (Error.FileNotFound, "File does not exist: {0}", filePath);
-				Environment.Exit (2);
+				Report.WriteError (Error.FileNotFound, "File does not exist: {0}", filePath);
+				return ExitCode.Abort;
 			}
 			
-			Report.AssembleFile (filePath, target.ToString ().ToUpper (), output_file);
+			Report.WriteMessage ("Assembling {0} to {1} -> {2}...",
+				filePath, target.ToString ().ToUpper (), output_file);
+			Report.WriteMessage (string.Empty);
+			
 			var reader = File.OpenText (filePath);
 			var scanner = new ILTokenizer (reader);
+			
+			Report.FilePath = filePath;
+			Report.Tokenizer = scanner;
 
 			if (show_tokens)
-				scanner.NewTokenEvent += new NewTokenEvent (ShowToken);
+				scanner.NewToken += ShowToken;
 
 			if (scan_only) {
 				ILToken tok;
 				while ((tok = scanner.NextToken) != ILToken.EOF)
 					Console.WriteLine (tok);
-				return;
+				return ExitCode.Success;
 			}
 
 			var parser = new ILParser (codegen, scanner);
@@ -114,20 +117,19 @@ namespace Mono.ILAsm {
 				parser.yyparse (new ScannerAdapter (scanner),
 					show_parser ? new yydebug.yyDebugSimple () : null);
 			} catch (ILTokenizingException ilte) {
-				Report.Error (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
+				Report.WriteError (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
 			} catch (yyParser.yyException ye) {
-				Report.Error (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
-			} catch (ILAsmException ie) {
-				// We update it here, because manually specifying this
-				// everywhere in the parser gets tiresome.
-				ie.Location = scanner.Reader.Location;
+				Report.WriteError (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
+			} catch (ILAsmException) {
 				throw;
 			} catch (Exception ex) {
-				throw new ILAsmException (Error.InternalError, ex.Message, scanner.Reader.Location, filePath, ex);
+				throw new InternalErrorException (ex.Message, ex);
 			}
+			
+			return ExitCode.Success;
 		}
 
-		private void ParseArgs (string[] args)
+		private bool ParseArgs (string[] args)
 		{
 			string command_arg;
 			foreach (var str in args) {
@@ -139,6 +141,8 @@ namespace Mono.ILAsm {
 				var cmd = GetCommand (str, out command_arg);
 				switch (cmd) {
 				case "out":
+				case "outp":
+				case "outpu":
 				case "output":	
 					output_file = command_arg;
 					break;
@@ -148,17 +152,23 @@ namespace Mono.ILAsm {
 				case "dll":
 					target = Target.Dll;
 					break;
+				case "qui":
+				case "quie":
 				case "quiet":
 					Report.Quiet = true;
 					break;
-				case "debug":
 				case "deb":
+				case "debu":
+				case "debug":
 					// TODO: support impl and opt
 					debugging_info = true;
 					break;
-				// Stubs to stay commandline compatible with MS
+				case "nol":
+				case "nolo":
+				case "nolog":
 				case "nologo":
-					break;
+					break; // We don't print a logo...
+				// Stubs to stay command line compatible with MS.
 				case "noautoinherit":
 				case "nocorstub":
 				case "stripreloc":
@@ -180,7 +190,7 @@ namespace Mono.ILAsm {
 				case "itanium":
 				case "x64":
 				case "pe64":
-					Report.Warning ("Unimplemented command line option: {0}", cmd);
+					Report.WriteWarning ("Unimplemented command line option: {0}", cmd);
 					break;
 				case "key":
 					if (command_arg.Length > 0)
@@ -193,11 +203,11 @@ namespace Mono.ILAsm {
 
 					break;
 				case "?":
-					Usage (false, false);
-					break;
+					Usage (false);
+					return false;
 				case "mono_?":
-					Usage (true, false);
-					break;
+					Usage (true);
+					return false;
 				case "mono_scanonly":
 					scan_only = true;
 					break;
@@ -212,13 +222,13 @@ namespace Mono.ILAsm {
 						break;
 					
 					About ();
-					break;
+					return false;
 				case "-version":
 					if (str [0] != '-')
 						break;
 
 					Version ();
-					break;
+					return false;
 				default:
 					if (str [0] == '-')
 						break;
@@ -227,6 +237,8 @@ namespace Mono.ILAsm {
 					break;
 				}
 			}
+			
+			return true;
 		}
 		
 		private static string CreateOutputFileName (IList<string> ilFileList, Target target)
@@ -244,8 +256,7 @@ namespace Mono.ILAsm {
 		private static void WriteError (string message, params object[] args)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
-			Console.Error.WriteLine (string.Format (message, args));
-			Console.Error.WriteLine ("***** FAILURE *****");
+			Report.ErrorOutput.WriteLine (string.Format (message, args));
 			Console.ResetColor ();
 		}
 
@@ -281,7 +292,7 @@ namespace Mono.ILAsm {
 			return sn.Sign (fileName);
 		}
 
-		public static void ShowToken (object sender, NewTokenEventArgs args)
+		private static void ShowToken (object sender, NewTokenEventArgs args)
 		{
 			Console.WriteLine ("Token: {0}", args.Token);
 		}
@@ -299,7 +310,7 @@ namespace Mono.ILAsm {
 			return command.ToLower ();
 		}
 
-		private static void Usage (bool dev, bool error)
+		private static void Usage (bool dev)
 		{
 			var n = Environment.NewLine;
 			
@@ -324,24 +335,18 @@ namespace Mono.ILAsm {
 					"   /mono_showtokens    Show tokens as they're scanned.{0}" +
 					"   /mono_showparser    Show parser debug output.{0}",
 					n);
-			
-			Environment.Exit (error ? 1 : 0);
 		}
 
 		private static void About ()
 		{
 			Console.WriteLine ("For more information on Mono, visit the project Web site{0}" +
-				"   http://www.go-mono.com{0}", Environment.NewLine);
-			
-			Environment.Exit (0);
+				"   http://www.go-mono.com", Environment.NewLine);
 		}
 
 		private static void Version ()
 		{
 			var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
 			Console.WriteLine ("Mono IL Assembler version {0}", version);
-			
-			Environment.Exit (0);
 		}
 	}
 }

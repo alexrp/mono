@@ -1,5 +1,5 @@
 // 
-// ModuleTests.cs
+// ExitCode.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,31 +24,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ModuleTests : AssemblerTester {
-		[Test]
-		public void TestModuleDirective ()
-		{
-			OpenILAsm ()
-				.Input ("module-001.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test001");
-		}
-		
-		[Test]
-		public void TestMultipleModuleDirectives ()
-		{
-			OpenILAsm ()
-				.Input ("module-002.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.Name == "test002");
-		}
+namespace Mono.ILAsm {
+	public enum ExitCode : byte {
+		Success = 0,
+		Error = 1,
+		Abort = 2,
 	}
 }

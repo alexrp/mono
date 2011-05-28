@@ -2763,7 +2763,8 @@ module_head		: D_MODULE
 					codegen.HasModuleDirective = true;
 				}
 				else if ((string) $2 != codegen.CurrentModule.Name)
-					Report.Warning (tokenizer.Location, ".module directive with different name ignored.");
+					Report.WriteWarning (tokenizer.Reader.Location,
+						".module directive with different name ignored.");
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
@@ -2806,7 +2807,7 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
 				if (codegen.HasAssemblyDirective)
-					Report.Error(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
+					Report.WriteError(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
 
 				var attr = (AssemblyAttributes) $2;
 				if ((attr & AssemblyAttributes.Retargetable) != 0)

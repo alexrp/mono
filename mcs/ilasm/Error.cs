@@ -33,5 +33,6 @@ namespace Mono.ILAsm {
 		NoEntryPoint = 3,
 		MultipleEntryPoints = 4,
 		MultipleAssemblyDirectives = 5,
+		SigningFailed = 6,
 	}
 }

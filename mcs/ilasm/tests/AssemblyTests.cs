@@ -37,7 +37,7 @@ namespace Mono.ILAsm.Tests {
 			OpenILAsm ()
 				.Input ("assembly-001.il")
 				.Run ()
-				.Expect (AssemblerResult.Success)
+				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.Assembly.Name.Name == "assembly001");
 		}
@@ -48,7 +48,7 @@ namespace Mono.ILAsm.Tests {
 			OpenILAsm ()
 				.Input ("assembly-002.il")
 				.Run ()
-				.Expect (AssemblerResult.Success)
+				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.Assembly.Name.PublicKey.ListEquals (new byte[] {
 					0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
@@ -65,7 +65,7 @@ namespace Mono.ILAsm.Tests {
 			OpenILAsm ()
 				.Input ("assembly-003.il")
 				.Run ()
-				.Expect (AssemblerResult.Success)
+				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.Assembly.Name.Culture == "en-US");
 		}
@@ -77,7 +77,7 @@ namespace Mono.ILAsm.Tests {
 				.Input ("assembly-004.il")
 				.ExpectError ()
 				.Run ()
-				.Expect (AssemblerResult.Error);
+				.Expect (ExitCode.Error);
 		}
 	}
 }

@@ -32,19 +32,19 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestUsage ()
 		{
-			OpenILAsm ().Argument ("?").Run ().Expect (AssemblerResult.Success);
+			OpenILAsm ().Argument ("?").Run ().Expect (ExitCode.Success);
 		}
 		
 		[Test]
 		public void TestAbout ()
 		{
-			OpenILAsm ().Argument ("about", ArgumentType.DoubleDash).Run ().Expect (AssemblerResult.Success);
+			OpenILAsm ().Argument ("about", ArgumentType.DoubleDash).Run ().Expect (ExitCode.Success);
 		}
 		
 		[Test]
 		public void TestVersion ()
 		{
-			OpenILAsm ().Argument ("version", ArgumentType.DoubleDash).Run ().Expect (AssemblerResult.Success);
+			OpenILAsm ().Argument ("version", ArgumentType.DoubleDash).Run ().Expect (ExitCode.Success);
 		}
 	}
 }

@@ -76,6 +76,7 @@
     <Compile Include="Target.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="ExitCode.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

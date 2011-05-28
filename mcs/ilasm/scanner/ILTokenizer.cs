@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using System.Globalization;
 
 namespace Mono.ILAsm {
-	public delegate void NewTokenEvent (object sender,NewTokenEventArgs args);
-
 	public class NewTokenEventArgs : EventArgs {
 		public ILToken Token { get; private set; }
 
@@ -21,32 +19,21 @@ namespace Mono.ILAsm {
 	public class ILTokenizer : ITokenStream {
 		private const string id_chars = "_$@?.`";
 		private ILToken last_token;
-		private readonly ILReader reader;
 		private readonly StringHelper str_builder;
 		private readonly NumberHelper num_builder;
 		internal bool in_byte_array;
 
-		public event NewTokenEvent NewTokenEvent;
+		public event EventHandler<NewTokenEventArgs> NewToken;
 
 		public ILTokenizer (StreamReader reader)
 		{
-			this.reader = new ILReader (reader);
-			this.str_builder = new StringHelper (this);
-			this.num_builder = new NumberHelper (this);
-			this.last_token = ILToken.Invalid.Clone () as ILToken;
+			Reader = new ILReader (reader);
+			str_builder = new StringHelper (this);
+			num_builder = new NumberHelper (this);
+			last_token = ILToken.Invalid.Clone () as ILToken;
 		}
 
-		public ILReader Reader {
-			get {
-				return reader;
-			}
-		}
-
-		public Location Location {
-			get {
-				return reader.Location;
-			}
-		}
+		public ILReader Reader { get; private set; }
 
 		public ILToken GetNextToken ()
 		{
@@ -57,20 +44,20 @@ namespace Mono.ILAsm {
 			int next;
 			var res = ILToken.EOF.Clone () as ILToken;
 			
-			while ((ch = reader.Read ()) != -1) {
+			while ((ch = Reader.Read ()) != -1) {
 				// Comments
 				if (ch == '/') {
-					next = reader.Peek ();
+					next = Reader.Peek ();
 					if (next == '/') {
 						// double-slash comment, skip to the end of the line.
-						for (reader.Read (); next != -1 && next != '\n'; next = reader.Read ())
+						for (Reader.Read (); next != -1 && next != '\n'; next = Reader.Read ())
 							;
 						continue;
 					} else if (next == '*') {
-						reader.Read ();
-						for (next = reader.Read (); next != -1; next = reader.Read ())
-							if (next == '*' && reader.Peek () == '/') {
-								reader.Read ();
+						Reader.Read ();
+						for (next = Reader.Read (); next != -1; next = Reader.Read ())
+							if (next == '*' && Reader.Peek () == '/') {
+								Reader.Read ();
 								goto end;
 							}
 						
@@ -93,42 +80,42 @@ namespace Mono.ILAsm {
 					}
 
 					if (!is_hex (ch))
-						throw new ILTokenizingException (reader.Location, ((char) ch).ToString ());
+						throw new ILTokenizingException (Reader.Location, ((char) ch).ToString ());
 					
 					hx += (char) ch;
-					if (is_hex (reader.Peek ()))
-						hx += (char) reader.Read ();
-					else if (!char.IsWhiteSpace ((char) reader.Peek ()) && reader.Peek () != ')')
-						throw new ILTokenizingException (reader.Location, ((char) reader.Peek ()).ToString ());
+					if (is_hex (Reader.Peek ()))
+						hx += (char) Reader.Read ();
+					else if (!char.IsWhiteSpace ((char) Reader.Peek ()) && Reader.Peek () != ')')
+						throw new ILTokenizingException (Reader.Location, ((char) Reader.Peek ()).ToString ());
 					
 					res.token = Token.HEXBYTE;
 					res.val = byte.Parse (hx, NumberStyles.HexNumber);
 
-					while (char.IsWhiteSpace ((char) reader.Peek ()))
-						reader.Read ();
+					while (char.IsWhiteSpace ((char) Reader.Peek ()))
+						Reader.Read ();
 					
 					break;
 				}
 
 				// Ellipsis
-				if (ch == '.' && reader.Peek () == '.') {
-					reader.MarkLocation ();
-					var ch2 = reader.Read ();
-					if (reader.Peek () == '.') {
+				if (ch == '.' && Reader.Peek () == '.') {
+					Reader.MarkLocation ();
+					var ch2 = Reader.Read ();
+					if (Reader.Peek () == '.') {
 						res = ILToken.Ellipsis;
-						reader.Read ();
+						Reader.Read ();
 						break;
 					}
 					
-					reader.Unread (ch2);
-					reader.RestoreLocation ();
+					Reader.Unread (ch2);
+					Reader.RestoreLocation ();
 				}
 
 				if (ch == '.' || ch == '#') {
-					next = reader.Peek ();
+					next = Reader.Peek ();
 					if (ch == '.' && char.IsDigit ((char) next)) {
 						num_builder.Start (ch);
-						reader.Unread (ch);
+						Reader.Unread (ch);
 						num_builder.Build ();
 						
 						if (num_builder.ResultToken != ILToken.Invalid) {
@@ -137,14 +124,14 @@ namespace Mono.ILAsm {
 						}
 					} else {
 						if (str_builder.Start (next) && str_builder.TokenId == Token.ID) {
-							reader.MarkLocation ();
+							Reader.MarkLocation ();
 							var dir_body = str_builder.Build ();
 							var dir = new string ((char) ch, 1) + dir_body;
 							if (IsDirective (dir))
 								res = ILTables.Directives.TryGet (dir);
 							else {
-								reader.Unread (dir_body.ToCharArray ());
-								reader.RestoreLocation ();
+								Reader.Unread (dir_body.ToCharArray ());
+								Reader.RestoreLocation ();
 								res = ILToken.Dot;
 							}
 						} else
@@ -156,11 +143,11 @@ namespace Mono.ILAsm {
 
 				// Numbers && Hexbytes
 				if (num_builder.Start (ch))
-				if ((ch == '-') && !(char.IsDigit ((char) reader.Peek ()))) {
+				if (ch == '-' && !char.IsDigit ((char) Reader.Peek ())) {
 					res = ILToken.Dash;
 					break;
 				} else {
-					reader.Unread (ch);
+					Reader.Unread (ch);
 					num_builder.Build ();
 					if (num_builder.ResultToken != ILToken.Invalid) {
 						res.CopyFrom (num_builder.ResultToken);
@@ -171,8 +158,8 @@ namespace Mono.ILAsm {
 				// Punctuation
 				var punct = ILToken.GetPunctuation (ch);
 				if (punct != null) {
-					if (punct == ILToken.Colon && reader.Peek () == ':') {
-						reader.Read ();
+					if (punct == ILToken.Colon && Reader.Peek () == ':') {
+						Reader.Read ();
 						res = ILToken.DoubleColon;
 					} else
 						res = punct;
@@ -181,16 +168,16 @@ namespace Mono.ILAsm {
 
 				// ID | QSTRING | SQSTRING | INSTR_* | KEYWORD
 				if (str_builder.Start (ch)) {
-					reader.Unread (ch);
+					Reader.Unread (ch);
 					var val = str_builder.Build ();
 					
 					if (str_builder.TokenId == Token.ID) {
 						ILToken opCode;
-						next = reader.Peek ();
+						next = Reader.Peek ();
 						if (next == '.') {
-							reader.MarkLocation ();
-							reader.Read ();
-							next = reader.Peek ();
+							Reader.MarkLocation ();
+							Reader.Read ();
+							next = Reader.Peek ();
 							
 							if (IsIdChar ((char) next)) {
 								var opTail = BuildId ();
@@ -199,9 +186,9 @@ namespace Mono.ILAsm {
 
 								if (opCode == null) {
 									if (str_builder.TokenId != Token.ID) {
-										reader.Unread (opTail.ToCharArray ());
-										reader.Unread ('.');
-										reader.RestoreLocation ();
+										Reader.Unread (opTail.ToCharArray ());
+										Reader.Unread ('.');
+										Reader.RestoreLocation ();
 										res.val = val;
 									} else {
 										res.token = Token.COMP_NAME;
@@ -222,7 +209,7 @@ namespace Mono.ILAsm {
 								}
 								
 								// Let the parser handle the dot
-								reader.Unread ('.');
+								Reader.Unread ('.');
 							}
 						}
 						
@@ -304,14 +291,14 @@ namespace Mono.ILAsm {
 			int last;
 
 			last = -1;
-			while ((ch = reader.Read ()) != -1) {
+			while ((ch = Reader.Read ()) != -1) {
 				if (IsIdChar ((char) ch) || ch == '.')
 					idsb.Append ((char) ch);
 				else {
-					reader.Unread (ch);
+					Reader.Unread (ch);
 					// Never end an id on a DOT
 					if (last == '.') {
-						reader.Unread (last);
+						Reader.Unread (last);
 						idsb.Length -= 1;
 					}
 					
@@ -326,7 +313,7 @@ namespace Mono.ILAsm {
 
 		private void OnNewToken (ILToken token)
 		{
-			var evnt = NewTokenEvent;
+			var evnt = NewToken;
 			if (evnt != null)
 				evnt (this, new NewTokenEventArgs (token));
 		}

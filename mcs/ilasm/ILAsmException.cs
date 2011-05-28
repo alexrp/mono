@@ -15,7 +15,7 @@ namespace Mono.ILAsm {
 	public class ILAsmException : Exception {
 		public Error Error { get; private set; }
 		
-		public Location Location { get; set; }
+		public Location Location { get; private set; }
 
 		public string FilePath { get; private set; }
 
@@ -68,7 +68,7 @@ namespace Mono.ILAsm {
 					Location.column + ": ";
 
 			return string.Format ("{0}Error IL{1}: {2}",
-				location_str, Error.ToString ("0000"), Message);
+				location_str, ((int) Error).ToString ("0000"), Message);
 		}
 	}
 }

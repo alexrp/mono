@@ -2,6 +2,7 @@
 AssemblyInfo.cs
 Driver.cs
 Error.cs
+ExitCode.cs
 Extensions.cs
 ILAsmException.cs
 InternalErrorException.cs
