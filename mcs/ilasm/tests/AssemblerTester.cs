@@ -24,60 +24,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using Mono.Cecil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	public abstract class AssemblerTester {
 		protected sealed class Assembler {
-			private readonly Process process;
-			private string output_file_name;
-			private bool dll = true;
-			private string arguments = string.Empty;
-			private bool silence = true;
-			private bool expect_error;
+			readonly Driver driver;
+			readonly List<string> arguments = new List<string> ();
+			bool expect_error;
+			bool expect_warning;
 			
-			public Assembler (Process process)
+			public Assembler ()
 			{
-				this.process = process;
+				driver = new Driver ();
+				driver.Target = Target.Dll;
+				driver.Output = TextWriter.Null;
+				Report.Quiet = true;
 			}
 			
 			public Assembler Input (params string[] fileNames)
 			{
-				if (output_file_name == null) {
-					var name = fileNames [0];
-					var ext_idx = name.LastIndexOf ('.');
-					
-					if (ext_idx == -1)
-						ext_idx = name.Length;
-					
-					output_file_name = name.Substring (0, ext_idx);
-				}
-				
 				foreach (var file in fileNames)
-					arguments += "../../tests/" + file;
+					arguments.Add ("../../tests/" + file);
 				
 				return this;
 			}
 			
 			public Assembler Dll ()
 			{
-				dll = true;
+				driver.Target = Target.Dll;
 				return this;
 			}
 			
 			public Assembler Exe ()
 			{
-				dll = false;
+				driver.Target = Target.Exe;
 				return this;
 			}
 			
 			public Assembler Output (string fileName)
 			{
-				output_file_name = fileName;
-				arguments += string.Format (" /output:{0}", fileName);
+				driver.OutputFileName = fileName;
 				return this;
 			}
 			
@@ -96,7 +88,7 @@ namespace Mono.ILAsm.Tests {
 					break;
 				}
 				
-				arguments += " " + arg + argument;
+				arguments.Add (arg + argument);
 				return this;
 			}
 			
@@ -107,8 +99,7 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler Argument (string argument, ArgumentType type, string value)
 			{
-				Argument (argument, type);
-				arguments += ":" + value;
+				Argument (argument + ":" + value, type);
 				return this;
 			}
 			
@@ -119,54 +110,64 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler Mute ()
 			{
-				silence = true;
+				driver.Output = TextWriter.Null;
+				Report.Quiet = true;
+				
 				return this;
 			}
 			
 			public Assembler Unmute ()
 			{
-				silence = false;
+				driver.Output = Console.Out;
+				Report.Quiet = false;
+				
 				return this;
 			}
 			
-			public Assembler ExpectError ()
+			public Assembler ExpectError (Error error)
 			{
 				expect_error = true;
 				return this;
 			}
 			
+			public Assembler ExpectWarning ()
+			{
+				expect_warning = true;
+				return this;
+			}
+			
 			public AssemblerOutput Run ()
 			{
-				if (silence)
-					process.StartInfo.RedirectStandardOutput = true;
-				
 				if (expect_error)
-					process.StartInfo.RedirectStandardError = true;
+					Report.ErrorOutput = TextWriter.Null;
 				
-				arguments += dll ? " /dll" : " /exe";
+				if (expect_warning)
+					Report.WarningOutput = TextWriter.Null;
 				
-				process.StartInfo.Arguments = arguments;
-				process.Start ();
-				process.WaitForExit ();
-				return new AssemblerOutput (output_file_name, dll, (ExitCode) process.ExitCode);
+				var result = driver.Run (arguments.ToArray ());
+				
+				// Reset stuff to defaults.
+				driver.Output = Console.Out;
+				Report.Quiet = false;
+				Report.ErrorOutput = Console.Error;
+				Report.WarningOutput = Console.Out;
+				
+				return new AssemblerOutput (driver.OutputFileName, result);
 			}
 		}
 		
 		protected sealed class AssemblerOutput {
-			public AssemblerOutput (string fileName, bool dll, ExitCode result)
+			public AssemblerOutput (string fileName, ExitCode? result)
 			{
 				Result = result;
 				file_name = fileName;
-				target_dll = dll;
 			}
 			
-			public ExitCode Result { get; private set; }
+			public ExitCode? Result { get; private set; }
 			
 			private readonly string file_name;
 			
-			private readonly bool target_dll;
-			
-			public AssemblerOutput Expect (ExitCode result)
+			public AssemblerOutput Expect (ExitCode? result)
 			{
 				Assert.AreEqual (result, Result);
 				return this;
@@ -174,7 +175,7 @@ namespace Mono.ILAsm.Tests {
 			
 			public AssembledModule GetModule ()
 			{
-				return new AssembledModule ("../../tests/" + file_name + (target_dll ? ".dll" : ".exe"));
+				return new AssembledModule (file_name);
 			}
 		}
 		
@@ -201,15 +202,9 @@ namespace Mono.ILAsm.Tests {
 			DoubleDash = 2,
 		}
 		
-		protected Assembler OpenILAsm ()
+		protected Assembler ILAsm ()
 		{
-			var startInfo = new ProcessStartInfo ("ilasm.exe");
-			startInfo.ErrorDialog = false;
-			startInfo.UseShellExecute = false;
-			
-			var proc = new Process ();
-			proc.StartInfo = startInfo;
-			return new Assembler (proc);
+			return new Assembler ();
 		}
 	}
 }

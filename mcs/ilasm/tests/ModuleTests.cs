@@ -32,7 +32,7 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestModuleDirective ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("module-001.il")
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -43,8 +43,9 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestMultipleModuleDirectives ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("module-002.il")
+				.ExpectWarning ()
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()

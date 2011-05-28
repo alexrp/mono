@@ -34,7 +34,7 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestEmptyAssemblyDirective ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("assembly-001.il")
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -45,7 +45,7 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestFullAssemblyDirective ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("assembly-002.il")
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -62,7 +62,7 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestRawLocale ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("assembly-003.il")
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -73,9 +73,9 @@ namespace Mono.ILAsm.Tests {
 		[Test]
 		public void TestMultipleAssemblyDirectives ()
 		{
-			OpenILAsm ()
+			ILAsm ()
 				.Input ("assembly-004.il")
-				.ExpectError ()
+				.ExpectError (Error.MultipleAssemblyDirectives)
 				.Run ()
 				.Expect (ExitCode.Error);
 		}

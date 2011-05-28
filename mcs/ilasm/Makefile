@@ -26,6 +26,7 @@ include ../build/executable.make
 
 run-test: $(PROGRAM)
 	find tests -name "*.cs" > tests/tests.dll.sources
-	$(MCS) /debug+ /define:"DEBUG;TRACE;NET_4_0" /target:library /keyfile:../class/mono.snk /out:tests/bin/Debug/tests.dll /r:ilasm.exe /r:Mono.Cecil.dll /r:nunit.framework.dll @tests/tests.dll.sources ../build/common/Consts.cs
+	if ! test -d tests/bin/Debug; then mkdir tests/bin && mkdir tests/bin/Debug; fi
+	$(MCS) /debug+ /define:"DEBUG;TRACE;NET_2_0" /target:library /keyfile:../class/mono.snk /out:tests/bin/Debug/tests.dll /r:ilasm.exe /r:Mono.Cecil.dll /r:nunit.framework.dll @tests/tests.dll.sources ../build/common/Consts.cs
 	cp ../class/lib/$(PROFILE)/ilasm.* tests/bin/Debug
 	nunit-console ilasm.nunit

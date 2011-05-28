@@ -21,14 +21,23 @@ using Mono.Security;
 namespace Mono.ILAsm {
 	public sealed class Driver {
 		private readonly List<string> il_file_list = new List<string> ();
-		private string output_file;
-		private Target target;
 		private bool show_tokens;
 		private bool show_parser;
 		private bool scan_only;
 		private bool debugging_info;
 		private bool key_container;
 		private string key_name;
+		
+		public string OutputFileName { get; set; }
+		
+		public Target Target { get; set; }
+		
+		public TextWriter Output { get; set; }
+		
+		public Driver ()
+		{
+			Output = Console.Out;
+		}
 
 		public ExitCode? Run (string[] args)
 		{
@@ -40,10 +49,10 @@ namespace Mono.ILAsm {
 				return ExitCode.Error;
 			}
 
-			if (output_file == null)
-				output_file = CreateOutputFileName (il_file_list, target);
+			if (OutputFileName == null)
+				OutputFileName = CreateOutputFileName (il_file_list, Target);
 			
-			var codegen = new CodeGenerator (output_file, target, debugging_info);
+			var codegen = new CodeGenerator (OutputFileName, Target, debugging_info);
 			StrongName sn = null;
 			
 			try {
@@ -55,7 +64,7 @@ namespace Mono.ILAsm {
 				
 				if (scan_only)
 					return 0;
-				if (target != Target.Dll && !codegen.HasEntryPoint)
+				if (Target != Target.Dll && !codegen.HasEntryPoint)
 					Report.WriteError (Error.NoEntryPoint, "No entry point found.");
 				
 				if (key_name != null) {
@@ -64,12 +73,12 @@ namespace Mono.ILAsm {
 					codegen.CurrentModule.Assembly.Name.PublicKey = sn.PublicKey;
 				}
 				
-				codegen.Write (output_file);
+				codegen.Write (OutputFileName);
 				
 				if (sn != null)
 					try {
 						Report.WriteMessage ("Signing assembly with the specified strong name key pair...");
-						Sign (sn, output_file);
+						Sign (sn, OutputFileName);
 					} catch (Exception ex) {
 						Report.WriteError (Error.SigningFailed, "Could not sign assembly: {0}",
 							ex.Message);
@@ -93,7 +102,7 @@ namespace Mono.ILAsm {
 			}
 			
 			Report.WriteMessage ("Assembling {0} to {1} -> {2}...",
-				filePath, target.ToString ().ToUpper (), output_file);
+				filePath, Target.ToString ().ToUpper (), OutputFileName);
 			Report.WriteMessage (string.Empty);
 			
 			var reader = File.OpenText (filePath);
@@ -144,13 +153,13 @@ namespace Mono.ILAsm {
 				case "outp":
 				case "outpu":
 				case "output":	
-					output_file = command_arg;
+					OutputFileName = command_arg;
 					break;
 				case "exe":
-					target = Target.Exe;
+					Target = Target.Exe;
 					break;
 				case "dll":
-					target = Target.Dll;
+					Target = Target.Dll;
 					break;
 				case "qui":
 				case "quie":
@@ -310,11 +319,11 @@ namespace Mono.ILAsm {
 			return command.ToLower ();
 		}
 
-		private static void Usage (bool dev)
+		private void Usage (bool dev)
 		{
 			var n = Environment.NewLine;
 			
-			Console.WriteLine ("Mono IL Assembler{0}" +
+			Output.WriteLine ("Mono IL Assembler{0}" +
 				"ilasm [options] <source files>{0}" +
 				"   --about             About the Mono ILAsm compiler.{0}" +
 				"   --version           Print the version number of the Mono ILAsm compiler.{0}" +
@@ -328,25 +337,25 @@ namespace Mono.ILAsm {
 				n);
 			
 			if (!dev)
-				Console.WriteLine ("Pass /mono_? for developer options.", n);
+				Output.WriteLine ("Pass /mono_? for developer options.", n);
 			else
-				Console.WriteLine ("Developer options:{0}" +
+				Output.WriteLine ("Developer options:{0}" +
 					"   /mono_scanonly      Only perform tokenization.{0}" +
 					"   /mono_showtokens    Show tokens as they're scanned.{0}" +
 					"   /mono_showparser    Show parser debug output.{0}",
 					n);
 		}
 
-		private static void About ()
+		private void About ()
 		{
-			Console.WriteLine ("For more information on Mono, visit the project Web site{0}" +
+			Output.WriteLine ("For more information on Mono, visit the project Web site{0}" +
 				"   http://www.go-mono.com", Environment.NewLine);
 		}
 
-		private static void Version ()
+		private void Version ()
 		{
 			var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
-			Console.WriteLine ("Mono IL Assembler version {0}", version);
+			Output.WriteLine ("Mono IL Assembler version {0}", version);
 		}
 	}
 }
