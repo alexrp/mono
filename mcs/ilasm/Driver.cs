@@ -131,6 +131,9 @@ namespace Mono.ILAsm {
 				Report.WriteError (Error.SyntaxError, ilte.Location, "Syntax error at token '" + ilte.Token + "'.");
 			} catch (yyParser.yyException ye) {
 				Report.WriteError (Error.SyntaxError, scanner.Reader.Location, "Syntax error: " + ye.Message);
+			} finally {
+				Report.Tokenizer = null;
+				Report.FilePath = null;
 			}
 			
 			return ExitCode.Success;

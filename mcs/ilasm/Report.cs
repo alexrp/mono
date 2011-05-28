@@ -71,10 +71,18 @@ namespace Mono.ILAsm {
 		public static event EventHandler<WarningEventArgs> Warning;
 		
 		public static event EventHandler<ErrorEventArgs> Error;
+		
+		private static Location GetLocation ()
+		{
+			if (Tokenizer != null)
+				return Tokenizer.Reader.Location;
+			
+			return null;
+		}
 
 		internal static void WriteError (Error error, string message, params object[] args)
 		{
-			WriteError (error, null, message, args);
+			WriteError (error, GetLocation (), message, args);
 		}
 
 		internal static void WriteError (Error error, Location location, string message, params object[] args)
@@ -85,12 +93,12 @@ namespace Mono.ILAsm {
 			if (evnt != null)
 				evnt (null, new ErrorEventArgs (error, location, msg));
 			
-			throw new ILAsmException (error, FilePath, location, msg);
+			throw new ILAsmException (error, msg, location, FilePath);
 		}
 
 		internal static void WriteWarning (Warning warning, string message, params object[] args)
 		{
-			WriteWarning (warning, null, message, args);
+			WriteWarning (warning, GetLocation (), message, args);
 		}
 
 		internal static void WriteWarning (Warning warning, Location location, string message, params object[] args)
