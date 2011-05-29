@@ -79,5 +79,25 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Error);
 		}
+		
+		[Test]
+		public void TestRetargetableAssembly ()
+		{
+			ILAsm ()
+				.Input ("assembly-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Assembly.Name.IsRetargetable);
+		}
+		
+		[Test]
+		public void TestMiscellaneousAssemblyAttributes ()
+		{
+			ILAsm ()
+				.Input ("assembly-006.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
 	}
 }

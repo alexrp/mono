@@ -311,7 +311,7 @@ namespace Mono.ILAsm {
 
 		private static string GetCommand (string str, out string command_arg)
 		{
-			var end_index = str.IndexOfAny (new char[] { ':', '=' }, 1);
+			var end_index = str.IndexOfAny (new[] { ':', '=' }, 1);
 			var command = str.Substring (1, (end_index == -1 ? str.Length : end_index) - 1);
 
 			if (end_index != -1)

@@ -250,6 +250,11 @@ namespace Mono.ILAsm {
 			keywords ["enablejittracking"] = new ILToken (Token.K_ENABLEJITTRACKING, "enablejittracking");
 			keywords ["disablejitoptimizer"] = new ILToken (Token.K_DISABLEJITOPTIMIZER, "disablejitoptimizer");
 			keywords ["retargetable"] = new ILToken (Token.K_RETARGETABLE, "retargetable");
+			keywords ["legacy"] = new ILToken (Token.K_LEGACY, "legacy");
+			keywords ["library"] = new ILToken (Token.K_LIBRARY, "library");
+			keywords ["x86"] = new ILToken (Token.K_X86, "x86");
+			keywords ["amd64"] = new ILToken (Token.K_AMD64, "amd64");
+			keywords ["ia64"] = new ILToken (Token.K_IA64, "ia64");
 			keywords ["preservesig"] = new ILToken (Token.K_PRESERVESIG, "preservesig");
 			keywords ["beforefieldinit"] = new ILToken (Token.K_BEFOREFIELDINIT, "beforefieldinit");
 			keywords ["alignment"] = new ILToken (Token.K_ALIGNMENT, "alignment");
