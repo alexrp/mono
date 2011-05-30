@@ -19,9 +19,10 @@ using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public class ILParser {
-		private CodeGenerator codegen;
-		private ILTokenizer tokenizer;
-		private static int yacc_verbose_flag = 0;
+		private readonly CodeGenerator codegen;
+		private readonly ILTokenizer tokenizer;
+		private readonly Stack<string> namespace_stack = new Stack<string> ();
+		private static readonly int yacc_verbose_flag = 0;
 
 		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -360,7 +361,9 @@ decls			:
 decl			:
 			/*
 			class_all
+			*/
 			| namespace_all
+			/*
 			| method_all
 			| field_decl
 			| data_decl
@@ -421,19 +424,24 @@ vtfixup_attr		:
 			| vtfixup_attr K_CALLMOSTDERIVED
 			;
 
-/*
 namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
 			{
-				codegen.CurrentNameSpace = null;
+				codegen.CurrentNamespace = namespace_stack.Pop ();
 			}
 			;
 
 namespace_head		: D_NAMESPACE comp_name
 			{
-				codegen.CurrentNameSpace = (string) $2;
+				namespace_stack.Push (codegen.CurrentNamespace);
+
+				if (codegen.CurrentNamespace != string.Empty)
+					codegen.CurrentNamespace += ".";
+
+				codegen.CurrentNamespace += (string) $2;
 			}
 			;
 
+/*
 class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			{
 				codegen.EndTypeDef ();
