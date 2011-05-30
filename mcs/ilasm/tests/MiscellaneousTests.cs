@@ -1,10 +1,10 @@
 // 
-// Error.cs
+// MiscellaneousTests.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using NUnit.Framework;
 
-namespace Mono.ILAsm {
-	public enum Error : short {
-		InternalError = 0,
-		FileNotFound = 1,
-		SyntaxError = 2,
-		NoEntryPoint = 3,
-		MultipleEntryPoints = 4,
-		MultipleAssemblyDirectives = 5,
-		SigningFailed = 6,
-		InvalidImageBase = 7,
-		InvalidFileAlignment = 8,
+namespace Mono.ILAsm.Tests {
+	[TestFixture]
+	public sealed class MiscellaneousTests : AssemblerTester {
+		// TODO: Verify functionality of all of these when Cecil supports it.
+		
+		[Test]
+		public void TestFileAlignment ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-001.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
+		public void TestImageBase ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-002.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
+		public void TestStackReserve ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-003.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
 	}
 }

@@ -5,3 +5,4 @@ tests/AssemblerTester.cs
 tests/AssemblyInfo.cs
 tests/Extensions.cs
 tests/ModuleTests.cs
+tests/MiscellaneousTests.cs

@@ -1,6 +1,7 @@
 /ILParser.cs
 bin/*
 obj/*
+test-results/*
 */bin/*
 */obj/*
 */test-results/*

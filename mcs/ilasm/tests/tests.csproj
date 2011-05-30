@@ -52,6 +52,7 @@
     <Compile Include="AssemblyTests.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="NamespaceTests.cs" />
+    <Compile Include="MiscellaneousTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -72,5 +73,8 @@
     <None Include="tests\namespace-001.il" />
     <None Include="tests\namespace-002.il" />
     <None Include="tests\namespace-003.il" />
+    <None Include="tests\misc-decl-001.il" />
+    <None Include="tests\misc-decl-002.il" />
+    <None Include="tests\misc-decl-003.il" />
   </ItemGroup>
 </Project>

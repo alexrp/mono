@@ -397,7 +397,23 @@ decl			:
 			}
 			// TODO: Find a way to set these with Cecil.
 			| D_FILE K_ALIGNMENT int32
+			{
+				var fa = (int) $3;
+
+				if (fa < 0x200 || fa > 0x10000 || (fa & (fa - 1)) != 0) {
+					Report.WriteError (Error.InvalidFileAlignment,
+						"Invalid file alignment; must be a power of two between 0x200 and 0x10000.");
+				}
+			}
 			| D_IMAGEBASE int64
+			{
+				var ib = (long) $2;
+
+				if ((ib & 0xffff) != 0) {
+					Report.WriteError (Error.InvalidImageBase,
+						"Invalid image base; must be 0x10000-aligned.");
+				}
+			}
 			| D_STACKRESERVE int64
 			| extsource_spec
 			| language_decl
