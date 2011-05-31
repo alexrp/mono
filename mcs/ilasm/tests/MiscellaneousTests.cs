@@ -41,12 +41,41 @@ namespace Mono.ILAsm.Tests {
 		}
 		
 		[Test]
+		public void TestNonPowerOfTwoFileAlignment ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-004.il")
+				.ExpectError (Error.InvalidFileAlignment)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		public void TestOutOfRangeFileAlignment ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-005.il")
+				.ExpectError (Error.InvalidFileAlignment)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
 		public void TestImageBase ()
 		{
 			ILAsm ()
 				.Input ("misc-decl-002.il")
 				.Run ()
 				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
+		public void TestUnalignedImageBase ()
+		{
+			ILAsm ()
+				.Input ("misc-decl-006.il")
+				.ExpectError (Error.InvalidImageBase)
+				.Run ()
+				.Expect (ExitCode.Error);
 		}
 		
 		[Test]
