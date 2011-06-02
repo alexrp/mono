@@ -1,10 +1,10 @@
 // 
-// Warning.cs
+// module-extern-002.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,38 +23,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
 
-namespace Mono.ILAsm {
-	public enum Warning : short {
-		/// <summary>
-		/// Something might have gone wrong in the assembler.
-		/// </summary>
-		InternalWarning = 0,
-		/// <summary>
-		/// A .module directive was ignored (usually because one was already
-		/// encountered).
-		/// </summary>
-		ModuleDirectiveIgnored = 1,
-		/// <summary>
-		/// A .assembly extern directive was ignored (usually happens when one
-		/// directive shadows another by name).
-		/// </summary>
-		AssemblyReferenceIgnored = 2,
-		/// <summary>
-		/// Happens when an assembly is indirectly referenced but hasn't been
-		/// declared earlier. ILAsm will attempt to resolve it in the GAC.
-		/// </summary>
-		AutoResolvingAssembly = 3,
-		/// <summary>
-		/// Happens if automatic resolution of an indirectly referenced assembly
-		/// fails.
-		/// </summary>
-		AutoResolutionFailed = 4,
-		/// <summary>
-		/// Happens when a .module extern directive is ignored (usually happens
-		/// when the same module is referenced multiple times).
-		/// </summary>
-		ModuleReferenceIgnored = 5,
-	}
-}
+.module extern test002
+.module extern test002

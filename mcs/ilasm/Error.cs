@@ -27,15 +27,47 @@ using System;
 
 namespace Mono.ILAsm {
 	public enum Error : short {
+		/// <summary>
+		/// Something went wrong in the assembler.
+		/// </summary>
 		InternalError = 0,
+		/// <summary>
+		/// An input file could not be found.
+		/// </summary>
 		FileNotFound = 1,
+		/// <summary>
+		/// A grammatical error was encountered in the source input.
+		/// </summary>
 		SyntaxError = 2,
+		/// <summary>
+		/// No entry point found in an executable target.
+		/// </summary>
 		NoEntryPoint = 3,
+		/// <summary>
+		/// Multiple entry points were declared in an executable target.
+		/// </summary>
 		MultipleEntryPoints = 4,
+		/// <summary>
+		/// Multiple .assembly directives were encountered.
+		/// </summary>
 		MultipleAssemblyDirectives = 5,
+		/// <summary>
+		/// Assembly signing failed.
+		/// </summary>
 		SigningFailed = 6,
+		/// <summary>
+		/// Happens if an image base is not 0x10000-aligned.
+		/// </summary>
 		InvalidImageBase = 7,
+		/// <summary>
+		/// Happens if a file alignment is not a power of two and/or is not
+		/// between 0x200 and 0x10000.
+		/// </summary>
 		InvalidFileAlignment = 8,
+		/// <summary>
+		/// Happens if a module is referenced in a signature but has not
+		/// been referenced with a .module extern directive.
+		/// </summary>
 		UndeclaredModuleReference = 9,
 	}
 }

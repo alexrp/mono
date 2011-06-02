@@ -42,6 +42,16 @@ namespace Mono.ILAsm.Tests {
 		}
 		
 		[Test]
+		public void TestDuplicateModuleExternDirective ()
+		{
+			ILAsm ()
+				.Input ("module-extern-002.il")
+				.ExpectWarning (Warning.ModuleReferenceIgnored)
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
 		public void TestEmptyAssemblyExternDirective ()
 		{
 			ILAsm ()
