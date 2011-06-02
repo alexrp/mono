@@ -1,6 +1,7 @@
 tests/CommandLineTests.cs
 tests/NamespaceTests.cs
 tests/AssemblyTests.cs
+tests/ReferenceTests.cs
 tests/AssemblerTester.cs
 tests/AssemblyInfo.cs
 tests/Extensions.cs

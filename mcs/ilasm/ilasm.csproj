@@ -76,6 +76,7 @@
     <Compile Include="Error.cs" />
     <Compile Include="ExitCode.cs" />
     <Compile Include="Warning.cs" />
+    <Compile Include="codegen\AliasedAssemblyNameReference.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

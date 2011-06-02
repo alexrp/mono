@@ -27,9 +27,18 @@ using System;
 using System.Collections.Generic;
 
 namespace Mono.ILAsm.Tests {
-	public static class Extensions {
+	internal static class Extensions {
 		public static bool ListEquals<T> (this IList<T> list, IList<T> other)
 		{
+			if (list == null && other != null)
+				return false;
+			
+			if (list != null && other == null)
+				return false;
+			
+			if (list == null && other == null)
+				return true;
+			
 			if (list.Count != other.Count)
 				return false;
 			
@@ -46,6 +55,22 @@ namespace Mono.ILAsm.Tests {
 				list.Add (value);
 			
 			return list;
+		}
+		
+		public static bool Contains<T> (this IList<T> list, params Predicate<T>[] predicates)
+		{
+			bool flag = false;
+			
+			foreach (var item in list) {
+				foreach (var predicate in predicates)
+					if (!(flag = predicate (item)))
+						break;
+				
+				if (flag)
+					return true;
+			}
+			
+			return false;
 		}
 	}
 }

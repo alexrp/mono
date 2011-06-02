@@ -29,5 +29,8 @@ namespace Mono.ILAsm {
 	public enum Warning : short {
 		InternalWarning = 0,
 		ModuleDirectiveIgnored = 1,
+		AssemblyReferenceIgnored = 2,
+		AutoResolvingAssembly = 3,
+		AutoResolutionFailed = 4,
 	}
 }

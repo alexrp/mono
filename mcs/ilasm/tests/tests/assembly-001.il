@@ -27,5 +27,3 @@
 .assembly assembly001
 {
 }
-
-.module test001

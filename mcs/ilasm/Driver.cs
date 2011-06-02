@@ -52,7 +52,10 @@ namespace Mono.ILAsm {
 			if (OutputFileName == null)
 				OutputFileName = CreateOutputFileName (il_file_list, Target);
 			
-			var codegen = new CodeGenerator (OutputFileName, Target, debugging_info);
+			var codegen = new CodeGenerator (OutputFileName, Target) {
+				DebuggingSymbols = debugging_info,
+			};
+			
 			StrongName sn = null;
 			
 			try {

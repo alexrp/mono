@@ -9,6 +9,7 @@ Program.cs
 Report.cs
 Target.cs
 Warning.cs
+codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs
 parser/ScannerAdapter.cs
 scanner/ILReader.cs

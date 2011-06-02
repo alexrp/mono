@@ -4,9 +4,9 @@ using System;
 
 namespace Mono.ILAsm {
 	public sealed class ScannerAdapter : yyParser.yyInput {
-		public ScannerAdapter (ILTokenizer tokens)
+		public ScannerAdapter (ILTokenizer tokenizer)
 		{
-			this.BaseStream = tokens;
+			BaseStream = tokenizer;
 		}
 
 		public ILTokenizer BaseStream { get; private set; }

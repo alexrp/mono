@@ -1,10 +1,10 @@
 // 
-// Error.cs
+// AliasedAssemblyNameReference.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,18 +24,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 
 namespace Mono.ILAsm {
-	public enum Error : short {
-		InternalError = 0,
-		FileNotFound = 1,
-		SyntaxError = 2,
-		NoEntryPoint = 3,
-		MultipleEntryPoints = 4,
-		MultipleAssemblyDirectives = 5,
-		SigningFailed = 6,
-		InvalidImageBase = 7,
-		InvalidFileAlignment = 8,
-		UndeclaredModuleReference = 9,
+	public sealed class AliasedAssemblyNameReference : AssemblyNameReference {
+		public AliasedAssemblyNameReference (string name, Version version)
+			: base (name, version)
+		{
+		}
+		
+		public string Alias { get; set; }
 	}
 }

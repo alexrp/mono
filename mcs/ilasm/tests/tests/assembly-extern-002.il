@@ -1,10 +1,10 @@
 // 
-// Error.cs
+// assembly-extern-002.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
 
-namespace Mono.ILAsm {
-	public enum Error : short {
-		InternalError = 0,
-		FileNotFound = 1,
-		SyntaxError = 2,
-		NoEntryPoint = 3,
-		MultipleEntryPoints = 4,
-		MultipleAssemblyDirectives = 5,
-		SigningFailed = 6,
-		InvalidImageBase = 7,
-		InvalidFileAlignment = 8,
-		UndeclaredModuleReference = 9,
-	}
+.assembly extern test002
+{
+	.publickeytoken = (00 05 10 15 20 25 30 35)
+	.hash = (19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00)
+	.locale "en-US"
+	.ver 1:2:3:4
 }

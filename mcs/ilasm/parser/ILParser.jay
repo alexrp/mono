@@ -373,8 +373,8 @@ decl			:
 			| file_decl
 			*/
 			| assembly_all
-			/*
 			| assemblyref_all
+			/*
 			| exptype_all
 			| manifestres_all
 			*/
@@ -2792,6 +2792,8 @@ module_head		: D_MODULE
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
+				var module = new ModuleReference ((string) $3);
+				codegen.CurrentModule.ModuleReferences.Add (module);
 			}
 			;
 
@@ -2899,23 +2901,40 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			}
 			*/
 			;
-
-/*
-asm_or_ref_decl		: D_PUBLICKEY ASSIGN bytes_list
-			| D_VER int32 COLON int32 COLON int32 COLON int32
-			| D_LOCALE comp_qstring
-			| D_LOCALE ASSIGN bytes_list
-			| customattr_decl
 			;
 
 assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
+			{
+				var asmRef = codegen.CurrentAssemblyReference;
+
+				// If we have a public key and a token, we prefer the
+				// token. Cecil prefers the public key, so we have to
+				// do this ourselves.
+				if (asmRef.PublicKey != null && asmRef.PublicKeyToken != null) {
+					var token = asmRef.PublicKeyToken;
+					asmRef.PublicKey = null;
+					asmRef.PublicKeyToken = token;
+				}
+
+				var asmRefAlias = asmRef as AliasedAssemblyNameReference;
+				if (asmRefAlias != null)
+					codegen.AliasedAssemblyReferences.Add (asmRefAlias.Alias, asmRefAlias);
+
+				codegen.CurrentModule.AssemblyReferences.Add (asmRef);
+				codegen.CurrentAssemblyReference = null;
+			}
 			;
 
-assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr slashed_name
+assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name
 			{
+				codegen.CurrentAssemblyReference = new AssemblyNameReference ((string) $4, new Version ());
 			}
-			| D_ASSEMBLY K_EXTERN asm_attr slashed_name K_AS slashed_name
+			| D_ASSEMBLY K_EXTERN asm_attr comp_name K_AS comp_name
 			{
+				var name = new AliasedAssemblyNameReference ((string) $4, new Version ()) {
+					Alias = (string) $6,
+				};
+				codegen.CurrentAssemblyReference = name;
 			}
 			;
 
@@ -2925,25 +2944,40 @@ assemblyref_decls	:
 
 assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			{
+				codegen.CurrentAssemblyReference.Version =
+					new Version ((int) $2, (int) $4, (int) $6, (int) $8);
 			}
 			| D_PUBLICKEY ASSIGN bytes_list
 			{
+				codegen.CurrentAssemblyReference.PublicKey = (byte[]) $3;
 			}
 			| D_PUBLICKEYTOKEN ASSIGN bytes_list
 			{
+				codegen.CurrentAssemblyReference.PublicKeyToken = (byte[]) $3;
 			}
 			| D_LOCALE comp_qstring
 			{
+				codegen.CurrentAssemblyReference.Culture = (string) $2;
 			}
 			| D_LOCALE ASSIGN bytes_list
+			{
+				// See the note in assembly_decl -> D_LOCALE.
+				var text = Encoding.Unicode.GetString ((byte[]) $3);
+				codegen.CurrentAssemblyReference.Culture = text;
+			}
 			| D_HASH ASSIGN bytes_list
 			{
+				codegen.CurrentAssemblyReference.Hash = (byte[]) $3;
 			}
+			| K_AUTO // TODO: Implement this.
+			/*
 			| customattr_decl
 			{
 			}
+			*/
 			;
 
+/*
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
 			;
 
