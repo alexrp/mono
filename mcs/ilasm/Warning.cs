@@ -32,5 +32,6 @@ namespace Mono.ILAsm {
 		AssemblyReferenceIgnored = 2,
 		AutoResolvingAssembly = 3,
 		AutoResolutionFailed = 4,
+		ModuleReferenceIgnored = 5,
 	}
 }

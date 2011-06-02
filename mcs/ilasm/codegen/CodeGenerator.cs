@@ -59,7 +59,7 @@ namespace Mono.ILAsm {
 			return null;
 		}
 		
-		private AssemblyNameReference GetAssemblyReference (string name)
+		public AssemblyNameReference GetAssemblyReference (string name)
 		{
 			foreach (var asm in CurrentModule.AssemblyReferences)
 				if (asm.Name == name)
@@ -68,9 +68,18 @@ namespace Mono.ILAsm {
 			return null;
 		}
 		
-		internal AssemblyNameReference GetAliasedAssemblyReference (string name)
+		public AssemblyNameReference GetAliasedAssemblyReference (string name)
 		{
 			return GetAssemblyReference (name) ?? AliasedAssemblyReferences.TryGet (name);
+		}
+		
+		public ModuleReference GetModuleReference (string name)
+		{
+			foreach (var mod in CurrentModule.ModuleReferences)
+				if (mod.Name == name)
+					return mod;
+			
+			return null;
 		}
 		
 		public IMetadataScope GetScope (string name, bool module)

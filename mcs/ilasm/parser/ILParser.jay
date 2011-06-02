@@ -2795,6 +2795,12 @@ module_head		: D_MODULE
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
+				var name = (string) $3;
+				
+				if (codegen.GetModuleReference (name) != null)
+					Report.WriteWarning (Warning.ModuleReferenceIgnored,
+						"Ignoring duplicate module reference: {0}", name);
+				
 				var module = new ModuleReference ((string) $3);
 				codegen.CurrentModule.ModuleReferences.Add (module);
 			}
