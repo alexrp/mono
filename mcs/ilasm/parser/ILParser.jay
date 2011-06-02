@@ -11,18 +11,17 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
-using System.Security;
-using System.Security.Permissions;
 using System.Text;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public class ILParser {
-		private readonly CodeGenerator codegen;
-		private readonly ILTokenizer tokenizer;
-		private readonly Stack<string> namespace_stack = new Stack<string> ();
-		private static readonly int yacc_verbose_flag = 0;
+		readonly CodeGenerator codegen;
+		readonly ILTokenizer tokenizer;
+		readonly Stack<string> namespace_stack = new Stack<string> ();
+		bool is_enum_class;
+		bool is_value_class;
+		static readonly int yacc_verbose_flag = 0;
 
 		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -359,9 +358,7 @@ decls			:
 			;
 
 decl			:
-			/*
 			class_all
-			*/
 			| namespace_all
 			/*
 			| method_all
@@ -457,28 +454,26 @@ namespace_head		: D_NAMESPACE comp_name
 			}
 			;
 
-/*
 class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			{
-				codegen.EndTypeDef ();
+				codegen.CurrentModule.Types.Add (codegen.CurrentType);
+				codegen.CurrentType = null;
 			}
 			;
 
-class_head 		: D_CLASS class_attr comp_name formal_typars_clause extends_clause impl_clause
+class_head 		: D_CLASS class_attr comp_name //formal_typars_clause extends_clause impl_clause
 			{
-				codegen.BeginTypeDef ((TypeAttributes) $2, (string) $3, 
-					$5 as BaseClassRef, $6 as ArrayList,
-					null, (GenericParameters) $4);
+				codegen.CurrentType = new TypeDefinition (codegen.CurrentNamespace,
+					(string) $3, (TypeAttributes) $2);
 
-				if (is_value_class)
-					codegen.CurrentTypeDef.MakeValueClass ();
+				if (is_value_class) {
+					codegen.CurrentType.IsValueType = true;
+					codegen.CurrentType.BaseType = codegen.GetCorlib ().ValueType;
+				}
 
 				if (is_enum_class)
-					codegen.CurrentTypeDef.MakeEnumClass ();
+					codegen.CurrentType.BaseType = codegen.GetCorlib ().Enum;
 			}
-			;
-
-class_attrs		: class_attrs class_attr
 			;
 
 class_attr		:
@@ -488,13 +483,13 @@ class_attr		:
 				$$ = new TypeAttributes ();
 			}
 			| class_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
-			| class_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.Private; }
+			| class_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.NotPublic; }
 			| class_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPrivate; }
 			| class_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPublic; }
 			| class_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamily; }
 			| class_attr K_NESTED K_ASSEMBLY	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedAssembly;}
-			| class_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamAndAssem; }
-			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamOrAssem; }
+			| class_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamANDAssem; }
+			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamORAssem; }
 			| class_attr K_VALUE			{ is_value_class = true; }
 			| class_attr K_ENUM			{ is_enum_class = true; is_value_class = true; }
 			| class_attr K_INTERFACE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Interface; }
@@ -513,6 +508,7 @@ class_attr		:
 			| class_attr K_RTSPECIALNAME		{ $$ = (TypeAttributes) $1 | TypeAttributes.RTSpecialName; }
 			;
 
+/*
 extends_clause		:
 			| K_EXTENDS generic_class_ref
 			{
@@ -757,12 +753,13 @@ class_ref		: OPEN_BRACKET slashed_name CLOSE_BRACKET slashed_name
 					$$ = codegen.GetTypeRef ((string) $1);
 			}
 			;
+*/
 
 class_decls		:
 			| class_decls class_decl
 			;
 
-class_decl		: method_all
+class_decl		: /*method_all
 			| class_all
 			| event_all
 			| prop_all
@@ -808,9 +805,10 @@ class_decl		: method_all
 				codegen.CurrentTypeDef.AddOverride (sig, decl);
 			}
 			  OPEN_PARENS sig_args CLOSE_PARENS
-			| language_decl
+			| language_decl*/
 			;
 
+/*
 type			: generic_class_ref
 			{
 				$$ = $1;
@@ -1340,6 +1338,7 @@ field_attr		:
 			| field_attr K_LITERAL		{ $$ = (FieldAttr) $1 | FieldAttr.Literal; }
 			| field_attr K_NOTSERIALIZED	{ $$ = (FieldAttr) $1 | FieldAttr.Notserialized; }
 			;
+*/
 
 at_opt			:
 			| K_AT id
@@ -1348,6 +1347,7 @@ at_opt			:
 			}
 			;
 
+/*
 init_opt		:
 			| ASSIGN field_init
 			{
@@ -1461,6 +1461,7 @@ data_head		: D_DATA tls id ASSIGN
 				$$ = new DataDef (String.Empty, (bool) $2);
 			}
 			;
+*/
 
 tls			:
 			{
@@ -1472,6 +1473,7 @@ tls			:
 			}
 			;
 
+/*
 data_body		: OPEN_BRACE dataitem_list CLOSE_BRACE
 			{
 				$$ = $2;
@@ -2222,7 +2224,6 @@ instr			: INSTR_NONE
 					break;
 				case MiscInstr.ldc_r8:
 					fpdata = (byte[]) $2;
-					// FIXME: handle the stupid ARM FPA format
 					if (!BitConverter.IsLittleEndian)
 						System.Array.Reverse (fpdata, 0, 8);
 

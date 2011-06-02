@@ -5,6 +5,8 @@ using Mono.Cecil.Mdb;
 
 namespace Mono.ILAsm {
 	public sealed class CodeGenerator {
+		Corlib corlib;
+		
 		public ModuleDefinition CurrentModule { get; private set; }
 		
 		public string CurrentNamespace { get; internal set; }
@@ -103,14 +105,35 @@ namespace Mono.ILAsm {
 			
 			// No dice. Let's try automatically resolving it as an assembly.
 			var gacAsm = ResolveAssemblyReference (name);
-			if (gacAsm != null)
+			if (gacAsm != null) {
+				CurrentModule.AssemblyReferences.Add (gacAsm);
 				return gacAsm;
+			}
 			
 			Report.WriteWarning (Warning.AutoResolutionFailed,
 				"Could not resolve assembly: {0}", name);
 			
 			// OK, so all attempts failed. We'll just assume it works...
 			return new AssemblyNameReference (name, new Version ());
+		}
+		
+		public Corlib GetCorlib ()
+		{
+			if (corlib != null)
+				return corlib;
+			
+			const string corlibStr = "mscorlib";
+			
+			var asm = GetAliasedAssemblyReference (corlibStr);
+			if (asm != null)
+				return corlib = new Corlib (CurrentModule, asm);
+			
+			// TODO: Should we error if we can't resolve it?
+			asm = ResolveAssemblyReference (corlibStr) ??
+				new AssemblyNameReference (corlibStr, new Version ());
+			CurrentModule.AssemblyReferences.Add (asm);
+			
+			return corlib = new Corlib (CurrentModule, asm);
 		}
 	}
 }

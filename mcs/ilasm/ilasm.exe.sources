@@ -11,6 +11,7 @@ Target.cs
 Warning.cs
 codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs
+codegen/Corlib.cs
 parser/ScannerAdapter.cs
 scanner/ILReader.cs
 scanner/ILTokenizingException.cs
