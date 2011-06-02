@@ -27,6 +27,7 @@ namespace Mono.ILAsm {
 		
 		public CodeGenerator (string moduleName, Target target)
 		{
+			AliasedAssemblyReferences = new Dictionary<string, AliasedAssemblyNameReference> ();
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
 		}
@@ -56,6 +57,20 @@ namespace Mono.ILAsm {
 			return null;
 		}
 		
+		private AssemblyNameReference GetAssemblyReference (string name)
+		{
+			foreach (var asm in CurrentModule.AssemblyReferences)
+				if (asm.Name == name)
+					return asm;
+			
+			return null;
+		}
+		
+		internal AssemblyNameReference GetAliasedAssemblyReference (string name)
+		{
+			return GetAssemblyReference (name) ?? AliasedAssemblyReferences.TryGet (name);
+		}
+		
 		public IMetadataScope GetScope (string name, bool module)
 		{
 			// OK, so this behavior is a little messed up. Generally, the
@@ -68,10 +83,11 @@ namespace Mono.ILAsm {
 			// parameter is true, we're explicitly searching for a module, and
 			// thus error if a reference hasn't been declared.
 			
-			if (!module)
-				foreach (var asm in CurrentModule.AssemblyReferences)
-					if (asm.Name == name)
-						return asm;
+			if (!module) {
+				var asm = GetAliasedAssemblyReference (name);
+				if (asm != null)
+					return asm;
+			}
 			
 			foreach (var mod in CurrentModule.ModuleReferences)
 				if (mod.Name == name)

@@ -2906,21 +2906,30 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 			{
 				var asmRef = codegen.CurrentAssemblyReference;
-
-				// If we have a public key and a token, we prefer the
-				// token. Cecil prefers the public key, so we have to
-				// do this ourselves.
-				if (asmRef.PublicKey != null && asmRef.PublicKeyToken != null) {
-					var token = asmRef.PublicKeyToken;
-					asmRef.PublicKey = null;
-					asmRef.PublicKeyToken = token;
-				}
-
 				var asmRefAlias = asmRef as AliasedAssemblyNameReference;
-				if (asmRefAlias != null)
-					codegen.AliasedAssemblyReferences.Add (asmRefAlias.Alias, asmRefAlias);
 
-				codegen.CurrentModule.AssemblyReferences.Add (asmRef);
+				// If we already have a reference with this name, we
+				// ignore the one we just built.
+				if (codegen.GetAliasedAssemblyReference (asmRef.Name) == null) {
+					// If we have a public key and a token, we prefer the
+					// token. Cecil prefers the public key, so we have to
+					// do this ourselves.
+					if (asmRef.PublicKey != null && asmRef.PublicKeyToken != null) {
+						var token = asmRef.PublicKeyToken;
+						asmRef.PublicKey = null;
+						asmRef.PublicKeyToken = token;
+					}
+
+					if (asmRefAlias != null)
+						codegen.AliasedAssemblyReferences.Add (asmRefAlias.Alias, asmRefAlias);
+
+					codegen.CurrentModule.AssemblyReferences.Add (asmRef);
+				}
+				else
+					Report.WriteWarning (Warning.AssemblyReferenceIgnored,
+						"Redeclaration of assembly '{0}' ignored.",
+						asmRefAlias != null ? asmRefAlias.Alias : asmRef.Name);
+
 				codegen.CurrentAssemblyReference = null;
 			}
 			;
@@ -2931,10 +2940,11 @@ assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name
 			}
 			| D_ASSEMBLY K_EXTERN asm_attr comp_name K_AS comp_name
 			{
-				var name = new AliasedAssemblyNameReference ((string) $4, new Version ()) {
-					Alias = (string) $6,
+				var name = (string) $6;
+
+				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference ((string) $4, new Version ()) {
+					Alias = name,
 				};
-				codegen.CurrentAssemblyReference = name;
 			}
 			;
 
