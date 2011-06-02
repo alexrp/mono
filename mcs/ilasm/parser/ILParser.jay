@@ -16,12 +16,14 @@ using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public class ILParser {
+		static readonly int yacc_verbose_flag = 0;
 		readonly CodeGenerator codegen;
 		readonly ILTokenizer tokenizer;
 		readonly Stack<string> namespace_stack = new Stack<string> ();
 		bool is_enum_class;
 		bool is_value_class;
-		static readonly int yacc_verbose_flag = 0;
+		bool has_public_key;
+		bool has_public_key_token;
 
 		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -2915,7 +2917,7 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 					// If we have a public key and a token, we prefer the
 					// token. Cecil prefers the public key, so we have to
 					// do this ourselves.
-					if (asmRef.PublicKey != null && asmRef.PublicKeyToken != null) {
+					if (has_public_key && has_public_key_token) {
 						var token = asmRef.PublicKeyToken;
 						asmRef.PublicKey = null;
 						asmRef.PublicKeyToken = token;
@@ -2932,6 +2934,8 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 						asmRefAlias != null ? asmRefAlias.Alias : asmRef.Name);
 
 				codegen.CurrentAssemblyReference = null;
+				has_public_key = false;
+				has_public_key_token = false;
 			}
 			;
 
@@ -2961,10 +2965,12 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			| D_PUBLICKEY ASSIGN bytes_list
 			{
 				codegen.CurrentAssemblyReference.PublicKey = (byte[]) $3;
+				has_public_key = true;
 			}
 			| D_PUBLICKEYTOKEN ASSIGN bytes_list
 			{
 				codegen.CurrentAssemblyReference.PublicKeyToken = (byte[]) $3;
+				has_public_key_token = true;
 			}
 			| D_LOCALE comp_qstring
 			{
