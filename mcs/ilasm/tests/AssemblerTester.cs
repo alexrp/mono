@@ -170,11 +170,8 @@ namespace Mono.ILAsm.Tests {
 				Report.ErrorOutput = Console.Error;
 				Report.WarningOutput = Console.Out;
 				
-				if (expected_warning != null)
-					Assert.AreEqual ((Warning) expected_warning, resulting_warning);
-				
-				if (expected_error != null)
-					Assert.AreEqual ((Error) expected_error, resulting_error);
+				Assert.AreEqual (expected_warning, resulting_warning);
+				Assert.AreEqual (expected_error, resulting_error);
 				
 				return new AssemblerOutput (driver.OutputFileName, result);
 			}
