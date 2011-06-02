@@ -113,5 +113,31 @@ namespace Mono.ILAsm.Tests {
 						0x20, 0x25, 0x30, 0x35,
 					})));
 		}
+		
+		[Test]
+		public void TestShadowedAssemblyExternDirective ()
+		{
+			ILAsm ()
+				.Input ("assembly-extern-005.il")
+				.ExpectWarning (Warning.AssemblyReferenceIgnored)
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.AssemblyReferences.Contains (
+					y => y.Name == "test005" && y.Version.Equals (new Version (1, 0, 0, 0))));
+		}
+		
+		[Test]
+		public void TestShadowedAssemblyExternAsDirective ()
+		{
+			ILAsm ()
+				.Input ("assembly-extern-006.il")
+				.ExpectWarning (Warning.AssemblyReferenceIgnored)
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.AssemblyReferences.Contains (
+					y => y.Name == "test006" && y.Version.Equals (new Version (1, 0, 0, 0))));
+		}
 	}
 }

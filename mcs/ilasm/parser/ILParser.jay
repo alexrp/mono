@@ -2916,10 +2916,11 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 			{
 				var asmRef = codegen.CurrentAssemblyReference;
 				var asmRefAlias = asmRef as AliasedAssemblyNameReference;
+				var name = asmRefAlias != null ? asmRefAlias.Alias : asmRef.Name;
 
 				// If we already have a reference with this name, we
 				// ignore the one we just built.
-				if (codegen.GetAliasedAssemblyReference (asmRef.Name) == null) {
+				if (codegen.GetAliasedAssemblyReference (name) == null) {
 					// If we have a public key and a token, we prefer the
 					// token. Cecil prefers the public key, so we have to
 					// do this ourselves.
@@ -2936,8 +2937,7 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 				}
 				else
 					Report.WriteWarning (Warning.AssemblyReferenceIgnored,
-						"Redeclaration of assembly '{0}' ignored.",
-						asmRefAlias != null ? asmRefAlias.Alias : asmRef.Name);
+						"Redeclaration of assembly '{0}' ignored.", name);
 
 				codegen.CurrentAssemblyReference = null;
 				has_public_key = false;
