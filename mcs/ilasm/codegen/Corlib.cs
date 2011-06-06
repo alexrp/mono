@@ -61,6 +61,8 @@ namespace Mono.ILAsm {
 		
 		public TypeReference Int64 { get; private set; }
 		
+		public TypeReference UInt64 { get; private set; }
+		
 		public TypeReference Single { get; private set; }
 		
 		public TypeReference Double { get; private set; }

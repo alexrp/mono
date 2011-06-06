@@ -56,5 +56,9 @@ namespace Mono.ILAsm {
 		/// when the same module is referenced multiple times).
 		/// </summary>
 		ModuleReferenceIgnored = 5,
+		/// <summary>
+		/// Happens when a .namespace directive is encountered.
+		/// </summary>
+		LegacyNamespaceSyntax = 6,
 	}
 }

@@ -78,6 +78,7 @@
     <Compile Include="Warning.cs" />
     <Compile Include="codegen\AliasedAssemblyNameReference.cs" />
     <Compile Include="codegen\Corlib.cs" />
+    <Compile Include="codegen\QualifiedName.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

@@ -124,7 +124,7 @@ namespace Mono.ILAsm.Tests {
 				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.AssemblyReferences.Contains (
-					y => y.Name == "test005" && y.Version.Equals (new Version (1, 0, 0, 0))));
+					y => y.Version.Equals (new Version (1, 0, 0, 0))));
 		}
 		
 		[Test]
@@ -137,7 +137,7 @@ namespace Mono.ILAsm.Tests {
 				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.AssemblyReferences.Contains (
-					y => y.Name == "test006" && y.Version.Equals (new Version (1, 0, 0, 0))));
+					y => y.Version.Equals (new Version (1, 0, 0, 0))));
 		}
 	}
 }

@@ -54,6 +54,7 @@
     <Compile Include="NamespaceTests.cs" />
     <Compile Include="MiscellaneousTests.cs" />
     <Compile Include="ReferenceTests.cs" />
+    <Compile Include="ClassTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -88,5 +89,6 @@
     <None Include="tests\module-extern-002.il" />
     <None Include="tests\assembly-extern-005.il" />
     <None Include="tests\assembly-extern-006.il" />
+    <None Include="tests\class-001.il" />
   </ItemGroup>
 </Project>

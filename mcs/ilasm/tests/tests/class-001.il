@@ -1,5 +1,5 @@
 // 
-// NamespaceTests.cs
+// class-001.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -23,43 +23,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class NamespaceTests : AssemblerTester {
-		// TODO: Write tests to verify that classes get put into the correct
-		// namespaces when we can actually emit them.
-		
-		[Test]
-		public void TestNamespaceDirective ()
-		{
-			ILAsm ()
-				.Input ("namespace-001.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
-		}
-		
-		[Test]
-		public void TestNestedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-002.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
-		}
-		
-		[Test]
-		public void TestDottedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-003.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
-		}
-	}
+.assembly extern mscorlib
+{
+}
+
+.class test001
+{
 }

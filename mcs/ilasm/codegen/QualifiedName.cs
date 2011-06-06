@@ -1,5 +1,5 @@
 // 
-// NamespaceTests.cs
+// QualifiedName.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -24,42 +24,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using NUnit.Framework;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class NamespaceTests : AssemblerTester {
-		// TODO: Write tests to verify that classes get put into the correct
-		// namespaces when we can actually emit them.
-		
-		[Test]
-		public void TestNamespaceDirective ()
+namespace Mono.ILAsm {
+	public sealed class QualifiedName {
+		public QualifiedName ()
 		{
-			ILAsm ()
-				.Input ("namespace-001.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
+			Name = string.Empty;
+			Namespaces = new List<string> ();
+			Nestings = new List<string> ();
 		}
 		
-		[Test]
-		public void TestNestedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-002.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
+		public string Name { get; set; }
+		
+		public List<string> Namespaces { get; private set; }
+		
+		public List<string> Nestings { get; private set; }
+		
+		public string FullNamespace {
+			get {
+				var ns = new StringBuilder ();
+				
+				for (var i = 0; i < Namespaces.Count; i++) {
+					ns.Append (Namespaces [i]);
+					
+					if (i != Namespaces.Count - 1)
+						ns.Append (".");
+				}
+				
+				return ns.ToString ();
+			}
 		}
 		
-		[Test]
-		public void TestDottedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-003.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
+		public string FullName {
+			get {
+				var name = new StringBuilder (FullNamespace);
+				if (name.Length > 0)
+					name.Append (".");
+				
+				foreach (var nesting in Nestings) {
+					name.Append (nesting);
+					name.Append ("+");
+				}
+				
+				name.Append (Name);
+				return name.ToString ();
+			}
 		}
 	}
 }

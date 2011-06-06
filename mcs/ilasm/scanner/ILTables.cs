@@ -1,5 +1,4 @@
 // ILTables.cs
-// Mechanically generated  - DO NOT EDIT!
 //
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
 using System;
@@ -75,6 +74,11 @@ namespace Mono.ILAsm {
 			directives [".vtentry"] = new ILToken (Token.D_VTENTRY, ".vtentry");
 			directives [".vtfixup"] = new ILToken (Token.D_VTFIXUP, ".vtfixup");
 			directives [".zeroinit"] = new ILToken (Token.D_ZEROINIT, ".zeroinit");
+			directives [".this"] = new ILToken (Token.D_THIS, ".this");
+			directives [".base"] = new ILToken (Token.D_BASE, ".base");
+			directives [".nester"] = new ILToken (Token.D_NESTER, ".nester");
+			directives [".typelist"] = new ILToken (Token.D_TYPELIST, ".typelist");
+			directives [".mscorlib"] = new ILToken (Token.D_MSCORLIB, ".mscorlib");
 			
 			Directives = directives;
 			
@@ -162,6 +166,7 @@ namespace Mono.ILAsm {
 			keywords ["int16"] = new ILToken (Token.K_INT16, "int16");
 			keywords ["int32"] = new ILToken (Token.K_INT32, "int32");
 			keywords ["int64"] = new ILToken (Token.K_INT64, "int64");
+			keywords ["float"] = new ILToken (Token.K_FLOAT, "float");
 			keywords ["float32"] = new ILToken (Token.K_FLOAT32, "float32");
 			keywords ["float64"] = new ILToken (Token.K_FLOAT64, "float64");
 			keywords ["error"] = new ILToken (Token.K_ERROR, "error");
@@ -213,7 +218,6 @@ namespace Mono.ILAsm {
 			keywords ["property"] = new ILToken (Token.K_PROPERTY, "property");
 			keywords ["type"] = new ILToken (Token.K_TYPE, "type");
 			keywords ["refany"] = new ILToken (Token.K_TYPEDREF, "typedref");
-			keywords ["wchar"] = new ILToken (Token.K_WCHAR, "wchar");
 			keywords ["char"] = new ILToken (Token.K_CHAR, "char");
 			keywords ["fromunmanaged"] = new ILToken (Token.K_FROMUNMANAGED, "fromunmanaged");
 			keywords ["callmostderived"] = new ILToken (Token.K_CALLMOSTDERIVED, "callmostderived");
@@ -271,6 +275,7 @@ namespace Mono.ILAsm {
 			keywords ["on"] = new ILToken (Token.K_ON, "on");
 			keywords ["off"] = new ILToken (Token.K_OFF, "off");
 			keywords ["strict"] = new ILToken (Token.K_STRICT, "strict");
+			keywords ["mdtoken"] = new ILToken (Token.K_MDTOKEN, "mdtoken");
 			
 			Keywords = keywords;
 			

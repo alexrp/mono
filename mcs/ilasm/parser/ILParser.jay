@@ -24,6 +24,10 @@ namespace Mono.ILAsm {
 		bool is_value_class;
 		bool has_public_key;
 		bool has_public_key_token;
+		bool has_assembly_directive;
+		bool has_module_directive;
+		bool is_explicit_call;
+		bool is_instance_call;
 
 		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -155,6 +159,11 @@ namespace Mono.ILAsm {
 %token D_VTENTRY
 %token D_VTFIXUP
 %token D_ZEROINIT
+%token D_THIS
+%token D_BASE
+%token D_NESTER
+%token D_TYPELIST
+%token D_MSCORLIB
 
 %token K_AT
 %token K_AS
@@ -238,6 +247,7 @@ namespace Mono.ILAsm {
 %token K_INT16
 %token K_INT32
 %token K_INT64
+%token K_FLOAT
 %token K_FLOAT32
 %token K_FLOAT64
 %token K_ERROR
@@ -288,7 +298,6 @@ namespace Mono.ILAsm {
 %token K_MODOPT
 %token K_TYPEDREF
 %token K_TYPE
-%token K_WCHAR
 %token K_CHAR
 %token K_FROMUNMANAGED
 %token K_CALLMOSTDERIVED
@@ -347,6 +356,9 @@ namespace Mono.ILAsm {
 %token K_ON
 %token K_OFF
 %token K_CHARMAPERROR
+%token K_MDTOKEN
+%token K_FLAGS
+%token K_CALLCONV
 
 %start il_file
 
@@ -414,6 +426,8 @@ decl			:
 				}
 			}
 			| D_STACKRESERVE int64
+			| D_TYPELIST OPEN_BRACE class_refs CLOSE_BRACE // TODO: How can we sort with Cecil?
+			| D_MSCORLIB // TODO: What does this actually do?
 			| extsource_spec
 			| language_decl
 			;
@@ -441,6 +455,9 @@ vtfixup_attr		:
 
 namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
 			{
+				Report.WriteWarning (Warning.LegacyNamespaceSyntax,
+					"Use of legacy namespace syntax.");
+
 				codegen.CurrentNamespace = namespace_stack.Pop ();
 			}
 			;
@@ -452,7 +469,7 @@ namespace_head		: D_NAMESPACE comp_name
 				if (codegen.CurrentNamespace != string.Empty)
 					codegen.CurrentNamespace += ".";
 
-				codegen.CurrentNamespace += (string) $2;
+				codegen.CurrentNamespace += ((QualifiedName) $2).FullName;
 			}
 			;
 
@@ -463,18 +480,40 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			}
 			;
 
-class_head 		: D_CLASS class_attr comp_name //formal_typars_clause extends_clause impl_clause
+class_head		: D_CLASS class_attr comp_name
 			{
-				codegen.CurrentType = new TypeDefinition (codegen.CurrentNamespace,
-					(string) $3, (TypeAttributes) $2);
+				var qn = (QualifiedName) $3;
 
-				if (is_value_class) {
-					codegen.CurrentType.IsValueType = true;
-					codegen.CurrentType.BaseType = codegen.GetCorlib ().ValueType;
-				}
+				codegen.CurrentType = new TypeDefinition (codegen.CurrentNamespace +
+					qn.FullNamespace, qn.Name, (TypeAttributes) $2);
 
-				if (is_enum_class)
-					codegen.CurrentType.BaseType = codegen.GetCorlib ().Enum;
+				codegen.CurrentType.Attributes = (TypeAttributes) $2;
+
+				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+			}
+			  formal_typars_clause
+			{
+				if ($4 != null)
+					foreach (var arg in (List<GenericParameter>) $4)
+						codegen.CurrentType.GenericParameters.Add (arg);
+
+				codegen.CurrentGenericParameterProvider = null;
+			}
+			  extends_clause impl_clause
+			{
+				if ($5 == null) {
+					if (is_value_class)
+						codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
+					else if (is_enum_class)
+						codegen.CurrentType.BaseType = codegen.Corlib.Enum;
+					else
+						codegen.CurrentType.BaseType = codegen.Corlib.Object;
+				} else
+					codegen.CurrentType.BaseType = (TypeReference) $5;
+
+				if ($6 != null)
+					foreach (var interf in (List<TypeReference>) $6)
+						codegen.CurrentType.Interfaces.Add (interf);
 			}
 			;
 
@@ -482,7 +521,7 @@ class_attr		:
 			{
 				is_value_class = false;
 				is_enum_class = false;
-				$$ = new TypeAttributes ();
+				$$ = TypeAttributes.NotPublic;
 			}
 			| class_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
 			| class_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.NotPublic; }
@@ -508,9 +547,12 @@ class_attr		:
 			| class_attr K_BEFOREFIELDINIT		{ $$ = (TypeAttributes) $1 | TypeAttributes.BeforeFieldInit; }
 			| class_attr K_SPECIALNAME		{ $$ = (TypeAttributes) $1 | TypeAttributes.SpecialName; }
 			| class_attr K_RTSPECIALNAME		{ $$ = (TypeAttributes) $1 | TypeAttributes.RTSpecialName; }
+			| class_attr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS
+			{
+				$$ = (TypeAttributes) $1 | (TypeAttributes) (int) $4;
+			}
 			;
 
-/*
 extends_clause		:
 			| K_EXTENDS generic_class_ref
 			{
@@ -524,18 +566,17 @@ impl_clause		:
 
 impl_class_refs		: K_IMPLEMENTS generic_class_ref
 			{
-				ArrayList al = new ArrayList ();
-				al.Add ($2);
-				$$ = al;
+				$$ = new List<GenericInstanceType> () {
+					(GenericInstanceType) $2,
+				};
 			}
 			| impl_class_refs COMMA generic_class_ref
 			{
-				ArrayList al = (ArrayList) $1;
-
-				al.Insert (0, $3);
+				var al = (List<GenericInstanceType>) $1;
+				al.Add ((GenericInstanceType) $3);
 				$$ = al;
 			}
- 			;
+			;
 
 formal_typars_clause	:
 			| OPEN_ANGLE_BRACKET formal_typars CLOSE_ANGLE_BRACKET
@@ -553,13 +594,13 @@ typars_clause		:
 
 typars			: type
 			{
-				GenericArguments ga = new GenericArguments ();
-				ga.Add ((BaseTypeRef) $1);
-				$$ = ga;
+				$$ = new List<TypeReference> () {
+					(TypeReference) $1,
+				};
 			}
 			| typars COMMA type
 			{
-				((GenericArguments) $1).Add ((BaseTypeRef) $3);
+				((List<TypeReference>) $1).Add ((TypeReference) $3);
 				$$ = $1;
 			}
 			;
@@ -573,15 +614,14 @@ constraints_clause	:
 
 constraints		: generic_class_ref
 			{
-				ArrayList al = new ArrayList ();
-				al.Add ($1);
-				$$ = al;
+				$$ = new List<GenericInstanceType> () {
+					(GenericInstanceType) $1,
+				};
 			}
 			| constraints COMMA generic_class_ref
 			{
-				ArrayList al = (ArrayList) $1;
-				al.Add ($3);
-				$$ = al;
+				((List<GenericInstanceType>) $1).Add ((GenericInstanceType) $3);
+				$$ = $1;
 			}
 			;
 
@@ -591,11 +631,17 @@ generic_class_ref	: class_ref
 			}
 			| K_CLASS class_ref typars_clause
 			{
-				if ($3 != null)
-					$$ = ((BaseClassRef) $2).GetGenericTypeInst ((GenericArguments) $3);
-				else
+				if ($3 != null) {
+					var gti = new GenericInstanceType ((TypeReference) $2);
+
+					foreach (var ga in (List<TypeReference>) $3)
+						gti.GenericArguments.Add (ga);
+
+					$$ = gti;
+				} else
 					$$ = $2;
 			}
+			/*
 			| BANG int32
 			{
 				GenParam gpar = new GenParam ((int) $2, "", GenParamType.Var);
@@ -628,64 +674,58 @@ generic_class_ref	: class_ref
 				GenParam gpar = new GenParam (num, name, GenParamType.MVar);
 				$$ = new GenericParamRef (gpar, name);
 			}
+			*/
 			;
 
 formal_typars		: formal_typar_attr constraints_clause formal_typar
 			{
-				GenericParameter gp = new GenericParameter ((string) $3,
-					(Mono.Cecil.GenericParameterAttributes) $1, (ArrayList) $2);
+				var gp = new GenericParameter (((QualifiedName) $3).FullName,
+					codegen.CurrentGenericParameterProvider) {
+					Attributes = (GenericParameterAttributes) $1,
+				};
 
-				GenericParameters colln = new GenericParameters ();
-				colln.Add (gp);
-				$$ = colln;
+				foreach (var constraint in (List<TypeReference>) $2)
+					gp.Constraints.Add (constraint);
+
+				$$ = new List<GenericParameter> () {
+					gp,
+				};
 			}
 			| formal_typars COMMA formal_typar_attr constraints_clause formal_typar
 			{
-				GenericParameters colln = (GenericParameters) $1;
-				colln.Add (new GenericParameter ((string) $5,
-					(Mono.Cecil.GenericParameterAttributes) $3, (ArrayList) $4));
+				var colln = (List<GenericParameter>) $1;
 
+				var gp = new GenericParameter (((QualifiedName) $5).FullName,
+					codegen.CurrentGenericParameterProvider) {
+					Attributes = (GenericParameterAttributes) $3,
+				};
+
+				foreach (var constraint in (List<TypeReference>) $4)
+					gp.Constraints.Add (constraint);
+
+				colln.Add (gp);
 				$$ = colln;
 			}
 			;
- 
+
 formal_typar_attr	:
 			{
-				$$ = new Mono.Cecil.GenericParameterAttributes ();
+				$$ = GenericParameterAttributes.NonVariant;
 			}
-			| formal_typar_attr PLUS
-			{
-				$$ = (Mono.Cecil.GenericParameterAttributes) $1 |
-					Mono.Cecil.GenericParameterAttributes.Covariant; 
-			}
-			| formal_typar_attr DASH
-			{
-				$$ = (Mono.Cecil.GenericParameterAttributes) $1 |
-					Mono.Cecil.GenericParameterAttributes.Contravariant; 
-			}
-			| formal_typar_attr D_CTOR
-			{
-				$$ = (Mono.Cecil.GenericParameterAttributes) $1 |
-					Mono.Cecil.GenericParameterAttributes.DefaultConstructorConstraint; 
-			}
-			| formal_typar_attr K_VALUETYPE
-			{
-				$$ = (Mono.Cecil.GenericParameterAttributes) $1 |
-					Mono.Cecil.GenericParameterAttributes.NotNullableValueTypeConstraint; 
-			}
-			| formal_typar_attr K_CLASS
-			{
-				$$ = (Mono.Cecil.GenericParameterAttributes) $1 |
-					Mono.Cecil.GenericParameterAttributes.ReferenceTypeConstraint; 
-			}
+			| formal_typar_attr PLUS { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Covariant; }
+			| formal_typar_attr DASH { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Contravariant; }
+			| formal_typar_attr D_CTOR { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.DefaultConstructorConstraint; }
+			| formal_typar_attr K_VALUETYPE { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.NotNullableValueTypeConstraint; }
+			| formal_typar_attr K_CLASS { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.ReferenceTypeConstraint; }
 			;
 
-formal_typar		: id
+formal_typar		: comp_name
 			{
 				$$ = $1;
 			}
 			;
 
+/*
 param_type_decl		: D_PARAM K_TYPE id
 			{
 				if (codegen.CurrentMethodDef != null)
@@ -708,54 +748,69 @@ param_type_decl		: D_PARAM K_TYPE id
 					Report.Error (String.Format ("Type parameter '{0}' index out of range.", index));
 			}
 			;
+*/
 
 class_refs		: class_ref
 			{
-				ArrayList class_list = new ArrayList ();
-				class_list.Add ($1);
-				$$ = class_list; 
+				$$ = new List<TypeReference> () {
+					(TypeReference) $1,
+				};
 			}
 			| class_refs COMMA class_ref
 			{
-				ArrayList class_list = (ArrayList) $1;
-				class_list.Add ($3);
+				var class_list = (List<TypeReference>) $1;
+				class_list.Add ((TypeReference) $3);
 			}
 			;
-*/
 
 slashed_name		: comp_name
 			| slashed_name SLASH comp_name
 			{
-				$$ = string.Format ("{0}/{1}", $1, $3);
+				var sl = (QualifiedName) $1;
+
+				var qn = new QualifiedName {
+					Name = ((QualifiedName) $3).FullName, // TODO: Verify this.
+				};
+
+				foreach (var ns in sl.Namespaces)
+					qn.Namespaces.Add (ns);
+
+				foreach (var nesting in sl.Nestings)
+					qn.Nestings.Add (nesting);
+
+				qn.Nestings.Add (sl.Name);
+
+				$$ = qn;
 			}
 			;
 
-/*
-class_ref		: OPEN_BRACKET slashed_name CLOSE_BRACKET slashed_name
+class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 			{
-				if (codegen.IsThisAssembly ((string) $2))
-					$$ = codegen.GetTypeRef ((string) $4);
-				else
-					$$ = codegen.ExternTable.GetTypeRef ((string) $2, (string) $4, false);
+				var name = (QualifiedName) $2;
+				var type = (QualifiedName) $4;
+
+				var scope = codegen.GetScope (name.FullName, false);
+				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
 			}
-			| OPEN_BRACKET D_MODULE slashed_name CLOSE_BRACKET slashed_name
+			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET slashed_name
 			{
-				if (codegen.IsThisModule ((string) $3))
-					$$ = codegen.GetTypeRef ((string) $5);
-				else
-					$$ = codegen.ExternTable.GetModuleTypeRef ((string) $3, (string) $5, false);
+				var module = (QualifiedName) $3;
+				var type = (QualifiedName) $5;
+
+				if (module.FullName == codegen.CurrentModule.Name)
+					$$ = codegen.CurrentModule.GetType (type.FullNamespace, type.Name);
+				else {
+					var scope = codegen.GetScope (module.FullName, true);
+					$$ = new TypeReference (type.FullNamespace,
+						type.Name, codegen.CurrentModule, scope);
+				}
 			}
 			| slashed_name
 			{
-				PrimitiveTypeRef prim = PrimitiveTypeRef.GetPrimitiveType ((string) $1);
-
-				if (prim != null && !codegen.IsThisAssembly ("mscorlib"))
-					$$ = prim;
-				else
-					$$ = codegen.GetTypeRef ((string) $1);
+				var qn = (QualifiedName) $1;
+				$$ = codegen.CurrentModule.GetType (qn.FullNamespace, qn.Name);
 			}
 			;
-*/
 
 class_decls		:
 			| class_decls class_decl
@@ -778,14 +833,16 @@ class_decl		: /*method_all
 					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
 			}
 			| param_type_decl
+			*/
 			| D_SIZE int32
 			{
-				codegen.CurrentTypeDef.SetSize ((int) $2);
+				codegen.CurrentType.ClassSize = (int) $2;
 			}
 			| D_PACK int32
 			{
-				codegen.CurrentTypeDef.SetPack ((int) $2);
+				codegen.CurrentType.PackingSize = (short) (int) $2;
 			}
+			/*
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name K_WITH call_conv type type_spec DOUBLE_COLON method_name type_list
 			{
 				BaseTypeRef owner = (BaseTypeRef) $2;
@@ -807,51 +864,33 @@ class_decl		: /*method_all
 				codegen.CurrentTypeDef.AddOverride (sig, decl);
 			}
 			  OPEN_PARENS sig_args CLOSE_PARENS
-			| language_decl*/
+			*/
+			| language_decl
 			;
 
-/*
 type			: generic_class_ref
 			{
 				$$ = $1;
 			}
 			| K_OBJECT
 			{
-				$$ = new PrimitiveTypeRef (PrimitiveType.Object,
-					typeof (object).Name);
+				$$ = codegen.Corlib.Object;
 			}
 			| K_VALUE K_CLASS class_ref
 			{
-				BaseClassRef class_ref = (BaseClassRef) $3;
-				class_ref.MakeValueClass ();
-				$$ = class_ref;
+				// TODO: Warn if not a value type?
+				$$ = (TypeReference) $3;
 			}
-			| K_VALUETYPE OPEN_BRACKET slashed_name CLOSE_BRACKET slashed_name typars_clause
+			| K_VALUETYPE class_ref
 			{
-				ExternTypeRef ext_ref = codegen.ExternTable.GetTypeRef ((string) $3, (string) $5, true);
-
-				if ($6 != null)
-					$$ = ext_ref.GetGenericTypeInst ((GenericArguments) $6);
-				else
-					$$ = ext_ref;
-			}
-			| K_VALUETYPE slashed_name typars_clause
-			{
-				TypeRef t_ref = codegen.GetTypeRef ((string) $2);
-				t_ref.MakeValueClass ();
-
-				if ($3 != null)
-					$$ = t_ref.GetGenericTypeInst ((GenericArguments) $3);
-				else
-					$$ = t_ref;
+				// TODO: Warn if not a value type?
+				$$ = (TypeReference) $2;
 			}
 			| type OPEN_BRACKET CLOSE_BRACKET
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				base_type.MakeArray ();
-
-				$$ = base_type;
+				$$ = new ArrayType ((TypeReference) $1);
 			}
+			/*
 			| type OPEN_BRACKET bounds CLOSE_BRACKET
 			{
 				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
@@ -860,77 +899,67 @@ type			: generic_class_ref
 
 				$$ = base_type;
 			}
+			*/
 			| type AMPERSAND
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				base_type.MakeManagedPointer ();
-
-				$$ = base_type;
+				$$ = new ByReferenceType ((TypeReference) $1);
 			}
 			| type STAR
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				base_type.MakeUnmanagedPointer ();
-
-				$$ = base_type;
+				$$ = new PointerType ((TypeReference) $1);
 			}
 			| type K_PINNED
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				base_type.MakePinned ();
-
-				$$ = base_type;
+				$$ = new PinnedType ((TypeReference) $1);
 			}
 			| type K_MODREQ OPEN_PARENS class_ref CLOSE_PARENS
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				BaseClassRef class_ref = (BaseClassRef) $4;
-				base_type.MakeCustomModified (codegen,
-					CustomModifier.modreq, class_ref);
-
-				$$ = base_type;
+				$$ = new RequiredModifierType ((TypeReference) $4, (TypeReference) $1);
 			}
 			| type K_MODOPT OPEN_PARENS class_ref CLOSE_PARENS
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				BaseClassRef class_ref = (BaseClassRef) $4;
-				base_type.MakeCustomModified (codegen,
-					CustomModifier.modopt, class_ref);
-
-				$$ = base_type;
+				$$ = new OptionalModifierType ((TypeReference) $4, (TypeReference) $1);
 			}
+			/*
 			| K_METHOD call_conv type STAR OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				$$ = new MethodPointerTypeRef ((CallConv) $2, (BaseTypeRef) $3, (ArrayList) $6);
+				$$ = new FunctionPointerType {
+					CallingConvention = (MethodCallingConvention) $2,
+					ReturnType = (TypeReference) $3,
+				};
 			}
-			| primitive_type
+			*/
+			| simple_type
+			| K_VOID			{ $$ = codegen.Corlib.Void; }
+			| K_TYPEDREF			{ $$ = codegen.Corlib.TypedReference; }
+			| K_NATIVE K_INT		{ $$ = codegen.Corlib.IntPtr; }
+			| K_NATIVE K_UNSIGNED K_INT	{ $$ = codegen.Corlib.UIntPtr; }
+			| K_NATIVE K_UINT		{ $$ = codegen.Corlib.UIntPtr; }
+			| K_NATIVE K_FLOAT		{ $$ = codegen.Corlib.Single; } // TODO: Verify this.
 			;
 
-primitive_type		: K_INT8			{ $$ = new PrimitiveTypeRef (PrimitiveType.Int8, "System.SByte"); }
-			| K_INT16			{ $$ = new PrimitiveTypeRef (PrimitiveType.Int16, "System.Int16"); }
-			| K_INT32			{ $$ = new PrimitiveTypeRef (PrimitiveType.Int32, "System.Int32"); }
-			| K_INT64			{ $$ = new PrimitiveTypeRef (PrimitiveType.Int64, "System.Int64"); }
-			| K_FLOAT32			{ $$ = new PrimitiveTypeRef (PrimitiveType.Float32, "System.Single"); }
-			| K_FLOAT64			{ $$ = new PrimitiveTypeRef (PrimitiveType.Float64, "System.Double"); }
-			| K_UNSIGNED K_INT8		{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt8, "System.Byte"); }
-			| K_UINT8			{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt8, "System.Byte"); }
-			| K_UNSIGNED K_INT16		{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt16, "System.UInt16"); }
-			| K_UINT16			{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt16, "System.UInt16"); }
-			| K_UNSIGNED K_INT32		{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt32, "System.UInt32"); }
-			| K_UINT32			{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt32, "System.UInt32"); }
-			| K_UNSIGNED K_INT64		{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt64, "System.UInt64"); }
-			| K_UINT64			{ $$ = new PrimitiveTypeRef (PrimitiveType.UInt64, "System.UInt64"); }
-			| K_NATIVE K_INT		{ $$ = new PrimitiveTypeRef (PrimitiveType.NativeInt, "System.IntPtr"); }
-			| K_NATIVE K_UNSIGNED K_INT	{ $$ = new PrimitiveTypeRef (PrimitiveType.NativeUInt, "System.UIntPtr"); }
-			| K_NATIVE K_UINT		{ $$ = new PrimitiveTypeRef (PrimitiveType.NativeUInt, "System.UIntPtr"); }
-			| K_TYPEDREF			{ $$ = new PrimitiveTypeRef (PrimitiveType.TypedRef, "System.TypedReference"); }
-			| K_CHAR			{ $$ = new PrimitiveTypeRef (PrimitiveType.Char, "System.Char"); }
-			| K_WCHAR			{ $$ = new PrimitiveTypeRef (PrimitiveType.Char, "System.Char"); }
-			| K_VOID			{ $$ = new PrimitiveTypeRef (PrimitiveType.Void, "System.Void"); }
-			| K_BOOL			{ $$ = new PrimitiveTypeRef (PrimitiveType.Boolean, "System.Boolean"); }
-			| K_STRING			{ $$ = new PrimitiveTypeRef (PrimitiveType.String, "System.String"); }
+int_type		: K_INT8			{ $$ = codegen.Corlib.SByte; }
+			| K_INT16			{ $$ = codegen.Corlib.Int16; }
+			| K_INT32			{ $$ = codegen.Corlib.Int32; }
+			| K_INT64			{ $$ = codegen.Corlib.Int64; }
+			| K_UNSIGNED K_INT8		{ $$ = codegen.Corlib.Byte; }
+			| K_UINT8			{ $$ = codegen.Corlib.Byte; }
+			| K_UNSIGNED K_INT16		{ $$ = codegen.Corlib.UInt16; }
+			| K_UINT16			{ $$ = codegen.Corlib.UInt16; }
+			| K_UNSIGNED K_INT32		{ $$ = codegen.Corlib.UInt32; }
+			| K_UINT32			{ $$ = codegen.Corlib.UInt32; }
+			| K_UNSIGNED K_INT64		{ $$ = codegen.Corlib.UInt64; }
+			| K_UINT64			{ $$ = codegen.Corlib.UInt64; }
+
+simple_type		: K_FLOAT32			{ $$ = codegen.Corlib.Single; }
+			| K_FLOAT64			{ $$ = codegen.Corlib.Double; }
+			| K_CHAR			{ $$ = codegen.Corlib.Char; }
+			| K_BOOL			{ $$ = codegen.Corlib.Boolean; }
+			| K_STRING			{ $$ = codegen.Corlib.String; }
+			| int_type
 			;
 
+/*
 bounds			: bound
 			{
 				ArrayList bound_list = new ArrayList ();
@@ -976,30 +1005,30 @@ bound			:
 				$$ = new DictionaryEntry ($1, TypeRef.Ellipsis);
 			}
 			;
+*/
 
-call_conv		: K_INSTANCE call_conv
-			{
-				$$ = (CallConv) $2 | CallConv.Instance;
-			}
-			| K_EXPLICIT call_conv
-			{
-				$$ = (CallConv) $2 | CallConv.InstanceExplicit;
-			}
+call_conv		: K_INSTANCE call_conv { is_instance_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
+			| K_EXPLICIT call_conv { is_explicit_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
 			| call_kind
+			| K_CALLCONV OPEN_PARENS int32 CLOSE_PARENS
+			{
+				$$ = (MethodCallingConvention) $3;
+			}
 			;
 
 call_kind		:
 			{
-				$$ = new CallConv ();
+				$$ = MethodCallingConvention.Default;
 			}
-			| K_DEFAULT			{ $$ = CallConv.Default; }
-			| K_VARARG			{ $$ = CallConv.Vararg; }
-			| K_UNMANAGED K_CDECL		{ $$ = CallConv.Cdecl; }
-			| K_UNMANAGED K_STDCALL		{ $$ = CallConv.Stdcall; }
-			| K_UNMANAGED K_THISCALL	{ $$ = CallConv.Thiscall; }
-			| K_UNMANAGED K_FASTCALL	{ $$ = CallConv.Fastcall; }
+			| K_DEFAULT			{ $$ = MethodCallingConvention.Default; }
+			| K_VARARG			{ $$ = MethodCallingConvention.VarArg; }
+			| K_UNMANAGED K_CDECL		{ $$ = MethodCallingConvention.C; }
+			| K_UNMANAGED K_STDCALL		{ $$ = MethodCallingConvention.StdCall; }
+			| K_UNMANAGED K_THISCALL	{ $$ = MethodCallingConvention.ThisCall; }
+			| K_UNMANAGED K_FASTCALL	{ $$ = MethodCallingConvention.FastCall; }
 			;
 
+/*
 native_type		:
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
 			{
@@ -1401,10 +1430,6 @@ field_init_primitive	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 			{
 				$$ = new CharConst (Convert.ToChar ($3));
 			}
-			| K_WCHAR OPEN_PARENS int64 CLOSE_PARENS
-			{
-				$$ = new CharConst (Convert.ToChar ($3));
-			}
 			| K_INT8 OPEN_PARENS int64 CLOSE_PARENS
 			{
 				$$ = new IntConst ((sbyte)((long) ($3)));
@@ -1497,10 +1522,6 @@ dataitem_list		: dataitem
 			;
 
 dataitem		: K_CHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
-			{
-				$$ = new StringConst ((string) $4);
-			}
-			| K_WCHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
 			{
 				$$ = new StringConst ((string) $4);
 			}
@@ -2783,25 +2804,27 @@ sec_action		: K_REQUEST
 module_head		: D_MODULE
 			| D_MODULE comp_name
 			{
-				if (!codegen.HasModuleDirective) {
-					// Microsoft's ilasm only takes into account the
+				var name = ((QualifiedName) $2).FullName;
+
+				if (!has_module_directive) {
+					// Microsoft's ILAsm only takes into account the
 					// first .module directive
-					codegen.CurrentModule.Name = (string) $2;
-					codegen.HasModuleDirective = true;
+					codegen.CurrentModule.Name = name;
+					has_module_directive = true;
 				}
-				else if ((string) $2 != codegen.CurrentModule.Name)
+				else if (name != codegen.CurrentModule.Name)
 					Report.WriteWarning (Warning.ModuleDirectiveIgnored,
 						".module directive with different name ignored.");
 			}
 			| D_MODULE K_EXTERN comp_name
 			{
-				var name = (string) $3;
+				var name = ((QualifiedName) $3).FullName;
 				
 				if (codegen.GetModuleReference (name) != null)
 					Report.WriteWarning (Warning.ModuleReferenceIgnored,
 						"Ignoring duplicate module reference: {0}", name);
 				
-				var module = new ModuleReference ((string) $3);
+				var module = new ModuleReference (name);
 				codegen.CurrentModule.ModuleReferences.Add (module);
 			}
 			;
@@ -2841,21 +2864,18 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
-				if (codegen.HasAssemblyDirective)
+				if (has_assembly_directive)
 					Report.WriteError(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
 
-				var attr = (AssemblyAttributes) $2;
-				if ((attr & AssemblyAttributes.Retargetable) != 0)
-					codegen.CurrentModule.Assembly.Name.IsRetargetable = true;
-
-				codegen.CurrentModule.Assembly.Name.Name = (string) $3;
-				codegen.HasAssemblyDirective = true;
+				codegen.CurrentModule.Assembly.Name.Attributes = (AssemblyAttributes) $2;
+				codegen.CurrentModule.Assembly.Name.Name = ((QualifiedName) $3).FullName;
+				has_assembly_directive = true;
 			}
 			;
 
 asm_attr		:
 			{
-				$$ = new AssemblyAttributes ();
+				$$ = AssemblyAttributes.SideBySideCompatible;
 			}
 			| asm_attr K_RETARGETABLE
 			{
@@ -2947,14 +2967,19 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 
 assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name
 			{
-				codegen.CurrentAssemblyReference = new AssemblyNameReference ((string) $4, new Version ());
+				codegen.CurrentAssemblyReference = new AssemblyNameReference (((QualifiedName) $4).FullName,
+					new Version ()) {
+					Attributes = (AssemblyAttributes) $3,
+				};
 			}
 			| D_ASSEMBLY K_EXTERN asm_attr comp_name K_AS comp_name
 			{
-				var name = (string) $6;
+				var name = (QualifiedName) $6;
 
-				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference ((string) $4, new Version ()) {
-					Alias = name,
+				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference (((QualifiedName) $4).FullName,
+					new Version ()) {
+					Alias = name.FullName,
+					Attributes = (AssemblyAttributes) $3,
 				};
 			}
 			;
@@ -3167,11 +3192,41 @@ id			: ID
 			;
 
 comp_name		: id
+			{
+				$$ = new QualifiedName {
+					Name = (string) $1,
+				};
+			}
 			| comp_name DOT comp_name
 			{
-				$$ = (string) $1 + '.' + (string) $3;
+				var n1 = (QualifiedName) $1;
+				var n2 = (QualifiedName) $2;
+
+				var qn = new QualifiedName {
+					Name = n2.Name,
+				};
+
+				foreach (var ns in n1.Namespaces)
+					qn.Namespaces.Add (ns);
+
+				qn.Namespaces.Add (n1.Name);
+
+				foreach (var ns in n2.Namespaces)
+					qn.Namespaces.Add (ns);
+
+				$$ = qn;
 			}
 			| COMP_NAME
+			{
+				var strings = ((string) $1).Split ('.');
+
+				var qn = new QualifiedName {
+					Name = strings [1],
+				};
+				qn.Namespaces.Add (strings [0]);
+
+				$$ = qn;
+			}
 			;
 
 %%

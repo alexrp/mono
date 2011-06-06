@@ -4,6 +4,7 @@ tests/AssemblyTests.cs
 tests/ReferenceTests.cs
 tests/AssemblerTester.cs
 tests/AssemblyInfo.cs
+tests/ClassTests.cs
 tests/Extensions.cs
 tests/ModuleTests.cs
 tests/MiscellaneousTests.cs

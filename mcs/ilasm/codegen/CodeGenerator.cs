@@ -7,19 +7,23 @@ namespace Mono.ILAsm {
 	public sealed class CodeGenerator {
 		Corlib corlib;
 		
+		public Corlib Corlib {
+			get {
+				return corlib ?? (corlib = GetCorlib ());
+			}
+		}
+		
 		public ModuleDefinition CurrentModule { get; private set; }
 		
 		public string CurrentNamespace { get; internal set; }
-		
-		public bool HasModuleDirective { get; internal set; }
-		
-		public bool HasAssemblyDirective { get; internal set; }
 		
 		public TypeDefinition CurrentType { get; internal set; }
 		
 		public MethodDefinition CurrentMethod { get; internal set; }
 		
 		public AssemblyNameReference CurrentAssemblyReference { get; internal set; }
+		
+		public IGenericParameterProvider CurrentGenericParameterProvider { get; internal set; }
 		
 		public bool HasEntryPoint { get; internal set; }
 		
@@ -47,6 +51,9 @@ namespace Mono.ILAsm {
 			// Attempt to resolve the assembly in the GAC and insert its
 			// version and public key token in a reference.
 			
+			Report.WriteWarning (Warning.AutoResolvingAssembly,
+				"Attempting to resolve assembly: {0}", name);
+			
 			var asmName = new AssemblyNameReference (name, null);
 			var asm = CurrentModule.AssemblyResolver.Resolve (asmName);
 			
@@ -55,6 +62,9 @@ namespace Mono.ILAsm {
 				asmName.PublicKeyToken = asm.Name.PublicKeyToken;
 				return asmName;
 			}
+			
+			Report.WriteWarning (Warning.AutoResolutionFailed,
+				"Could not resolve assembly: {0}", name);
 			
 			return null;
 		}
@@ -92,7 +102,12 @@ namespace Mono.ILAsm {
 			// however, that fails, we just blindly emit an assembly name
 			// reference and hope for the best... Note that if the module
 			// parameter is true, we're explicitly searching for a module, and
-			// thus error if a reference hasn't been declared.
+			// thus error if a reference hasn't been declared. If the name
+			// matches the current module, and we're explicitly searching for
+			// a module, we return that.
+			
+			if (module && name == CurrentModule.Name)
+				return CurrentModule;
 			
 			if (!module) {
 				var asm = GetAliasedAssemblyReference (name);
@@ -109,9 +124,6 @@ namespace Mono.ILAsm {
 				Report.WriteError (Error.UndeclaredModuleReference,
 					"Use of undeclared module: {0}", name);
 			
-			Report.WriteWarning (Warning.AutoResolvingAssembly,
-				"Attempting to resolve assembly: {0}", name);
-			
 			// No dice. Let's try automatically resolving it as an assembly.
 			var gacAsm = ResolveAssemblyReference (name);
 			if (gacAsm != null) {
@@ -119,30 +131,24 @@ namespace Mono.ILAsm {
 				return gacAsm;
 			}
 			
-			Report.WriteWarning (Warning.AutoResolutionFailed,
-				"Could not resolve assembly: {0}", name);
-			
 			// OK, so all attempts failed. We'll just assume it works...
 			return new AssemblyNameReference (name, new Version ());
 		}
 		
-		public Corlib GetCorlib ()
+		private Corlib GetCorlib ()
 		{
-			if (corlib != null)
-				return corlib;
-			
 			const string corlibStr = "mscorlib";
 			
 			var asm = GetAliasedAssemblyReference (corlibStr);
 			if (asm != null)
-				return corlib = new Corlib (CurrentModule, asm);
+				return new Corlib (CurrentModule, asm);
 			
 			// TODO: Should we error if we can't resolve it?
 			asm = ResolveAssemblyReference (corlibStr) ??
 				new AssemblyNameReference (corlibStr, new Version ());
 			CurrentModule.AssemblyReferences.Add (asm);
 			
-			return corlib = new Corlib (CurrentModule, asm);
+			return new Corlib (CurrentModule, asm);
 		}
 	}
 }

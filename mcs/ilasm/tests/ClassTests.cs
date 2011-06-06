@@ -1,5 +1,5 @@
 // 
-// NamespaceTests.cs
+// ClassTests.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,38 +28,16 @@ using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
-	public sealed class NamespaceTests : AssemblerTester {
-		// TODO: Write tests to verify that classes get put into the correct
-		// namespaces when we can actually emit them.
-		
+	public sealed class ClassTests : AssemblerTester {
 		[Test]
-		public void TestNamespaceDirective ()
+		public void TestPrivateClass ()
 		{
 			ILAsm ()
-				.Input ("namespace-001.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
+				.Input ("class-001.il")
 				.Run ()
-				.Expect (ExitCode.Success);
-		}
-		
-		[Test]
-		public void TestNestedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-002.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
-		}
-		
-		[Test]
-		public void TestDottedNamespaceDirectives ()
-		{
-			ILAsm ()
-				.Input ("namespace-003.il")
-				.ExpectWarning (Warning.LegacyNamespaceSyntax)
-				.Run ()
-				.Expect (ExitCode.Success);
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test001") != null);
 		}
 	}
 }

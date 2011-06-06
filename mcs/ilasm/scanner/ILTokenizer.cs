@@ -17,10 +17,10 @@ namespace Mono.ILAsm {
 	}
 
 	public class ILTokenizer {
-		private const string id_chars = "_$@?.`";
-		private ILToken last_token;
-		private readonly StringHelper str_builder;
-		private readonly NumberHelper num_builder;
+		const string id_chars = "_$@?.`";
+		ILToken last_token;
+		readonly StringHelper str_builder;
+		readonly NumberHelper num_builder;
 		internal bool in_byte_array;
 
 		public event EventHandler<NewTokenEventArgs> NewToken;
@@ -79,11 +79,11 @@ namespace Mono.ILAsm {
 						break;
 					}
 
-					if (!is_hex (ch))
+					if (!IsHex (ch))
 						throw new ILTokenizingException (Reader.Location, ((char) ch).ToString ());
 					
 					hx += (char) ch;
-					if (is_hex (Reader.Peek ()))
+					if (IsHex (Reader.Peek ()))
 						hx += (char) Reader.Read ();
 					else if (!char.IsWhiteSpace ((char) Reader.Peek ()) && Reader.Peek () != ')')
 						throw new ILTokenizingException (Reader.Location, ((char) Reader.Peek ()).ToString ());
@@ -181,8 +181,8 @@ namespace Mono.ILAsm {
 							
 							if (IsIdChar ((char) next)) {
 								var opTail = BuildId ();
-								var full_str = string.Format ("{0}.{1}", val, opTail);
-								opCode = ILTables.OpCodes.TryGet (full_str);
+								var fullStr = string.Format ("{0}.{1}", val, opTail);
+								opCode = ILTables.OpCodes.TryGet (fullStr);
 
 								if (opCode == null) {
 									if (str_builder.TokenId != Token.ID) {
@@ -192,7 +192,7 @@ namespace Mono.ILAsm {
 										res.val = val;
 									} else {
 										res.token = Token.COMP_NAME;
-										res.val = full_str;
+										res.val = fullStr;
 									}
 									
 									break;
@@ -242,17 +242,17 @@ namespace Mono.ILAsm {
 			}
 		}
 
-		bool is_hex (int e)
+		bool IsHex (int e)
 		{
 			return (e >= '0' && e <= '9') || (e >= 'A' && e <= 'F') || (e >= 'a' && e <= 'f');
 		}
 
-		private static bool IsIdStartChar (char ch)
+		static bool IsIdStartChar (char ch)
 		{
 			return (char.IsLetter (ch) || (id_chars.IndexOf (ch) != -1));
 		}
 
-		private static bool IsIdChar (char ch)
+		static bool IsIdChar (char ch)
 		{
 			return (char.IsLetterOrDigit (ch) || (id_chars.IndexOf (ch) != -1));
 		}
@@ -277,7 +277,7 @@ namespace Mono.ILAsm {
 			return ILTables.Keywords.ContainsKey (name);
 		}
 
-		private string BuildId ()
+		string BuildId ()
 		{
 			var idsb = new StringBuilder ();
 			int ch;
@@ -304,7 +304,7 @@ namespace Mono.ILAsm {
 			return idsb.ToString ();
 		}
 
-		private void OnNewToken (ILToken token)
+		void OnNewToken (ILToken token)
 		{
 			var evnt = NewToken;
 			if (evnt != null)
