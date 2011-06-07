@@ -120,6 +120,7 @@ namespace Mono.ILAsm {
 %token D_LINE
 %token D_XLINE
 %token D_LOCALE
+%token D_CULTURE
 %token D_LOCALS
 %token D_MANIFESTRES
 %token D_MAXSTACK
@@ -2889,6 +2890,10 @@ assembly_decls		:
 			| assembly_decls assembly_decl
 			;
 
+locale_or_culture	: D_LOCALE
+			| D_CULTURE
+			;
+
 assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			{
 				codegen.CurrentModule.Assembly.Name.PublicKey = (byte[]) $3;
@@ -2898,11 +2903,11 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 				codegen.CurrentModule.Assembly.Name.Version =
 					new Version ((int) $2, (int) $4, (int) $6, (int) $8);
 			}
-			| D_LOCALE comp_qstring
+			| locale_or_culture comp_qstring
 			{
 				codegen.CurrentModule.Assembly.Name.Culture = (string) $2;
 			}
-			| D_LOCALE ASSIGN bytes_list
+			| locale_or_culture ASSIGN bytes_list
 			{
 				// I assume this is UTF-16. I really have no clue, though,
 				// and it isn't documented...
@@ -3004,11 +3009,11 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 				codegen.CurrentAssemblyReference.PublicKeyToken = (byte[]) $3;
 				has_public_key_token = true;
 			}
-			| D_LOCALE comp_qstring
+			| locale_or_culture comp_qstring
 			{
 				codegen.CurrentAssemblyReference.Culture = (string) $2;
 			}
-			| D_LOCALE ASSIGN bytes_list
+			| locale_or_culture ASSIGN bytes_list
 			{
 				// See the note in assembly_decl -> D_LOCALE.
 				var text = Encoding.Unicode.GetString ((byte[]) $3);
