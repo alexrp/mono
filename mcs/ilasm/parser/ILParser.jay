@@ -524,7 +524,7 @@ class_attr		:
 			| class_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamANDAssem; }
 			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamORAssem; }
 			| class_attr K_VALUE			{ is_value_class = true; }
-			| class_attr K_ENUM			{ is_enum_class = true; is_value_class = true; }
+			| class_attr K_ENUM			{ is_enum_class = true; }
 			| class_attr K_INTERFACE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Interface; }
 			| class_attr K_SEALED			{ $$ = (TypeAttributes) $1 | TypeAttributes.Sealed; }
 			| class_attr K_ABSTRACT			{ $$ = (TypeAttributes) $1 | TypeAttributes.Abstract; }

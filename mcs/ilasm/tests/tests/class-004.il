@@ -1,5 +1,5 @@
 // 
-// ClassTests.cs
+// class-004.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -23,57 +23,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public sealed class ClassTests : AssemblerTester {
-		[Test]
-		public void TestSimpleClassDirective ()
-		{
-			ILAsm ()
-				.Input ("class-001.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("test001") != null);
-		}
-		
-		[Test]
-		public void TestGenericClassDirective ()
-		{
-			ILAsm ()
-				.Input ("class-002.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetTypes ().Contains (
-					y => y.GenericParameters.ContainsMany (
-						z => z.Name == "T1",
-						z => z.Name == "T2")));
-		}
-		
-		[Test]
-		public void TestValueTypeClassDirective ()
-		{
-			ILAsm ()
-				.Input ("class-003.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("test003").IsValueType);
-		}
-		
-		[Test]
-		public void TestEnumClassDirective ()
-		{
-			ILAsm ()
-				.Input ("class-004.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("test004").IsEnum);
-		}
-	}
+.assembly extern mscorlib
+{
+}
+
+.class enum test004
+{
 }
