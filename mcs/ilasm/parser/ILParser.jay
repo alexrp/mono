@@ -217,6 +217,7 @@ namespace Mono.ILAsm {
 %token K_OLE
 %token K_LASTERR
 %token K_WINAPI
+%token K_PLATFORMAPI
 %token K_NATIVE
 %token K_IL
 %token K_CIL
@@ -1739,6 +1740,7 @@ pinv_attr		:
 			| pinv_attr K_AUTOCHAR			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.autochar; }
 			| pinv_attr K_LASTERR			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.lasterr; }
 			| pinv_attr K_WINAPI			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.winapi; }
+			| pinv_attr K_PLATFORMAPI		{ $$ = (PInvokeAttr) $1 | PInvokeAttr.winapi; }
 			| pinv_attr K_CDECL			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.cdecl; }
 			| pinv_attr K_STDCALL			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.stdcall; }
 			| pinv_attr K_THISCALL			{ $$ = (PInvokeAttr) $1 | PInvokeAttr.thiscall; }

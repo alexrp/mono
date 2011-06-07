@@ -240,6 +240,7 @@ namespace Mono.ILAsm {
 			keywords ["ole"] = new ILToken (Token.K_OLE, "ole");
 			keywords ["lasterr"] = new ILToken (Token.K_LASTERR, "lasterr");
 			keywords ["winapi"] = new ILToken (Token.K_WINAPI, "winapi");
+			keywords ["platformapi"] = new ILToken (Token.K_PLATFORMAPI, "platformapi");
 			keywords ["native"] = new ILToken (Token.K_NATIVE, "native");
 			keywords ["il"] = new ILToken (Token.K_IL, "il");
 			keywords ["cil"] = new ILToken (Token.K_CIL, "cil");
