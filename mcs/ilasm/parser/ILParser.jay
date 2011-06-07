@@ -481,21 +481,19 @@ class_head		: D_CLASS class_attr comp_name
 				codegen.CurrentType = new TypeDefinition (codegen.CurrentNamespace +
 					qn.FullNamespace, qn.Name, (TypeAttributes) $2);
 
-				codegen.CurrentType.Attributes = (TypeAttributes) $2;
-
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 			}
 			  formal_typars_clause
 			{
-				if ($4 != null)
-					foreach (var arg in (List<GenericParameter>) $4)
+				if ($5 != null)
+					foreach (var arg in (List<GenericParameter>) $5)
 						codegen.CurrentType.GenericParameters.Add (arg);
 
 				codegen.CurrentGenericParameterProvider = null;
 			}
 			  extends_clause impl_clause
 			{
-				if ($5 == null) {
+				if ($7 == null) {
 					if (is_value_class)
 						codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
 					else if (is_enum_class)
@@ -503,10 +501,10 @@ class_head		: D_CLASS class_attr comp_name
 					else
 						codegen.CurrentType.BaseType = codegen.Corlib.Object;
 				} else
-					codegen.CurrentType.BaseType = (TypeReference) $5;
+					codegen.CurrentType.BaseType = (TypeReference) $7;
 
-				if ($6 != null)
-					foreach (var interf in (List<TypeReference>) $6)
+				if ($8 != null)
+					foreach (var interf in (List<TypeReference>) $8)
 						codegen.CurrentType.Interfaces.Add (interf);
 			}
 			;
@@ -678,8 +676,9 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 					Attributes = (GenericParameterAttributes) $1,
 				};
 
-				foreach (var constraint in (List<TypeReference>) $2)
-					gp.Constraints.Add (constraint);
+				if ($2 != null)
+					foreach (var constraint in (List<TypeReference>) $2)
+						gp.Constraints.Add (constraint);
 
 				$$ = new List<GenericParameter> () {
 					gp,
@@ -694,8 +693,9 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 					Attributes = (GenericParameterAttributes) $3,
 				};
 
-				foreach (var constraint in (List<TypeReference>) $4)
-					gp.Constraints.Add (constraint);
+				if ($4 != null)
+					foreach (var constraint in (List<TypeReference>) $4)
+						gp.Constraints.Add (constraint);
 
 				colln.Add (gp);
 				$$ = colln;

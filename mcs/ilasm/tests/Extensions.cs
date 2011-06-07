@@ -49,15 +49,7 @@ namespace Mono.ILAsm.Tests {
 			return true;
 		}
 		
-		public static IList<T> Pad<T> (this IList<T> list, T value, int count)
-		{
-			for (var i = 0; i < count; i++)
-				list.Add (value);
-			
-			return list;
-		}
-		
-		public static bool Contains<T> (this IList<T> list, params Predicate<T>[] predicates)
+		public static bool Contains<T> (this IEnumerable<T> list, params Predicate<T>[] predicates)
 		{
 			bool flag = false;
 			
@@ -68,6 +60,23 @@ namespace Mono.ILAsm.Tests {
 				
 				if (flag)
 					return true;
+			}
+			
+			return false;
+		}
+		
+		public static bool ContainsMany<T> (this IEnumerable<T> list, params Predicate<T>[] predicates)
+		{
+			var passes = 0;
+			
+			foreach (var item in list) {
+				foreach (var predicate in predicates) {
+					if (predicate (item))
+						passes++;
+					
+					if (passes == predicates.Length)
+						return true;
+				}
 			}
 			
 			return false;
