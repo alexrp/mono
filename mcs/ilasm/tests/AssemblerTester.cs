@@ -47,9 +47,9 @@ namespace Mono.ILAsm.Tests {
 				driver.Target = Target.Dll;
 				driver.Output = TextWriter.Null;
 				
-				Report.Quiet = true;
-				Report.Warning += OnWarning;
-				Report.Error += OnError;
+				driver.Report.Quiet = true;
+				driver.Report.Warning += OnWarning;
+				driver.Report.Error += OnError;
 			}
 			
 			private void OnWarning (object sender, WarningEventArgs e)
@@ -126,7 +126,7 @@ namespace Mono.ILAsm.Tests {
 			public Assembler Mute ()
 			{
 				driver.Output = TextWriter.Null;
-				Report.Quiet = true;
+				driver.Report.Quiet = true;
 				
 				return this;
 			}
@@ -134,7 +134,7 @@ namespace Mono.ILAsm.Tests {
 			public Assembler Unmute ()
 			{
 				driver.Output = Console.Out;
-				Report.Quiet = false;
+				driver.Report.Quiet = false;
 				
 				return this;
 			}
@@ -154,21 +154,21 @@ namespace Mono.ILAsm.Tests {
 			public AssemblerOutput Run ()
 			{
 				if (expected_warning != null)
-					Report.WarningOutput = TextWriter.Null;
+					driver.Report.WarningOutput = TextWriter.Null;
 				
 				if (expected_error != null)
-					Report.ErrorOutput = TextWriter.Null;
+					driver.Report.ErrorOutput = TextWriter.Null;
 				
 				var result = driver.Run (arguments.ToArray ());
 				
 				// Reset stuff to defaults.
 				driver.Output = Console.Out;
 				
-				Report.Quiet = false;
-				Report.Warning -= OnWarning;
-				Report.Error -= OnError;
-				Report.ErrorOutput = Console.Error;
-				Report.WarningOutput = Console.Out;
+				driver.Report.Quiet = false;
+				driver.Report.Warning -= OnWarning;
+				driver.Report.Error -= OnError;
+				driver.Report.ErrorOutput = Console.Error;
+				driver.Report.WarningOutput = Console.Out;
 				
 				Assert.AreEqual (expected_warning, resulting_warning);
 				Assert.AreEqual (expected_error, resulting_error);

@@ -4,8 +4,10 @@ using Mono.Cecil;
 using Mono.Cecil.Mdb;
 
 namespace Mono.ILAsm {
-	public sealed class CodeGenerator {
+	internal sealed class CodeGenerator {
 		Corlib corlib;
+		
+		Report report;
 		
 		public Corlib Corlib {
 			get {
@@ -15,24 +17,25 @@ namespace Mono.ILAsm {
 		
 		public ModuleDefinition CurrentModule { get; private set; }
 		
-		public string CurrentNamespace { get; internal set; }
+		public string CurrentNamespace { get; set; }
 		
-		public TypeDefinition CurrentType { get; internal set; }
+		public TypeDefinition CurrentType { get; set; }
 		
-		public MethodDefinition CurrentMethod { get; internal set; }
+		public MethodDefinition CurrentMethod { get; set; }
 		
-		public AssemblyNameReference CurrentAssemblyReference { get; internal set; }
+		public AssemblyNameReference CurrentAssemblyReference { get; set; }
 		
-		public IGenericParameterProvider CurrentGenericParameterProvider { get; internal set; }
+		public IGenericParameterProvider CurrentGenericParameterProvider { get; set; }
 		
-		public bool HasEntryPoint { get; internal set; }
+		public bool HasEntryPoint { get; set; }
 		
 		public bool DebuggingSymbols { get; set; }
 		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
-		public CodeGenerator (string moduleName, Target target)
+		public CodeGenerator (Report report, string moduleName, Target target)
 		{
+			this.report = report;
 			AliasedAssemblyReferences = new Dictionary<string, AliasedAssemblyNameReference> ();
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
@@ -51,7 +54,7 @@ namespace Mono.ILAsm {
 			// Attempt to resolve the assembly in the GAC and insert its
 			// version and public key token in a reference.
 			
-			Report.WriteWarning (Warning.AutoResolvingAssembly,
+			report.WriteWarning (Warning.AutoResolvingAssembly,
 				"Attempting to resolve assembly: {0}", name);
 			
 			var asmName = new AssemblyNameReference (name, null);
@@ -63,7 +66,7 @@ namespace Mono.ILAsm {
 				return asmName;
 			}
 			
-			Report.WriteWarning (Warning.AutoResolutionFailed,
+			report.WriteWarning (Warning.AutoResolutionFailed,
 				"Could not resolve assembly: {0}", name);
 			
 			return null;
@@ -121,7 +124,7 @@ namespace Mono.ILAsm {
 			
 			// If we don't have a module by now, something went wrong.
 			if (module)
-				Report.WriteError (Error.UndeclaredModuleReference,
+				report.WriteError (Error.UndeclaredModuleReference,
 					"Use of undeclared module: {0}", name);
 			
 			// No dice. Let's try automatically resolving it as an assembly.

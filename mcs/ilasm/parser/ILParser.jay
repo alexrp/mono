@@ -15,10 +15,11 @@ using System.Text;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
-	public class ILParser {
+	internal class ILParser {
 		static readonly int yacc_verbose_flag = 0;
 		readonly CodeGenerator codegen;
 		readonly ILTokenizer tokenizer;
+		readonly Report report;
 		readonly Stack<string> namespace_stack = new Stack<string> ();
 		bool is_enum_class;
 		bool is_value_class;
@@ -29,18 +30,11 @@ namespace Mono.ILAsm {
 		bool is_explicit_call;
 		bool is_instance_call;
 
-		public ILParser (CodeGenerator codegen, ILTokenizer tokenizer)
+		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
 		{
+			this.report = report;
 			this.codegen = codegen;
 			this.tokenizer = tokenizer;
-		}
-
-		public CodeGenerator CodeGenerator {
-			get { return codegen; }
-		}
-
-		public ILTokenizer Tokenizer {
-			get { return tokenizer; }
 		}
 
 %}
@@ -412,7 +406,7 @@ decl			:
 				var fa = (int) $3;
 
 				if (fa < 0x200 || fa > 0x10000 || (fa & (fa - 1)) != 0) {
-					Report.WriteError (Error.InvalidFileAlignment,
+					report.WriteError (Error.InvalidFileAlignment,
 						"Invalid file alignment; must be a power of two between 0x200 and 0x10000.");
 				}
 			}
@@ -421,7 +415,7 @@ decl			:
 				var ib = (long) $2;
 
 				if ((ib & 0xffff) != 0) {
-					Report.WriteError (Error.InvalidImageBase,
+					report.WriteError (Error.InvalidImageBase,
 						"Invalid image base; must be 0x10000-aligned.");
 				}
 			}
@@ -455,7 +449,7 @@ vtfixup_attr		:
 
 namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
 			{
-				Report.WriteWarning (Warning.LegacyNamespaceSyntax,
+				report.WriteWarning (Warning.LegacyNamespaceSyntax,
 					"Use of legacy namespace syntax.");
 
 				codegen.CurrentNamespace = namespace_stack.Pop ();
@@ -2596,11 +2590,11 @@ custom_type		: call_conv type type_spec DOUBLE_COLON method_name OPEN_PARENS typ
 
 sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PARENS
 			{
-								$$ = TypeSpecToPermPair ($2, $3, (ArrayList) $5);
+				$$ = TypeSpecToPermPair ($2, $3, (ArrayList) $5);
 			}
 			| D_PERMISSION sec_action type_spec
 			{
-								$$ = TypeSpecToPermPair ($2, $3, null);
+				$$ = TypeSpecToPermPair ($2, $3, null);
 			}
 			| D_PERMISSIONSET sec_action ASSIGN bytes_list
 			{
@@ -2813,7 +2807,7 @@ module_head		: D_MODULE
 					has_module_directive = true;
 				}
 				else if (name != codegen.CurrentModule.Name)
-					Report.WriteWarning (Warning.ModuleDirectiveIgnored,
+					report.WriteWarning (Warning.ModuleDirectiveIgnored,
 						".module directive with different name ignored.");
 			}
 			| D_MODULE K_EXTERN comp_name
@@ -2821,7 +2815,7 @@ module_head		: D_MODULE
 				var name = ((QualifiedName) $3).FullName;
 				
 				if (codegen.GetModuleReference (name) != null)
-					Report.WriteWarning (Warning.ModuleReferenceIgnored,
+					report.WriteWarning (Warning.ModuleReferenceIgnored,
 						"Ignoring duplicate module reference: {0}", name);
 				
 				var module = new ModuleReference (name);
@@ -2865,7 +2859,7 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
 				if (has_assembly_directive)
-					Report.WriteError(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
+					report.WriteError(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
 
 				codegen.CurrentModule.Assembly.Name.Attributes = (AssemblyAttributes) $2;
 				codegen.CurrentModule.Assembly.Name.Name = ((QualifiedName) $3).FullName;
@@ -2956,7 +2950,7 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 					codegen.CurrentModule.AssemblyReferences.Add (asmRef);
 				}
 				else
-					Report.WriteWarning (Warning.AssemblyReferenceIgnored,
+					report.WriteWarning (Warning.AssemblyReferenceIgnored,
 						"Redeclaration of assembly '{0}' ignored.", name);
 
 				codegen.CurrentAssemblyReference = null;

@@ -34,8 +34,11 @@ namespace Mono.ILAsm {
 		
 		public TextWriter Output { get; set; }
 		
+		public Report Report { get; private set; }
+		
 		public Driver ()
 		{
+			Report = new Report ();
 			Output = Console.Out;
 		}
 
@@ -52,7 +55,7 @@ namespace Mono.ILAsm {
 			if (OutputFileName == null)
 				OutputFileName = CreateOutputFileName (il_file_list, Target);
 			
-			var codegen = new CodeGenerator (OutputFileName, Target) {
+			var codegen = new CodeGenerator (Report, OutputFileName, Target) {
 				DebuggingSymbols = debugging_info,
 			};
 			
@@ -67,6 +70,7 @@ namespace Mono.ILAsm {
 				
 				if (scan_only)
 					return 0;
+				
 				if (Target != Target.Dll && !codegen.HasEntryPoint)
 					Report.WriteError (Error.NoEntryPoint, "No entry point found.");
 				
@@ -126,7 +130,7 @@ namespace Mono.ILAsm {
 				return ExitCode.Success;
 			}
 
-			var parser = new ILParser (codegen, scanner);
+			var parser = new ILParser (Report, codegen, scanner);
 			try {
 				parser.yyparse (new ScannerAdapter (scanner),
 					show_parser ? new yydebug.yyDebugSimple () : null);
@@ -267,7 +271,7 @@ namespace Mono.ILAsm {
 				(target == Target.Dll ? ".dll" : ".exe");
 		}
 
-		private static void WriteError (string message, params object[] args)
+		private void WriteError (string message, params object[] args)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Report.ErrorOutput.WriteLine (string.Format (message, args));

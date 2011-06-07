@@ -34,12 +34,13 @@ namespace Mono.ILAsm {
 			// Do everything in Invariant
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 			
-			var result = new Driver ().Run (args);
+			var driver = new Driver ();
+			var result = driver.Run (args);
 			if (result == null)
 				return 0; // We just silently return success.
 			
 			if ((int) result == 0)
-				Report.WriteMessage ("Operation completed successfully.");
+				driver.Report.WriteMessage ("Operation completed successfully.");
 			
 			return (int) result;
 		}
