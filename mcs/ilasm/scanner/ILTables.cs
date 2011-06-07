@@ -2,12 +2,110 @@
 //
 // (C) Sergey Chaban (serge@wildwestsoftware.com)
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using Mono.Cecil.Cil;
 
 namespace Mono.ILAsm {
 	public static class ILTables {
+		public sealed class ReadOnlyDictionaryAdapter<TKey, TValue> : IDictionary<TKey, TValue> {
+			readonly IDictionary<TKey, TValue> dict;
+			
+			public ReadOnlyDictionaryAdapter (IDictionary<TKey, TValue> dict)
+			{
+				this.dict = dict;
+			}
+			
+			void IDictionary<TKey, TValue>.Add (TKey key, TValue value)
+			{
+				throw new NotSupportedException ();
+			}
+
+			public bool ContainsKey (TKey key)
+			{
+				return dict.ContainsKey (key);
+			}
+
+			bool IDictionary<TKey, TValue>.Remove (TKey key)
+			{
+				throw new NotSupportedException ();
+			}
+
+			public bool TryGetValue (TKey key, out TValue value)
+			{
+				return dict.TryGetValue (key, out value);
+			}
+
+			public TValue this [TKey key] {
+				get {
+					return dict [key];
+				}
+				set {
+					throw new NotSupportedException ();
+				}
+			}
+
+			public ICollection<TKey> Keys {
+				get {
+					return dict.Keys;
+				}
+			}
+
+			public ICollection<TValue> Values {
+				get {
+					return dict.Values;
+				}
+			}
+
+			IEnumerator IEnumerable.GetEnumerator ()
+			{
+				return ((IEnumerable) dict).GetEnumerator ();
+			}
+
+			public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator ()
+			{
+				return dict.GetEnumerator ();
+			}
+
+			void ICollection<KeyValuePair<TKey, TValue>>.Add (KeyValuePair<TKey, TValue> item)
+			{
+				throw new NotSupportedException ();
+			}
+
+			void ICollection<KeyValuePair<TKey, TValue>>.Clear ()
+			{
+				throw new NotSupportedException ();
+			}
+
+			public bool Contains (KeyValuePair<TKey, TValue> item)
+			{
+				return dict.Contains (item);
+			}
+
+			public void CopyTo (KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+			{
+				dict.CopyTo (array, arrayIndex);
+			}
+
+			bool ICollection<KeyValuePair<TKey, TValue>>.Remove (KeyValuePair<TKey, TValue> item)
+			{
+				throw new NotSupportedException ();
+			}
+
+			public int Count {
+				get {
+					return dict.Count;
+				}
+			}
+
+			public bool IsReadOnly {
+				get {
+					return true;
+				}
+			}
+		}
+		
 		static ILTables ()
 		{
 			var directives = new Dictionary<string, ILToken> (300);
@@ -80,7 +178,7 @@ namespace Mono.ILAsm {
 			directives [".typelist"] = new ILToken (Token.D_TYPELIST, ".typelist");
 			directives [".mscorlib"] = new ILToken (Token.D_MSCORLIB, ".mscorlib");
 			
-			Directives = directives;
+			Directives = new ReadOnlyDictionaryAdapter<string, ILToken> (directives);
 			
 			var keywords = new Dictionary<string, ILToken> (300);
 			
@@ -277,7 +375,7 @@ namespace Mono.ILAsm {
 			keywords ["strict"] = new ILToken (Token.K_STRICT, "strict");
 			keywords ["mdtoken"] = new ILToken (Token.K_MDTOKEN, "mdtoken");
 			
-			Keywords = keywords;
+			Keywords = new ReadOnlyDictionaryAdapter<string, ILToken> (keywords);
 			
 			var opCodes = new Dictionary<string, ILToken> (300);
 			
@@ -516,13 +614,13 @@ namespace Mono.ILAsm {
 			opCodes ["calli"] = new ILToken (Token.INSTR_SIG, Cecil.Cil.OpCodes.Calli);
 			opCodes ["ldtoken"] = new ILToken (Token.INSTR_TOK, Cecil.Cil.OpCodes.Ldtoken);
 			
-			OpCodes = opCodes;
+			OpCodes = new ReadOnlyDictionaryAdapter<string, ILToken> (opCodes);
 		}
 
-		public static Dictionary<string, ILToken> Directives { get; private set; }
+		public static ReadOnlyDictionaryAdapter<string, ILToken> Directives { get; private set; }
 
-		public static Dictionary<string, ILToken> Keywords { get; private set; }
+		public static ReadOnlyDictionaryAdapter<string, ILToken> Keywords { get; private set; }
 		
-		public static Dictionary<string, ILToken> OpCodes { get; private set; }
+		public static ReadOnlyDictionaryAdapter<string, ILToken> OpCodes { get; private set; }
 	}
 }
