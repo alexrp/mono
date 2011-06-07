@@ -60,5 +60,9 @@ namespace Mono.ILAsm {
 		/// Happens when a .namespace directive is encountered.
 		/// </summary>
 		LegacyNamespaceSyntax = 6,
+		/// <summary>
+		/// A .hash algorithm directive had an unrecognized value.
+		/// </summary>
+		UnknownHashAlgorithm = 7,
 	}
 }

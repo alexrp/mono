@@ -92,7 +92,6 @@ namespace Mono.ILAsm {
 %token INSTR_PARAM
 
 %token D_ADDON
-%token D_ALGORITHM
 %token D_ASSEMBLY
 %token D_BACKING
 %token D_BLOB
@@ -2910,8 +2909,14 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			}
 			| D_HASH K_ALGORITHM int32
 			{
-				codegen.CurrentModule.Assembly.Name.HashAlgorithm =
-					(AssemblyHashAlgorithm) (int) $3;
+				var algo = (AssemblyHashAlgorithm) (int) $3;
+
+				if (algo != AssemblyHashAlgorithm.SHA1)
+					report.WriteWarning (Warning.UnknownHashAlgorithm,
+						"Unknown hash algorithm; suggest using {0}.",
+						((int) AssemblyHashAlgorithm.SHA1).ToString ("X8"));
+
+				codegen.CurrentModule.Assembly.Name.HashAlgorithm = algo;
 			}
 			/*
 			| customattr_decl

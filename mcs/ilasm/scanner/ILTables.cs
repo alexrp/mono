@@ -111,7 +111,6 @@ namespace Mono.ILAsm {
 			var directives = new Dictionary<string, ILToken> (300);
 			
 			directives [".addon"] = new ILToken (Token.D_ADDON, ".addon");
-			directives [".algorithm"] = new ILToken (Token.D_ALGORITHM, ".algorithm");
 			directives [".assembly"] = new ILToken (Token.D_ASSEMBLY, ".assembly");
 			directives [".backing"] = new ILToken (Token.D_BACKING, ".backing");
 			directives [".blob"] = new ILToken (Token.D_BLOB, ".blob");

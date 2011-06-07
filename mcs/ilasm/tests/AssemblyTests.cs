@@ -99,5 +99,15 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success);
 		}
+		
+		[Test]
+		public void TestInvalidAssemblyHashAlgorithm ()
+		{
+			ILAsm ()
+				.Input ("assembly-007.il")
+				.ExpectWarning (Warning.UnknownHashAlgorithm)
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
 	}
 }

@@ -93,5 +93,6 @@
     <None Include="tests\class-002.il" />
     <None Include="tests\class-003.il" />
     <None Include="tests\class-004.il" />
+    <None Include="tests\assembly-007.il" />
   </ItemGroup>
 </Project>
