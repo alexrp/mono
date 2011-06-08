@@ -484,17 +484,15 @@ class_head		: D_CLASS class_attr comp_name
 
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 			}
-			  formal_typars_clause
+			  formal_typars_clause extends_clause impl_clause
 			{
 				if ($5 != null)
 					foreach (var arg in (List<GenericParameter>) $5)
 						codegen.CurrentType.GenericParameters.Add (arg);
 
 				codegen.CurrentGenericParameterProvider = null;
-			}
-			  extends_clause impl_clause
-			{
-				if ($7 == null) {
+
+				if ($6 == null) {
 					if (is_value_class)
 						codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
 					else if (is_enum_class)
@@ -502,10 +500,10 @@ class_head		: D_CLASS class_attr comp_name
 					else
 						codegen.CurrentType.BaseType = codegen.Corlib.Object;
 				} else
-					codegen.CurrentType.BaseType = (TypeReference) $7;
+					codegen.CurrentType.BaseType = (TypeReference) $6;
 
-				if ($8 != null)
-					foreach (var interf in (List<TypeReference>) $8)
+				if ($7 != null)
+					foreach (var interf in (List<TypeReference>) $7)
 						codegen.CurrentType.Interfaces.Add (interf);
 			}
 			;
@@ -559,14 +557,14 @@ impl_clause		:
 
 impl_class_refs		: K_IMPLEMENTS generic_class_ref
 			{
-				$$ = new List<GenericInstanceType> () {
-					(GenericInstanceType) $2,
+				$$ = new List<TypeReference> () {
+					(TypeReference) $2,
 				};
 			}
 			| impl_class_refs COMMA generic_class_ref
 			{
-				var al = (List<GenericInstanceType>) $1;
-				al.Add ((GenericInstanceType) $3);
+				var al = (List<TypeReference>) $1;
+				al.Add ((TypeReference) $3);
 				$$ = al;
 			}
 			;

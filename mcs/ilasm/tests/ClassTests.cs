@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
@@ -37,7 +38,9 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test001") != null);
+				.Expect (x => x.Types.Contains (
+					y => y.Name == "test001",
+					y => y.BaseType.FullName == "System.Object"));
 		}
 		
 		[Test]
@@ -74,6 +77,104 @@ namespace Mono.ILAsm.Tests {
 				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.GetType ("test004").IsEnum);
+		}
+		
+		[Test]
+		public void TestInterfaceImplementation ()
+		{
+			ILAsm ()
+				.Input ("class-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test005").Interfaces.Contains (
+					y => y.FullName == "System.ICloneable"));
+		}
+		
+		[Test]
+		public void TestMultipleInterfaceImplementations ()
+		{
+			ILAsm ()
+				.Input ("class-006.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test006").Interfaces.ContainsMany (
+					y => y.FullName == "System.ICloneable",
+					y => y.FullName == "System.IDisposable"));
+		}
+		
+		[Test]
+		public void TestSimpleClassInheritance ()
+		{
+			ILAsm ()
+				.Input ("class-007.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test007").BaseType.Name == "test007_base");
+		}
+		
+		[Test]
+		public void TestGenericValueTypeConstraint ()
+		{
+			ILAsm ()
+				.Input ("class-008.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetTypes ().Contains (
+					y => y.GenericParameters.Contains (
+						z => z.Attributes.HasBitFlag (GenericParameterAttributes.NotNullableValueTypeConstraint))));
+		}
+		
+		[Test]
+		public void TestGenericReferenceTypeConstraint ()
+		{
+			ILAsm ()
+				.Input ("class-009.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetTypes ().Contains (
+					y => y.GenericParameters.Contains (
+						z => z.Attributes.HasBitFlag (GenericParameterAttributes.ReferenceTypeConstraint))));
+		}
+		
+		[Test]
+		public void TestGenericConstructorConstraint ()
+		{
+			ILAsm ()
+				.Input ("class-010.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetTypes ().Contains (
+					y => y.GenericParameters.Contains (
+						z => z.Attributes.HasBitFlag (GenericParameterAttributes.DefaultConstructorConstraint))));
+		}
+		
+		[Test]
+		public void TestInterfaceClassDirective ()
+		{
+			ILAsm ()
+				.Input ("class-011.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test011").IsInterface);
+		}
+		
+		[Test]
+		public void TestSimpleInterfaceImplementation ()
+		{
+			ILAsm ()
+				.Input ("class-012.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test012").Interfaces.Contains (
+					y => y.Name == "test012_if"));
 		}
 	}
 }
