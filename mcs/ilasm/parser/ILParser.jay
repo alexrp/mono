@@ -531,7 +531,7 @@ class_attr		:
 			;
 
 extends_clause		:
-			| K_EXTENDS generic_class_ref
+			| K_EXTENDS type_spec
 			{
 				$$ = $2;
 			}
@@ -541,13 +541,13 @@ impl_clause		:
 			| impl_class_refs
 			;
 
-impl_class_refs		: K_IMPLEMENTS generic_class_ref
+impl_class_refs		: K_IMPLEMENTS type_spec
 			{
 				$$ = new List<TypeReference> () {
 					(TypeReference) $2,
 				};
 			}
-			| impl_class_refs COMMA generic_class_ref
+			| impl_class_refs COMMA type_spec
 			{
 				var al = (List<TypeReference>) $1;
 				al.Add ((TypeReference) $3);
@@ -560,98 +560,6 @@ formal_typars_clause	:
 			{
 				$$ = $2;
 			}
-			;
-
-typars_clause		:
-			| OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
-			{
-				$$ = $2;
-			}
-			;
-
-typars			: type
-			{
-				$$ = new List<TypeReference> () {
-					(TypeReference) $1,
-				};
-			}
-			| typars COMMA type
-			{
-				((List<TypeReference>) $1).Add ((TypeReference) $3);
-				$$ = $1;
-			}
-			;
-
-constraints_clause	:
-			| OPEN_PARENS constraints CLOSE_PARENS
-			{
-				$$ = $2;
-			}
-			;
-
-constraints		: generic_class_ref
-			{
-				$$ = new List<GenericInstanceType> () {
-					(GenericInstanceType) $1,
-				};
-			}
-			| constraints COMMA generic_class_ref
-			{
-				((List<GenericInstanceType>) $1).Add ((GenericInstanceType) $3);
-				$$ = $1;
-			}
-			;
-
-generic_class_ref	: class_ref
-			{
-				$$ = $1;
-			}
-			| K_CLASS class_ref typars_clause
-			{
-				if ($3 != null) {
-					var gti = new GenericInstanceType ((TypeReference) $2);
-
-					foreach (var ga in (List<TypeReference>) $3)
-						gti.GenericArguments.Add (ga);
-
-					$$ = gti;
-				} else
-					$$ = $2;
-			}
-			/*
-			| BANG int32
-			{
-				GenParam gpar = new GenParam ((int) $2, "", GenParamType.Var);
-				$$ = new GenericParamRef (gpar, $2.ToString ());
-			}
-			| BANG BANG int32
-			{
-				GenParam gpar = new GenParam ((int) $3, "", GenParamType.MVar);
-				$$ = new GenericParamRef (gpar, $3.ToString ());
-			}
-			| BANG id
-			{
-				int num = -1;
-				string name = (string) $2;
-
-				if (codegen.CurrentTypeDef != null)
-					num = codegen.CurrentTypeDef.GetGenericParamNum (name);
-
-				GenParam gpar = new GenParam (num, name, GenParamType.Var);
-				$$ = new GenericParamRef (gpar, name);
-			}
-			| BANG BANG id
-			{
-				int num = -1;
-				string name = (string) $3;
-
-				if (codegen.CurrentMethodDef != null)
-					num = codegen.CurrentMethodDef.GetGenericParamNum (name);
-
-				GenParam gpar = new GenParam (num, name, GenParamType.MVar);
-				$$ = new GenericParamRef (gpar, name);
-			}
-			*/
 			;
 
 formal_typars		: formal_typar_attr constraints_clause formal_typar
@@ -704,90 +612,23 @@ formal_typar		: comp_name
 			}
 			;
 
-/*
-param_type_decl		: D_PARAM K_TYPE id
+constraints_clause	:
+			| OPEN_PARENS constraints CLOSE_PARENS
 			{
-				if (codegen.CurrentMethodDef != null)
-					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam ((string) $3);
-				else
-					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam ((string) $3);
-
-				if (codegen.CurrentCustomAttrTarget == null)
-					Report.Error (String.Format ("Type parameter '{0}' undefined.", (string) $3));
-			}
-			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
-			{
-				int index = ((int) $4);
-				if (codegen.CurrentMethodDef != null)
-					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam (index - 1);
-				else
-					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam (index - 1);
-
-				if (codegen.CurrentCustomAttrTarget == null)
-					Report.Error (String.Format ("Type parameter '{0}' index out of range.", index));
+				$$ = $2;
 			}
 			;
-*/
 
-class_refs		: class_ref
+constraints		: type_spec
 			{
-				$$ = new List<TypeReference> () {
-					(TypeReference) $1,
+				$$ = new List<GenericInstanceType> () {
+					(GenericInstanceType) $1,
 				};
 			}
-			| class_refs COMMA class_ref
+			| constraints COMMA type_spec
 			{
-				var class_list = (List<TypeReference>) $1;
-				class_list.Add ((TypeReference) $3);
-			}
-			;
-
-slashed_name		: comp_name
-			| slashed_name SLASH comp_name
-			{
-				var sl = (QualifiedName) $1;
-
-				var qn = new QualifiedName {
-					Name = ((QualifiedName) $3).FullName, // TODO: Verify this.
-				};
-
-				foreach (var ns in sl.Namespaces)
-					qn.Namespaces.Add (ns);
-
-				foreach (var nesting in sl.Nestings)
-					qn.Nestings.Add (nesting);
-
-				qn.Nestings.Add (sl.Name);
-
-				$$ = qn;
-			}
-			;
-
-class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
-			{
-				var name = (QualifiedName) $2;
-				var type = (QualifiedName) $4;
-
-				var scope = codegen.GetScope (name.FullName, false);
-				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
-			}
-			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET slashed_name
-			{
-				var module = (QualifiedName) $3;
-				var type = (QualifiedName) $5;
-
-				if (module.FullName == codegen.CurrentModule.Name)
-					$$ = codegen.CurrentModule.GetType (type.FullNamespace, type.Name);
-				else {
-					var scope = codegen.GetScope (module.FullName, true);
-					$$ = new TypeReference (type.FullNamespace,
-						type.Name, codegen.CurrentModule, scope);
-				}
-			}
-			| slashed_name
-			{
-				var qn = (QualifiedName) $1;
-				$$ = codegen.CurrentModule.GetType (qn.FullNamespace, qn.Name);
+				((List<GenericInstanceType>) $1).Add ((GenericInstanceType) $3);
+				$$ = $1;
 			}
 			;
 
@@ -847,23 +688,113 @@ class_decl		: /*method_all
 			| language_decl
 			;
 
-type			: generic_class_ref
+/*
+param_type_decl		: D_PARAM K_TYPE id
 			{
-				$$ = $1;
+				if (codegen.CurrentMethodDef != null)
+					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam ((string) $3);
+				else
+					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam ((string) $3);
+
+				if (codegen.CurrentCustomAttrTarget == null)
+					Report.Error (String.Format ("Type parameter '{0}' undefined.", (string) $3));
 			}
-			| K_OBJECT
+			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
 			{
-				$$ = codegen.Corlib.Object;
+				int index = ((int) $4);
+				if (codegen.CurrentMethodDef != null)
+					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam (index - 1);
+				else
+					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam (index - 1);
+
+				if (codegen.CurrentCustomAttrTarget == null)
+					Report.Error (String.Format ("Type parameter '{0}' index out of range.", index));
+			}
+			;
+*/
+
+slashed_name		: comp_name
+			| slashed_name SLASH comp_name
+			{
+				var sl = (QualifiedName) $1;
+
+				var qn = new QualifiedName {
+					Name = ((QualifiedName) $3).FullName, // TODO: Verify this.
+				};
+
+				foreach (var ns in sl.Namespaces)
+					qn.Namespaces.Add (ns);
+
+				foreach (var nesting in sl.Nestings)
+					qn.Nestings.Add (nesting);
+
+				qn.Nestings.Add (sl.Name);
+
+				$$ = qn;
+			}
+			;
+
+class_refs		: class_ref
+			{
+				$$ = new List<TypeReference> () {
+					(TypeReference) $1,
+				};
+			}
+			| class_refs COMMA class_ref
+			{
+				var class_list = (List<TypeReference>) $1;
+				class_list.Add ((TypeReference) $3);
+			}
+			;
+
+class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
+			{
+				var name = (QualifiedName) $2;
+				var type = (QualifiedName) $4;
+
+				var scope = codegen.GetScope (name.FullName, false);
+				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
+			}
+			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name
+			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
+			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET slashed_name
+			{
+				var module = (QualifiedName) $3;
+				var type = (QualifiedName) $5;
+
+				if (module.FullName == codegen.CurrentModule.Name)
+					$$ = codegen.CurrentModule.GetType (type.FullNamespace, type.Name);
+				else {
+					var scope = codegen.GetScope (module.FullName, true);
+					$$ = new TypeReference (type.FullNamespace,
+						type.Name, codegen.CurrentModule, scope);
+				}
+			}
+			| slashed_name
+			{
+				var qn = (QualifiedName) $1;
+				$$ = codegen.CurrentModule.GetType (qn.FullNamespace, qn.Name);
+			}
+			| mdtoken
+			// TODO: Implement these.
+			| D_THIS
+			| D_BASE
+			| D_NESTER
+			;
+
+type			: K_CLASS class_ref
+			{
+				$$ = $2;
 			}
 			| K_VALUE K_CLASS class_ref
 			{
 				// TODO: Warn if not a value type?
-				$$ = (TypeReference) $3;
+				$$ = $3;
 			}
 			| K_VALUETYPE class_ref
 			{
 				// TODO: Warn if not a value type?
-				$$ = (TypeReference) $2;
+				$$ = $2;
 			}
 			| type OPEN_BRACKET CLOSE_BRACKET
 			{
@@ -891,11 +822,11 @@ type			: generic_class_ref
 			{
 				$$ = new PinnedType ((TypeReference) $1);
 			}
-			| type K_MODREQ OPEN_PARENS class_ref CLOSE_PARENS
+			| type K_MODREQ OPEN_PARENS type_spec CLOSE_PARENS
 			{
 				$$ = new RequiredModifierType ((TypeReference) $4, (TypeReference) $1);
 			}
-			| type K_MODOPT OPEN_PARENS class_ref CLOSE_PARENS
+			| type K_MODOPT OPEN_PARENS type_spec CLOSE_PARENS
 			{
 				$$ = new OptionalModifierType ((TypeReference) $4, (TypeReference) $1);
 			}
@@ -908,13 +839,64 @@ type			: generic_class_ref
 				};
 			}
 			*/
-			| simple_type
+			| type OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
+			{
+				if ($3 != null) {
+					var gti = new GenericInstanceType ((TypeReference) $1);
+
+					foreach (var ga in (List<TypeReference>) $3)
+						gti.GenericArguments.Add (ga);
+
+					$$ = gti;
+				} else
+					$$ = $1;
+			}
+			/*
+			| BANG int32
+			{
+				GenParam gpar = new GenParam ((int) $2, "", GenParamType.Var);
+				$$ = new GenericParamRef (gpar, $2.ToString ());
+			}
+			| BANG BANG int32
+			{
+				GenParam gpar = new GenParam ((int) $3, "", GenParamType.MVar);
+				$$ = new GenericParamRef (gpar, $3.ToString ());
+			}
+			| BANG id
+			{
+				int num = -1;
+				string name = (string) $2;
+
+				if (codegen.CurrentTypeDef != null)
+					num = codegen.CurrentTypeDef.GetGenericParamNum (name);
+
+				GenParam gpar = new GenParam (num, name, GenParamType.Var);
+				$$ = new GenericParamRef (gpar, name);
+			}
+			| BANG BANG id
+			{
+				int num = -1;
+				string name = (string) $3;
+
+				if (codegen.CurrentMethodDef != null)
+					num = codegen.CurrentMethodDef.GetGenericParamNum (name);
+
+				GenParam gpar = new GenParam (num, name, GenParamType.MVar);
+				$$ = new GenericParamRef (gpar, name);
+			}
+			*/
+			| K_OBJECT			{ $$ = codegen.Corlib.Object; }
 			| K_VOID			{ $$ = codegen.Corlib.Void; }
 			| K_TYPEDREF			{ $$ = codegen.Corlib.TypedReference; }
 			| K_NATIVE K_INT		{ $$ = codegen.Corlib.IntPtr; }
 			| K_NATIVE K_UNSIGNED K_INT	{ $$ = codegen.Corlib.UIntPtr; }
 			| K_NATIVE K_UINT		{ $$ = codegen.Corlib.UIntPtr; }
 			| K_NATIVE K_FLOAT		{ $$ = codegen.Corlib.Single; } // TODO: Verify this.
+			| simple_type
+			| ELLIPSIS type
+			{
+				$$ = new SentinelType ((TypeReference) $2);
+			}
 			;
 
 int_type		: K_INT8			{ $$ = codegen.Corlib.SByte; }
@@ -936,6 +918,41 @@ simple_type		: K_FLOAT32			{ $$ = codegen.Corlib.Single; }
 			| K_BOOL			{ $$ = codegen.Corlib.Boolean; }
 			| K_STRING			{ $$ = codegen.Corlib.String; }
 			| int_type
+			;
+
+typars			: type
+			{
+				$$ = new List<TypeReference> () {
+					(TypeReference) $1,
+				};
+			}
+			| typars COMMA type
+			{
+				((List<TypeReference>) $1).Add ((TypeReference) $3);
+				$$ = $1;
+			}
+			;
+
+type_spec		: class_ref
+			| OPEN_BRACKET slashed_name CLOSE_BRACKET // TODO: What do we do with this?
+			| OPEN_BRACKET D_MODULE slashed_name CLOSE_BRACKET
+			{
+				var module = (string) $3;
+
+				if (module == codegen.CurrentModule.Name)
+					$$ = codegen.CurrentModule.GetType ("<Module>");
+				else {
+					var mod = codegen.GetModuleReference (module);
+
+					if (mod == null)
+						report.WriteError (Error.UndeclaredModuleReference,
+							"Use of undeclared module: {0}", module);
+
+					$$ = new TypeReference (string.Empty, "<Module>",
+						codegen.CurrentModule, mod);
+				}
+			}
+			| type
 			;
 
 /*
@@ -1992,20 +2009,6 @@ slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
 			}
 			;
 
-type_spec		: OPEN_BRACKET slashed_name CLOSE_BRACKET
-			| OPEN_BRACKET D_MODULE slashed_name CLOSE_BRACKET
-			{
-				string module = (string) $3;
-
-				if (codegen.IsThisModule (module)) {
-					// TODO: This is not handled yet.
-				} else {
-					$$ = codegen.ExternTable.GetModuleTypeRef ((string) $3, "<Module>", false);
-				}
-			}
-			| type
-			;
-
 scope_block		: scope_block_begin method_decls CLOSE_BRACE
 			{
 				$$ = new HandlerBlock ((LabelInfo) $1,
@@ -2799,11 +2802,11 @@ module_head		: D_MODULE
 			| D_MODULE K_EXTERN comp_name
 			{
 				var name = ((QualifiedName) $3).FullName;
-				
+
 				if (codegen.GetModuleReference (name) != null)
 					report.WriteWarning (Warning.ModuleReferenceIgnored,
 						"Ignoring duplicate module reference: {0}", name);
-				
+
 				var module = new ModuleReference (name);
 				codegen.CurrentModule.ModuleReferences.Add (module);
 			}
@@ -3079,6 +3082,12 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 			;
 */
 
+mdtoken			: K_MDTOKEN OPEN_PARENS int32 CLOSE_PARENS
+			{
+				$$ = $2;
+			}
+			;
+
 comp_qstring		: QSTRING
 			| comp_qstring PLUS QSTRING
 			{
@@ -3135,9 +3144,9 @@ bytes_list		: OPEN_PARENS
 			}
 			  bytes CLOSE_PARENS
 			{
-				$$ = $3;
-
 				tokenizer.in_byte_array  = false;
+
+				$$ = $3;
 			}
 			;
 

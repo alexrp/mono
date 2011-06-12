@@ -102,5 +102,6 @@
     <None Include="tests\class-010.il" />
     <None Include="tests\class-011.il" />
     <None Include="tests\class-012.il" />
+    <None Include="tests\class-013.il" />
   </ItemGroup>
 </Project>

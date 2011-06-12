@@ -176,5 +176,17 @@ namespace Mono.ILAsm.Tests {
 				.Expect (x => x.GetType ("test012").Interfaces.Contains (
 					y => y.Name == "test012_if"));
 		}
+		
+		[Test]
+		public void TestGenericInterfaceImplementation ()
+		{
+			ILAsm ()
+				.Input ("class-013.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test013").Interfaces.Contains (
+					y => y.FullName == "System.IEquatable`1<test013_dummy>"));
+		}
 	}
 }
