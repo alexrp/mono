@@ -357,7 +357,9 @@ decl			:
 			| namespace_all
 			/*
 			| method_all
+			*/
 			| field_decl
+			/*
 			| data_decl
 			*/
 			| vtfixup_decl
@@ -640,7 +642,9 @@ class_decl		: /*method_all
 			| class_all
 			| event_all
 			| prop_all
+			*/
 			| field_decl
+			/*
 			| data_decl
 			| sec_decl
 			{
@@ -712,27 +716,6 @@ param_type_decl		: D_PARAM K_TYPE id
 			}
 			;
 */
-
-slashed_name		: comp_name
-			| slashed_name SLASH comp_name
-			{
-				var sl = (QualifiedName) $1;
-
-				var qn = new QualifiedName {
-					Name = ((QualifiedName) $3).FullName, // TODO: Verify this.
-				};
-
-				foreach (var ns in sl.Namespaces)
-					qn.Namespaces.Add (ns);
-
-				foreach (var nesting in sl.Nestings)
-					qn.Nestings.Add (nesting);
-
-				qn.Nestings.Add (sl.Name);
-
-				$$ = qn;
-			}
-			;
 
 class_refs		: class_ref
 			{
@@ -899,18 +882,30 @@ type			: K_CLASS class_ref
 			}
 			;
 
+unsigned_int8		: K_UINT8
+			| K_UNSIGNED K_INT8
+			;
+
+unsigned_int16		: K_UINT16
+			| K_UNSIGNED K_INT16
+			;
+
+unsigned_int32		: K_UINT32
+			| K_UNSIGNED K_INT32
+			;
+
+unsigned_int64		: K_UINT64
+			| K_UNSIGNED K_INT64
+			;
+
 int_type		: K_INT8			{ $$ = codegen.Corlib.SByte; }
 			| K_INT16			{ $$ = codegen.Corlib.Int16; }
 			| K_INT32			{ $$ = codegen.Corlib.Int32; }
 			| K_INT64			{ $$ = codegen.Corlib.Int64; }
-			| K_UNSIGNED K_INT8		{ $$ = codegen.Corlib.Byte; }
-			| K_UINT8			{ $$ = codegen.Corlib.Byte; }
-			| K_UNSIGNED K_INT16		{ $$ = codegen.Corlib.UInt16; }
-			| K_UINT16			{ $$ = codegen.Corlib.UInt16; }
-			| K_UNSIGNED K_INT32		{ $$ = codegen.Corlib.UInt32; }
-			| K_UINT32			{ $$ = codegen.Corlib.UInt32; }
-			| K_UNSIGNED K_INT64		{ $$ = codegen.Corlib.UInt64; }
-			| K_UINT64			{ $$ = codegen.Corlib.UInt64; }
+			| unsigned_int8			{ $$ = codegen.Corlib.Byte; }
+			| unsigned_int16		{ $$ = codegen.Corlib.UInt16; }
+			| unsigned_int32		{ $$ = codegen.Corlib.UInt32; }
+			| unsigned_int64		{ $$ = codegen.Corlib.UInt64; }
 
 simple_type		: K_FLOAT32			{ $$ = codegen.Corlib.Single; }
 			| K_FLOAT64			{ $$ = codegen.Corlib.Double; }
@@ -1315,23 +1310,24 @@ variant_type		:
 			| K_CF
 			| K_CLSID
 			;
+*/
 
 field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
 			{
-				FieldDef field_def = new FieldDef((FieldAttr) $3, 
-					(string) $5, (BaseTypeRef) $4);
+				var field = new FieldDefinition((string) $5, (FieldAttributes) $3,
+					(TypeReference) $4);
 
-				codegen.AddFieldDef (field_def);
-				codegen.CurrentCustomAttrTarget = field_def;
+				field.Offset = (int) $2;
 
-				if ($2 != null)
-					field_def.SetOffset ((uint) (int)$2);
+				if ($7 != null) {
+					field.Constant = $7 is Null ? null : $7;
+					field.HasConstant = true;
+				}
 
-				if ($6 != null)
-					field_def.AddDataValue ((string) $6);
-
-				if ($7 != null)
-					field_def.SetValue ((Constant) $7);
+				if (codegen.CurrentType != null)
+					codegen.CurrentType.Fields.Add (field);
+				else
+					codegen.CurrentModule.GetType ("<Module>").Fields.Add (field);
 			}
 			;
 
@@ -1344,37 +1340,38 @@ repeat_opt		:
 
 field_attr		:
 			{
-				$$ = new FieldAttr ();
+				$$ = FieldAttributes.CompilerControlled;
 			}
-			| field_attr K_PUBLIC		{ $$ = (FieldAttr) $1 | FieldAttr.Public; }
-			| field_attr K_PRIVATE		{ $$ = (FieldAttr) $1 | FieldAttr.Private; }
-			| field_attr K_FAMILY		{ $$ = (FieldAttr) $1 | FieldAttr.Family; }
-			| field_attr K_ASSEMBLY		{ $$ = (FieldAttr) $1 | FieldAttr.Assembly; }
-			| field_attr K_FAMANDASSEM	{ $$ = (FieldAttr) $1 | FieldAttr.FamAndAssem; }
-			| field_attr K_FAMORASSEM	{ $$ = (FieldAttr) $1 | FieldAttr.FamOrAssem; }
+			| field_attr K_PUBLIC		{ $$ = (FieldAttributes) $1 | FieldAttributes.Public; }
+			| field_attr K_PRIVATE		{ $$ = (FieldAttributes) $1 | FieldAttributes.Private; }
+			| field_attr K_FAMILY		{ $$ = (FieldAttributes) $1 | FieldAttributes.Family; }
+			| field_attr K_ASSEMBLY		{ $$ = (FieldAttributes) $1 | FieldAttributes.Assembly; }
+			| field_attr K_FAMANDASSEM	{ $$ = (FieldAttributes) $1 | FieldAttributes.FamANDAssem; }
+			| field_attr K_FAMORASSEM	{ $$ = (FieldAttributes) $1 | FieldAttributes.FamORAssem; }
 			| field_attr K_PRIVATESCOPE
-			| field_attr K_STATIC		{ $$ = (FieldAttr) $1 | FieldAttr.Static; }
-			| field_attr K_INITONLY		{ $$ = (FieldAttr) $1 | FieldAttr.Initonly; }
-			| field_attr K_RTSPECIALNAME	{ $$ = (FieldAttr) $1 | FieldAttr.RTSpecialName; }
-			| field_attr K_SPECIALNAME	{ $$ = (FieldAttr) $1 | FieldAttr.SpecialName; }
+			| field_attr K_STATIC		{ $$ = (FieldAttributes) $1 | FieldAttributes.Static; }
+			| field_attr K_INITONLY		{ $$ = (FieldAttributes) $1 | FieldAttributes.InitOnly; }
+			| field_attr K_RTSPECIALNAME	{ $$ = (FieldAttributes) $1 | FieldAttributes.RTSpecialName; }
+			| field_attr K_SPECIALNAME	{ $$ = (FieldAttributes) $1 | FieldAttributes.SpecialName; }
+			/*
 			| field_attr K_MARSHAL OPEN_PARENS native_type CLOSE_PARENS
 			{
 				codegen.AddFieldMarshalInfo ((NativeType) $4);
 				$$ = (FieldAttr) $1 | FieldAttr.HasFieldMarshal;
 			}
-			| field_attr K_LITERAL		{ $$ = (FieldAttr) $1 | FieldAttr.Literal; }
-			| field_attr K_NOTSERIALIZED	{ $$ = (FieldAttr) $1 | FieldAttr.Notserialized; }
+			*/
+			| field_attr K_LITERAL		{ $$ = (FieldAttributes) $1 | FieldAttributes.Literal; }
+			| field_attr K_NOTSERIALIZED	{ $$ = (FieldAttributes) $1 | FieldAttributes.NotSerialized; }
 			;
-*/
 
 at_opt			:
 			| K_AT id
 			{
+				// TODO: Make use of this.
 				$$ = $2;
 			}
 			;
 
-/*
 init_opt		:
 			| ASSIGN field_init
 			{
@@ -1384,77 +1381,75 @@ init_opt		:
 
 field_init_primitive	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 			{
-				$$ = new FloatConst (Convert.ToSingle ($3));
+				$$ = (float) (double) $3;
 			}
 			| K_FLOAT64 OPEN_PARENS float64 CLOSE_PARENS
 			{
-				$$ = new DoubleConst (Convert.ToDouble ($3));
+				$$ = $3;
 			}
 			| K_FLOAT32 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new FloatConst (BitConverter.ToSingle (BitConverter.GetBytes ((long)$3), BitConverter.IsLittleEndian ? 0 : 4));
+				$$ = BitConverter.ToSingle (BitConverter.GetBytes ((long) $3), BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			| K_FLOAT64 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new DoubleConst (BitConverter.Int64BitsToDouble ((long)$3));
+				$$ = BitConverter.Int64BitsToDouble ((long) $3);
 			}
 			| K_INT64 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new IntConst (Convert.ToInt64 ($3));
+				$$ = $3;
 			}
-			| K_UINT64 OPEN_PARENS int64 CLOSE_PARENS
+			| unsigned_int64 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new UIntConst (Convert.ToUInt64 ((ulong)(long) $3));
+				$$ = (ulong) (long) $3;
 			}
 			| K_INT32 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new IntConst ((int)((long)$3));
+				$$ = (int) (long) $3;
 			}
-			| K_UINT32 OPEN_PARENS int64 CLOSE_PARENS
+			| unsigned_int32 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new UIntConst ((uint)((long)$3));
+				$$ = (uint) (long) $3;
 			}
 			| K_INT16 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new IntConst ((short)((long) $3));
+				$$ = (short) (long) $3;
 			}
-			| K_UINT16 OPEN_PARENS int64 CLOSE_PARENS
+			| unsigned_int16 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new UIntConst ((ushort)((long) $3));
-			}
-			| K_CHAR OPEN_PARENS int64 CLOSE_PARENS
-			{
-				$$ = new CharConst (Convert.ToChar ($3));
+				$$ = (ushort) (long) $3;
 			}
 			| K_INT8 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new IntConst ((sbyte)((long) ($3)));
+				$$ = (sbyte) (long) $3;
 			}
-			| K_UINT8 OPEN_PARENS int64 CLOSE_PARENS
+			| unsigned_int8 OPEN_PARENS int64 CLOSE_PARENS
 			{
-				$$ = new UIntConst ((byte)((long) ($3)));
+				$$ = (byte) (long) $3;
+			}
+			| K_CHAR OPEN_PARENS int64 CLOSE_PARENS
+			{
+				$$ = (char) (long) $3;
 			}
 			| K_BOOL OPEN_PARENS truefalse CLOSE_PARENS
 			{
-				$$ = new BoolConst ((bool) $3);
+				$$ = $3;
 			}
 			;
 
 field_init		: field_init_primitive
 			| K_BYTEARRAY bytes_list
 			{
-				$$ = new ByteArrConst ((byte[]) $2);
+				$$ = $2;
 			}
 			| comp_qstring
-			{
-				$$ = new StringConst ((string) $1);
-			}
 			| K_NULLREF
 			{
-				$$ = new NullConst ();
+				$$ = new Null ();
 			}
 			;
 
+/*
 data_decl		: data_head data_body
 			{
 				DataDef datadef = (DataDef) $1;
@@ -3081,6 +3076,27 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 			| customattr_decl
 			;
 */
+
+slashed_name		: comp_name
+			| slashed_name SLASH comp_name
+			{
+				var sl = (QualifiedName) $1;
+
+				var qn = new QualifiedName {
+					Name = ((QualifiedName) $3).FullName, // TODO: Verify this.
+				};
+
+				foreach (var ns in sl.Namespaces)
+					qn.Namespaces.Add (ns);
+
+				foreach (var nesting in sl.Nestings)
+					qn.Nestings.Add (nesting);
+
+				qn.Nestings.Add (sl.Name);
+
+				$$ = qn;
+			}
+			;
 
 mdtoken			: K_MDTOKEN OPEN_PARENS int32 CLOSE_PARENS
 			{

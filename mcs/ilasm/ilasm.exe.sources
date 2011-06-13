@@ -12,6 +12,7 @@ Warning.cs
 codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs
 codegen/Corlib.cs
+codegen/Null.cs
 codegen/QualifiedName.cs
 parser/ScannerAdapter.cs
 scanner/ILReader.cs
