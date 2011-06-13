@@ -64,5 +64,9 @@ namespace Mono.ILAsm {
 		/// A .hash algorithm directive had an unrecognized value.
 		/// </summary>
 		UnknownHashAlgorithm = 7,
+		/// <summary>
+		/// A module-global field was not marked as static.
+		/// </summary>
+		GlobalFieldMadeStatic = 8,
 	}
 }

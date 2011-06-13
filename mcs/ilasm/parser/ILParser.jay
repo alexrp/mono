@@ -1314,8 +1314,18 @@ variant_type		:
 
 field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
 			{
-				var field = new FieldDefinition((string) $5, (FieldAttributes) $3,
-					(TypeReference) $4);
+				var isGlobal = codegen.CurrentType == null;
+				var attrs = (FieldAttributes) $3;
+
+				if (isGlobal && (attrs & FieldAttributes.Static) == 0)
+				{
+					attrs |= FieldAttributes.Static;
+
+					report.WriteWarning (Warning.GlobalFieldMadeStatic,
+						"Global field made static.");
+				}
+
+				var field = new FieldDefinition((string) $5, attrs, (TypeReference) $4);
 
 				field.Offset = (int) $2;
 
@@ -1324,10 +1334,10 @@ field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
 					field.HasConstant = true;
 				}
 
-				if (codegen.CurrentType != null)
-					codegen.CurrentType.Fields.Add (field);
-				else
+				if (isGlobal)
 					codegen.CurrentModule.GetType ("<Module>").Fields.Add (field);
+				else
+					codegen.CurrentType.Fields.Add (field);
 			}
 			;
 
