@@ -112,11 +112,13 @@ namespace Mono.ILAsm {
 %token D_XLINE
 %token D_LOCALE
 %token D_CULTURE
+%token D_LOCALIZED
 %token D_LOCALS
 %token D_MAXSTACK
 %token D_METHOD
 %token D_MODULE
 %token D_MRESOURCE
+%token D_MANIFESTRES
 %token D_NAMESPACE
 %token D_OTHER
 %token D_OVERRIDE
@@ -127,6 +129,7 @@ namespace Mono.ILAsm {
 %token D_PROPERTY
 %token D_PUBLICKEY
 %token D_PUBLICKEYTOKEN
+%token D_ADDON
 %token D_REMOVEON
 %token D_SET
 %token D_SIZE
@@ -143,6 +146,7 @@ namespace Mono.ILAsm {
 %token D_NESTER
 %token D_TYPELIST
 %token D_MSCORLIB
+%token D_PDIRECT
 
 %token K_AT
 %token K_AS
@@ -190,7 +194,6 @@ namespace Mono.ILAsm {
 %token K_IMPORT
 %token K_SERIALIZABLE
 %token K_NESTED
-%token K_LATEINIT
 %token K_EXTENDS
 %token K_IMPLEMENTS
 %token K_FINAL
@@ -200,7 +203,6 @@ namespace Mono.ILAsm {
 %token K_UNMANAGEDEXP
 %token K_PINVOKEIMPL
 %token K_NOMANGLE
-%token K_OLE
 %token K_LASTERR
 %token K_WINAPI
 %token K_PLATFORMAPI
@@ -279,6 +281,7 @@ namespace Mono.ILAsm {
 %token K_TYPEDREF
 %token K_TYPE
 %token K_CHAR
+%token K_WCHAR
 %token K_FROMUNMANAGED
 %token K_CALLMOSTDERIVED
 %token K_BYTEARRAY
@@ -308,12 +311,8 @@ namespace Mono.ILAsm {
 %token K_NONCASDEMAND
 %token K_NONCASLINKDEMAND
 %token K_NONCASINHERITANCE
-%token K_READONLY
 %token K_NOMETADATA
 %token K_ALGORITHM
-%token K_FULLORIGIN
-%token K_ENABLEJITTRACKING
-%token K_DISABLEJITOPTIMIZER
 %token K_RETARGETABLE
 %token K_LEGACY
 %token K_LIBRARY
@@ -332,13 +331,18 @@ namespace Mono.ILAsm {
 %token K_STRING
 %token K_TRUE
 %token K_FALSE
-%token K_IS
 %token K_ON
 %token K_OFF
 %token K_CHARMAPERROR
 %token K_MDTOKEN
 %token K_FLAGS
 %token K_CALLCONV
+%token K_NOAPPDOMAIN
+%token K_NOMACHINE
+%token K_NOPROCESS
+%token K_ILLEGAL
+%token K_UNUSED
+%token K_WRAPPER
 
 %start il_file
 
@@ -361,14 +365,13 @@ decl			:
 			/*
 			| data_decl
 			*/
+			| vtable_decl
 			| vtfixup_decl
-			/*
 			| file_decl
-			*/
 			| assembly_all
 			| assemblyref_all
-			/*
 			| exptype_all
+			/*
 			| manifestres_all
 			*/
 			| module_head
@@ -423,6 +426,9 @@ extsource_spec		: D_LINE int32 SQSTRING
 language_decl		: D_LANGUAGE SQSTRING
 			| D_LANGUAGE SQSTRING COMMA SQSTRING
 			| D_LANGUAGE SQSTRING COMMA SQSTRING COMMA SQSTRING
+			;
+
+vtable_decl		: D_VTABLE ASSIGN OPEN_PARENS bytes CLOSE_PARENS
 			;
 
 vtfixup_decl		: D_VTFIXUP OPEN_BRACKET int32 CLOSE_BRACKET vtfixup_attr K_AT id
@@ -1276,7 +1282,7 @@ field_attr		:
 			;
 
 marshal_spec		:
-			| K_MARSHAL OPEN PARENS marshal_info CLOSE_PARENS
+			| K_MARSHAL OPEN_PARENS marshal_info CLOSE_PARENS
 			{
 				$$ = $3;
 			}
@@ -1775,11 +1781,13 @@ type_list		:
 				type_list.Add ($4);
 			}
 			;
+*/
 
 opt_id			:
 			| id
 			;
 
+/*
 method_decls		:
 			| method_decls method_decl
 			;
@@ -2725,15 +2733,9 @@ module_head		: D_MODULE
 			}
 			;
 
-/*
 file_decl		: D_FILE file_attr comp_name file_entry D_HASH ASSIGN bytes_list file_entry
-			{
-			}
 			| D_FILE file_attr comp_name file_entry
-			{
-			}
 			;
-*/
 
 file_attr 		:
 			{
@@ -2788,6 +2790,9 @@ asm_attr		:
 			| asm_attr K_X86
 			| asm_attr K_IA64
 			| asm_attr K_AMD64
+			| asm_attr K_NOAPPDOMAIN
+			| asm_attr K_NOPROCESS
+			| asm_attr K_NOMACHINE
 			;
 
 assembly_decls		:
@@ -2935,11 +2940,11 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			*/
 			;
 
-/*
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
 			;
 
 exptype_head		: D_CLASS K_EXTERN expt_attr comp_name
+			| D_EXPORT expt_attr comp_name
 			;
 
 expt_attr 		:
@@ -2960,9 +2965,12 @@ exptype_decls		:
 exptype_decl		: D_FILE comp_name
 			| D_CLASS K_EXTERN comp_name
 			| D_CLASS int32
+			/*
 			| customattr_decl
+			*/
 			;
 
+/*
 manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 			;
 

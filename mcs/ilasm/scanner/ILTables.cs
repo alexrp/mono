@@ -136,6 +136,7 @@ namespace Mono.ILAsm {
 			directives [".method"] = new ILToken (Token.D_METHOD, ".method");
 			directives [".module"] = new ILToken (Token.D_MODULE, ".module");
 			directives [".mresource"] = new ILToken (Token.D_MRESOURCE, ".mresource");
+			directives [".manifestres"] = new ILToken (Token.D_MANIFESTRES, ".manifestres");
 			directives [".namespace"] = new ILToken (Token.D_NAMESPACE, ".namespace");
 			directives [".other"] = new ILToken (Token.D_OTHER, ".other");
 			directives [".override"] = new ILToken (Token.D_OVERRIDE, ".override");
@@ -146,6 +147,7 @@ namespace Mono.ILAsm {
 			directives [".property"] = new ILToken (Token.D_PROPERTY, ".property");
 			directives [".publickey"] = new ILToken (Token.D_PUBLICKEY, ".publickey");
 			directives [".publickeytoken"] = new ILToken (Token.D_PUBLICKEYTOKEN, ".publickeytoken");
+			directives [".addon"] = new ILToken (Token.D_ADDON, ".addon");
 			directives [".removeon"] = new ILToken (Token.D_REMOVEON, ".removeon");
 			directives [".set"] = new ILToken (Token.D_SET, ".set");
 			directives [".size"] = new ILToken (Token.D_SIZE, ".size");
@@ -162,6 +164,8 @@ namespace Mono.ILAsm {
 			directives [".nester"] = new ILToken (Token.D_NESTER, ".nester");
 			directives [".typelist"] = new ILToken (Token.D_TYPELIST, ".typelist");
 			directives [".mscorlib"] = new ILToken (Token.D_MSCORLIB, ".mscorlib");
+			directives [".localized"] = new ILToken (Token.D_LOCALIZED, ".localized");
+			directives [".pdirect"] = new ILToken (Token.D_PDIRECT, ".pdirect");
 			
 			Directives = new ReadOnlyDictionaryAdapter<string, ILToken> (directives);
 			
@@ -213,7 +217,6 @@ namespace Mono.ILAsm {
 			keywords ["import"] = new ILToken (Token.K_IMPORT, "import");
 			keywords ["serializable"] = new ILToken (Token.K_SERIALIZABLE, "serializable");
 			keywords ["nested"] = new ILToken (Token.K_NESTED, "nested");
-			keywords ["lateinit"] = new ILToken (Token.K_LATEINIT, "lateinit");
 			keywords ["extends"] = new ILToken (Token.K_EXTENDS, "extends");
 			keywords ["implements"] = new ILToken (Token.K_IMPLEMENTS, "implements");
 			keywords ["final"] = new ILToken (Token.K_FINAL, "final");
@@ -223,7 +226,6 @@ namespace Mono.ILAsm {
 			keywords ["unmanagedexp"] = new ILToken (Token.K_UNMANAGEDEXP, "unmanagedexp");
 			keywords ["pinvokeimpl"] = new ILToken (Token.K_PINVOKEIMPL, "pinvokeimpl");
 			keywords ["nomangle"] = new ILToken (Token.K_NOMANGLE, "nomangle");
-			keywords ["ole"] = new ILToken (Token.K_OLE, "ole");
 			keywords ["lasterr"] = new ILToken (Token.K_LASTERR, "lasterr");
 			keywords ["winapi"] = new ILToken (Token.K_WINAPI, "winapi");
 			keywords ["platformapi"] = new ILToken (Token.K_PLATFORMAPI, "platformapi");
@@ -303,6 +305,7 @@ namespace Mono.ILAsm {
 			keywords ["type"] = new ILToken (Token.K_TYPE, "type");
 			keywords ["refany"] = new ILToken (Token.K_TYPEDREF, "typedref");
 			keywords ["char"] = new ILToken (Token.K_CHAR, "char");
+			keywords ["wchar"] = new ILToken (Token.K_WCHAR, "wchar");
 			keywords ["fromunmanaged"] = new ILToken (Token.K_FROMUNMANAGED, "fromunmanaged");
 			keywords ["callmostderived"] = new ILToken (Token.K_CALLMOSTDERIVED, "callmostderived");
 			keywords ["bytearray"] = new ILToken (Token.K_BYTEARRAY, "bytearray");
@@ -331,12 +334,8 @@ namespace Mono.ILAsm {
 			keywords ["noncasdemand"] = new ILToken (Token.K_NONCASDEMAND, "noncasdemand");
 			keywords ["noncaslinkdemand"] = new ILToken (Token.K_NONCASLINKDEMAND, "noncaslinkdemand");
 			keywords ["noncasinheritance"] = new ILToken (Token.K_NONCASINHERITANCE, "noncasinheritance");
-			keywords ["readonly"] = new ILToken (Token.K_READONLY, "readonly");
 			keywords ["nometadata"] = new ILToken (Token.K_NOMETADATA, "nometadata");
 			keywords ["algorithm"] = new ILToken (Token.K_ALGORITHM, "algorithm");
-			keywords ["fullorigin"] = new ILToken (Token.K_FULLORIGIN, "fullorigin");
-			keywords ["enablejittracking"] = new ILToken (Token.K_ENABLEJITTRACKING, "enablejittracking");
-			keywords ["disablejitoptimizer"] = new ILToken (Token.K_DISABLEJITOPTIMIZER, "disablejitoptimizer");
 			keywords ["retargetable"] = new ILToken (Token.K_RETARGETABLE, "retargetable");
 			keywords ["legacy"] = new ILToken (Token.K_LEGACY, "legacy");
 			keywords ["library"] = new ILToken (Token.K_LIBRARY, "library");
@@ -355,11 +354,16 @@ namespace Mono.ILAsm {
 			keywords ["string"] = new ILToken (Token.K_STRING, "string");
 			keywords ["true"] = new ILToken (Token.K_TRUE, "true");
 			keywords ["false"] = new ILToken (Token.K_FALSE, "false");
-			keywords ["is"] = new ILToken (Token.K_IS, "is");
 			keywords ["on"] = new ILToken (Token.K_ON, "on");
 			keywords ["off"] = new ILToken (Token.K_OFF, "off");
 			keywords ["strict"] = new ILToken (Token.K_STRICT, "strict");
 			keywords ["mdtoken"] = new ILToken (Token.K_MDTOKEN, "mdtoken");
+			keywords ["noappdomain"] = new ILToken (Token.K_NOAPPDOMAIN, "noappdomain");
+			keywords ["noprocess"] = new ILToken (Token.K_NOPROCESS, "noprocess");
+			keywords ["nomachine"] = new ILToken (Token.K_NOMACHINE, "nomachine");
+			keywords ["illegal"] = new ILToken (Token.K_ILLEGAL, "illegal");
+			keywords ["unused"] = new ILToken (Token.K_UNUSED, "unused");
+			keywords ["wrapper"] = new ILToken (Token.K_WRAPPER, "wrapper");
 			
 			Keywords = new ReadOnlyDictionaryAdapter<string, ILToken> (keywords);
 			
@@ -599,6 +603,15 @@ namespace Mono.ILAsm {
 			opCodes ["switch"] = new ILToken (Token.INSTR_SWITCH, Cecil.Cil.OpCodes.Switch);
 			opCodes ["calli"] = new ILToken (Token.INSTR_SIG, Cecil.Cil.OpCodes.Calli);
 			opCodes ["ldtoken"] = new ILToken (Token.INSTR_TOK, Cecil.Cil.OpCodes.Ldtoken);
+			opCodes ["no."] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.No);
+			opCodes ["prefix1"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix2"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix3"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix4"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix5"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix6"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefix7"] = new ILToken (Token.INSTR_NONE, null);
+			opCodes ["prefixref"] = new ILToken (Token.INSTR_NONE, null);
 			
 			OpCodes = new ReadOnlyDictionaryAdapter<string, ILToken> (opCodes);
 		}
