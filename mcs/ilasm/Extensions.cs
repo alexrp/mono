@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	public static class Extensions {
@@ -45,6 +46,11 @@ namespace Mono.ILAsm {
 			var intFlag = ((IConvertible) flag).ToUInt64 (null);
 			
 			return (intValue & intFlag) != 0;
+		}
+		
+		public static TypeDefinition GetModuleType (this ModuleDefinition module)
+		{
+			return module.GetType ("<Module>");
 		}
 	}
 }

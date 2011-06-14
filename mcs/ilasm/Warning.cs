@@ -72,5 +72,15 @@ namespace Mono.ILAsm {
 		/// A module-global field had an offset specified; ignored.
 		/// </summary>
 		GlobalFieldOffsetIgnored = 9,
+		/// <summary>
+		/// Happens when a deprecated native type is used in a marshaling
+		/// signature.
+		/// </summary>
+		DeprecatedNativeType = 10,
+		/// <summary>
+		/// Happens if an array marshal notation for parameters is used on
+		/// a field.
+		/// </summary>
+		ParameterMarshalNotationOnField = 11,
 	}
 }

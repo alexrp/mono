@@ -74,5 +74,14 @@ namespace Mono.ILAsm {
 		/// for static fields).
 		/// </summary>
 		InstanceFieldWithDataLocation = 10,
+		/// <summary>
+		/// An unsupported variant type was used in a safe array marshaling
+		/// specification.
+		/// </summary>
+		UnsupportedVariantType = 11,
+		/// <summary>
+		/// An unsupported native type was used in a marshaling signature.
+		/// </summary>
+		UnsupportedNativeType = 12,
 	}
 }

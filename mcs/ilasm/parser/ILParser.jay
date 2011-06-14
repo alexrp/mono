@@ -29,6 +29,7 @@ namespace Mono.ILAsm {
 		bool has_module_directive;
 		bool is_explicit_call;
 		bool is_instance_call;
+		bool is_parameter_marshal_notation;
 
 		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -1019,283 +1020,173 @@ call_kind		:
 			| K_UNMANAGED K_FASTCALL	{ $$ = MethodCallingConvention.FastCall; }
 			;
 
-/*
-native_type		:
+marshal_info		:
+			/*
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
 			{
-				$$ = new CustomMarshaller ((string) $3, (string) $5);
 			}
+			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring COMMA comp_qstring COMMA comp_qstring CLOSE_PARENS
+			{
+			}
+			*/
 			| K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET
 			{
-				$$ = new FixedSysString ((uint) (int)$4);
+				$$ = new FixedSysStringMarshalInfo {
+					Size = (int) $4,
+				};
 			}
 			| K_FIXED K_ARRAY OPEN_BRACKET int32 CLOSE_BRACKET
 			{
-				$$ = new FixedArray ((int) $4);
-			}
-			| K_VARIANT
-			| K_CURRENCY
-			{
-				$$ = NativeType.Currency;
-			}
-			| K_SYSCHAR
-			| K_VOID
-			{
-				$$ = NativeType.Void;
-			}
-			| K_BOOL
-			{
-				$$ = NativeType.Boolean;
-			}
-			| K_INT8
-			{
-				$$ = NativeType.Int8;
-			}
-			| K_INT16
-			{
-				$$ = NativeType.Int16;
-			}
-			| K_INT32
-			{
-				$$ = NativeType.Int32;
-			}
-			| K_INT64
-			{
-				$$ = NativeType.Int64;
-			}
-			| K_FLOAT32
-			{
-				$$ = NativeType.Float32;
-			}
-			| K_FLOAT64
-			{
-				$$ = NativeType.Float64;
-			}
-			| K_ERROR
-			{
-				$$ = NativeType.Error;
-			}
-			| K_UNSIGNED K_INT8
-			{
-				$$ = NativeType.UInt8;
-			}
-			| K_UINT8
-			{
-				$$ = NativeType.UInt8;
-			}
-			| K_UNSIGNED K_INT16
-			{
-				$$ = NativeType.UInt16;
-			}
-			| K_UINT16
-			{
-				$$ = NativeType.UInt16;
-			}
-			| K_UNSIGNED K_INT32
-			{
-				$$ = NativeType.UInt32;
-			}
-			| K_UINT32
-			{
-				$$ = NativeType.UInt32;
-			}
-			| K_UNSIGNED K_INT64
-			{
-				$$ = NativeType.UInt64;
-			}
-			| K_UINT64
-			{
-				$$ = NativeType.UInt64;
+				$$ = new FixedArrayMarshalInfo {
+					Size = (int) $4,
+				};
 			}
 			| native_type STAR
+			{
+				report.WriteWarning (Warning.DeprecatedNativeType,
+					"Pointer syntax for native types is deprecated.");
+
+				// Emit an invalid native type. Don't ask me how this works;
+				// blame Microsoft's ILAsm.
+				$$ = new MarshalInfo ((NativeType) 0);
+			}
 			| native_type OPEN_BRACKET CLOSE_BRACKET
 			{
-				$$ = new NativeArray ((NativeType) $1);
+				// This is not Microsoft-compatible. I have no idea how they
+				// calculate the values they emit for jagged arrays.
+				$$ = new ArrayMarshalInfo {
+					ElementType = (NativeType) $1,
+				};
 			}
 			| native_type OPEN_BRACKET int32 CLOSE_BRACKET
 			{
-				$$ = new NativeArray ((NativeType) $1, (int) $3, 0, 0);
+				$$ = new ArrayMarshalInfo {
+					ElementType = (NativeType) $1,
+					Size = (int) $3,
+				};
 			}
 			| native_type OPEN_BRACKET int32 PLUS int32 CLOSE_BRACKET
 			{
-				//FIXME: Allowed only for methods, !fields
-				$$ = new NativeArray ((NativeType) $1, (int) $3, (int) $5);
+				is_parameter_marshal_notation = true;
+
+				$$ = new ArrayMarshalInfo {
+					ElementType = (NativeType) $1,
+					Size = (int) $3,
+					SizeParameterMultiplier = (int) $5,
+				};
 			}
 			| native_type OPEN_BRACKET PLUS int32 CLOSE_BRACKET
 			{
-				//FIXME: Allowed only for methods, !fields
-				$$ = new NativeArray ((NativeType) $1, -1, (int) $4);
-			}
-			| K_DECIMAL
-			| K_DATE
-			| K_BSTR
-			{
-				$$ = NativeType.BStr;
-			}
-			| K_LPSTR
-			{
-				$$ = NativeType.LPStr;
-			}
-			| K_LPWSTR
-			{
-				$$ = NativeType.LPWStr;
-			}
-			| K_LPTSTR
-			{
-				$$ = NativeType.LPTStr;
-			}
-			| K_OBJECTREF
-			| K_IUNKNOWN
-			{
-				$$ = NativeType.IUnknown;
-			}
-			| K_IDISPATCH
-			{
-				$$ = NativeType.IDispatch;
-			}
-			| K_STRUCT
-			{
-				$$ = NativeType.Struct;
-			}
-			| K_INTERFACE
-			{
-				$$ = NativeType.Interface;
+				is_parameter_marshal_notation = true;
+
+				$$ = new ArrayMarshalInfo {
+					ElementType = (NativeType) $1,
+					SizeParameterMultiplier = (int) $4,
+				};
 			}
 			| K_SAFEARRAY variant_type
 			{
-				if ($2 == null)
-					$$ = new SafeArray ();
-				else
-					$$ = new SafeArray ((SafeArrayType) $2);
+				$$ = new SafeArrayMarshalInfo {
+					ElementType = (VariantType) $2,
+				};
 			}
-			| K_SAFEARRAY variant_type COMMA comp_qstring
-			| K_INT
+			| marshal_type
 			{
-				$$ = NativeType.Int;
-			}
-			| K_UNSIGNED K_INT
-			{
-				$$ = NativeType.UInt;
-			}
-			| K_NESTED K_STRUCT
-			| K_BYVALSTR
-			{
-				$$ = NativeType.ByValStr;
-			}
-			| K_ANSI K_BSTR
-			{
-				$$ = NativeType.AnsiBStr;
-			}
-			| K_TBSTR
-			{
-				$$ = NativeType.TBstr;
-			}
-			| K_VARIANT K_BOOL
-			{
-				$$ = NativeType.VariantBool;
-			}
-			| K_METHOD
-			{
-				$$ = NativeType.FuncPtr;
-			}	
-			| K_AS K_ANY
-			{
-				$$ = NativeType.AsAny;
-			}
-			| K_LPSTRUCT
-			{
-				$$ = NativeType.LPStruct;
+				$$ = new MarshalInfo ((NativeType) $1);
 			}
 			;
 
-variant_type		:
-			| K_NULL
-			| K_VARIANT
+unsigned_int		: K_UINT
+			| K_UNSIGNED K_INT
+			;
+
+marshal_type		: K_CURRENCY				{ $$ = NativeType.Currency; }
+			| K_BOOL				{ $$ = NativeType.Boolean; }
+			| K_INT8				{ $$ = NativeType.I1; }
+			| K_INT16				{ $$ = NativeType.I2; }
+			| K_INT32				{ $$ = NativeType.I4; }
+			| K_INT64				{ $$ = NativeType.I8; }
+			| K_FLOAT32				{ $$ = NativeType.R4; }
+			| K_FLOAT64				{ $$ = NativeType.R8; }
+			| K_ERROR				{ $$ = NativeType.Error; }
+			| unsigned_int8				{ $$ = NativeType.U1; }
+			| unsigned_int16			{ $$ = NativeType.U2; }
+			| unsigned_int32			{ $$ = NativeType.U4; }
+			| unsigned_int64			{ $$ = NativeType.U8; }
+			| K_BSTR				{ $$ = NativeType.BStr; }
+			| K_LPSTR				{ $$ = NativeType.LPStr; }
+			| K_LPWSTR				{ $$ = NativeType.LPWStr; }
+			| K_LPTSTR				{ $$ = NativeType.LPTStr; }
+			| K_IUNKNOWN				{ $$ = NativeType.IUnknown; }
+			| K_IDISPATCH				{ $$ = NativeType.IDispatch; }
+			| K_STRUCT				{ $$ = NativeType.Struct; }
+			| K_INTERFACE				{ $$ = NativeType.IntF; }
+			| K_INT					{ $$ = NativeType.Int; }
+			| unsigned_int				{ $$ = NativeType.UInt; }
+			| K_BYVALSTR				{ $$ = NativeType.ByValStr; }
+			| K_ANSI K_BSTR				{ $$ = NativeType.ANSIBStr; }
+			| K_TBSTR				{ $$ = NativeType.TBStr; }
+			| K_VARIANT K_BOOL			{ $$ = NativeType.VariantBool; }
+			| K_METHOD				{ $$ = NativeType.Func; }
+			| K_AS K_ANY				{ $$ = NativeType.ASAny; }
+			| K_LPSTRUCT				{ $$ = NativeType.LPStruct; }
+			| native_type
 			{
-				$$ = SafeArrayType.variant;
+				// The grammar supports these types, but we can't
+				// actually use them.
+				report.WriteError(Error.UnsupportedNativeType,
+					"Unsupported native type used in marshaling signature.");
 			}
-			| K_CURRENCY
-			{
-				$$ = SafeArrayType.currency;
-			}
+			;
+
+native_type		: K_VARIANT
 			| K_VOID
-			| K_BOOL
+			| K_SYSCHAR
+			| K_DECIMAL
+			| K_DATE
+			| K_OBJECTREF
+			| K_NESTED K_STRUCT
+			;
+
+safearray_type		: K_VARIANT		{ $$ = VariantType.Variant; }
+			| K_CURRENCY		{ $$ = VariantType.CY; }
+			| K_BOOL		{ $$ = VariantType.Bool; }
+			| K_INT8		{ $$ = VariantType.I1; }
+			| K_INT16		{ $$ = VariantType.I2; }
+			| K_INT32		{ $$ = VariantType.I4; }
+			| K_FLOAT32		{ $$ = VariantType.R4; }
+			| K_FLOAT64		{ $$ = VariantType.R8; }
+			| unsigned_int8		{ $$ = VariantType.UI1; }
+			| unsigned_int16	{ $$ = VariantType.UI2; }
+			| unsigned_int32	{ $$ = VariantType.UI4; }
+			| K_DECIMAL		{ $$ = VariantType.Decimal; }
+			| K_DATE		{ $$ = VariantType.Date; }
+			| K_BSTR		{ $$ = VariantType.BStr; }
+			| K_IUNKNOWN		{ $$ = VariantType.Unknown; }
+			| K_IDISPATCH		{ $$ = VariantType.Dispatch; }
+			| K_INT 		{ $$ = VariantType.Int; }
+			| unsigned_int		{ $$ = VariantType.UInt; }
+			| K_ERROR		{ $$ = VariantType.Error; }
+			| variant_type
 			{
-				$$ = SafeArrayType.boolean;
+				// The grammar supports these types, but we can't
+				// actually use them.
+				report.WriteError(Error.UnsupportedVariantType,
+					"Unsupported variant type used in safe array signature.");
 			}
-			| K_INT8
-			{
-				$$ = SafeArrayType.int8;
-			}
-			| K_INT16
-			{
-				$$ = SafeArrayType.int16;
-			}
-			| K_INT32
-			{
-				$$ = SafeArrayType.int32;
-			}
+			;
+
+variant_type		: K_NULL
+			| K_VOID
 			| K_INT64
-			| K_FLOAT32
-			{
-				$$ = SafeArrayType.float32;
-			}
-			| K_FLOAT64
-			{
-				$$ = SafeArrayType.float64;
-			}
-			| K_UNSIGNED K_INT8
-			{
-				$$ = SafeArrayType.uint8;
-			}
-			| K_UNSIGNED K_INT16
-			{
-				$$ = SafeArrayType.uint16;
-			}
-			| K_UNSIGNED K_INT32
-			{
-				$$ = SafeArrayType.uint32;
-			}
-			| K_UNSIGNED K_INT64
+			| unsigned_int64
 			| STAR
 			| variant_type OPEN_BRACKET CLOSE_BRACKET
 			| variant_type K_VECTOR
 			| variant_type AMPERSAND
-			| K_DECIMAL
-			{
-				$$ = SafeArrayType.Decimal;
-			}
-			| K_DATE
-			{
-				$$ = SafeArrayType.date;
-			}
-			| K_BSTR
-			{
-				$$ = SafeArrayType.bstr;
-			}
 			| K_LPSTR
 			| K_LPWSTR
-			| K_IUNKNOWN
-			{
-				$$ = SafeArrayType.unknown;
-			}
-			| K_IDISPATCH
-			{
-				$$ = SafeArrayType.unknown;
-			}
 			| K_SAFEARRAY
-			| K_INT
-			{
-				$$ = SafeArrayType.Int;
-			}
-			| K_UNSIGNED K_INT
-			{
-				$$ = SafeArrayType.UInt;
-			}
-			| K_ERROR
-			{
-				$$ = SafeArrayType.error;
-			}
 			| K_HRESULT
 			| K_CARRAY
 			| K_USERDEFINED
@@ -1310,9 +1201,8 @@ variant_type		:
 			| K_CF
 			| K_CLSID
 			;
-*/
 
-field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
+field_decl		: D_FIELD field_offset field_attr marshal_spec type id at_opt init_opt
 			{
 				var isGlobal = codegen.CurrentType == null;
 				var attrs = (FieldAttributes) $3;
@@ -1326,7 +1216,7 @@ field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
 						"Global field made static.");
 				}
 
-				var field = new FieldDefinition((string) $5, attrs, (TypeReference) $4);
+				var field = new FieldDefinition((string) $6, attrs, (TypeReference) $5);
 
 				if ($2 != null) {
 					if (!isGlobal)
@@ -1336,12 +1226,24 @@ field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
 							"Offset for global field ignored.");
 				}
 
-				if ($6 != null && !isStatic)
+				if ($4 != null) {
+					if (is_parameter_marshal_notation) {
+						// TODO: This warning should be emitted more closely to the relevant code.
+						report.WriteWarning (Warning.ParameterMarshalNotationOnField,
+							"Invalid use of array marshal notation for parameters on a field.");
+
+						is_parameter_marshal_notation = false;
+					}
+
+					field.MarshalInfo = (MarshalInfo) $4;
+				}
+
+				if ($7 != null && !isStatic)
 					report.WriteError (Error.InstanceFieldWithDataLocation,
 						"Instance fields cannot have an associated data location.");
 
-				if ($7 != null) {
-					field.Constant = $7 is Null ? null : $7;
+				if ($8 != null) {
+					field.Constant = $8 is Null ? null : $8;
 					field.HasConstant = true;
 				}
 
@@ -1374,15 +1276,15 @@ field_attr		:
 			| field_attr K_INITONLY		{ $$ = (FieldAttributes) $1 | FieldAttributes.InitOnly; }
 			| field_attr K_RTSPECIALNAME	{ $$ = (FieldAttributes) $1 | FieldAttributes.RTSpecialName; }
 			| field_attr K_SPECIALNAME	{ $$ = (FieldAttributes) $1 | FieldAttributes.SpecialName; }
-			/*
-			| field_attr K_MARSHAL OPEN_PARENS native_type CLOSE_PARENS
-			{
-				codegen.AddFieldMarshalInfo ((NativeType) $4);
-				$$ = (FieldAttr) $1 | FieldAttr.HasFieldMarshal;
-			}
-			*/
 			| field_attr K_LITERAL		{ $$ = (FieldAttributes) $1 | FieldAttributes.Literal; }
 			| field_attr K_NOTSERIALIZED	{ $$ = (FieldAttributes) $1 | FieldAttributes.NotSerialized; }
+			;
+
+marshal_spec		:
+			| K_MARSHAL OPEN PARENS marshal_info CLOSE_PARENS
+			{
+				$$ = $3;
+			}
 			;
 
 at_opt			:
