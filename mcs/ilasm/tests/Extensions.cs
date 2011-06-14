@@ -81,13 +81,5 @@ namespace Mono.ILAsm.Tests {
 			
 			return false;
 		}
-		
-		public static bool HasBitFlag (this Enum value, Enum flag)
-		{
-			var intValue = ((IConvertible) value).ToUInt64 (null);
-			var intFlag = ((IConvertible) flag).ToUInt64 (null);
-			
-			return (intValue & intFlag) != 0;
-		}
 	}
 }

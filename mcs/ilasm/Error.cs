@@ -69,5 +69,10 @@ namespace Mono.ILAsm {
 		/// been referenced with a .module extern directive.
 		/// </summary>
 		UndeclaredModuleReference = 9,
+		/// <summary>
+		/// Happens if an instance field has an at clause (this is only valid
+		/// for static fields).
+		/// </summary>
+		InstanceFieldWithDataLocation = 10,
 	}
 }

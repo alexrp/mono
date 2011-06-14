@@ -1316,8 +1316,9 @@ field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
 			{
 				var isGlobal = codegen.CurrentType == null;
 				var attrs = (FieldAttributes) $3;
+				var isStatic = attrs.HasBitFlag(FieldAttributes.Static);
 
-				if (isGlobal && (attrs & FieldAttributes.Static) == 0)
+				if (isGlobal && !isStatic)
 				{
 					attrs |= FieldAttributes.Static;
 
@@ -1334,6 +1335,10 @@ field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
 						report.WriteWarning (Warning.GlobalFieldOffsetIgnored,
 							"Offset for global field ignored.");
 				}
+
+				if ($6 != null && !isStatic)
+					report.WriteError (Error.InstanceFieldWithDataLocation,
+						"Instance fields cannot have an associated data location.");
 
 				if ($7 != null) {
 					field.Constant = $7 is Null ? null : $7;

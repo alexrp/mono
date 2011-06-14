@@ -110,5 +110,6 @@
     <None Include="tests\field-004.il" />
     <None Include="tests\field-005.il" />
     <None Include="tests\field-006.il" />
+    <None Include="tests\field-007.il" />
   </ItemGroup>
 </Project>

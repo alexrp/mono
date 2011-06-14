@@ -104,5 +104,15 @@ namespace Mono.ILAsm.Tests {
 					y => y.Offset == 2,
 					y => y.Offset == 3));
 		}
+		
+		[Test]
+		public void TestFieldWithDataLocation ()
+		{
+			ILAsm ()
+				.Input ("field-007.il")
+				.ExpectError (Error.InstanceFieldWithDataLocation)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
 	}
 }

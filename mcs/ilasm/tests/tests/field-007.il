@@ -1,10 +1,10 @@
 // 
-// Extensions.cs
+// field-007.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,28 +23,12 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.Collections.Generic;
 
-namespace Mono.ILAsm {
-	public static class Extensions {
-		public static TValue TryGet<TKey, TValue> (this IDictionary<TKey, TValue> dict,
-			TKey key)
-			where TValue : class
-		{
-			TValue value;
-			if (dict.TryGetValue (key, out value))
-				return value;
-			
-			return null;
-		}
-		
-		public static bool HasBitFlag (this Enum value, Enum flag)
-		{
-			var intValue = ((IConvertible) value).ToUInt64 (null);
-			var intFlag = ((IConvertible) flag).ToUInt64 (null);
-			
-			return (intValue & intFlag) != 0;
-		}
-	}
+.assembly extern mscorlib
+{
+}
+
+.class test007_cls
+{
+	.field uint32 test007 at somewhere
 }
