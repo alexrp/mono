@@ -83,5 +83,10 @@ namespace Mono.ILAsm {
 		/// An unsupported native type was used in a marshaling signature.
 		/// </summary>
 		UnsupportedNativeType = 12,
+		/// <summary>
+		/// Happens, for example, if the lower bound of an array is greater
+		/// than the upper bound.
+		/// </summary>
+		InvalidArrayBound = 13,
 	}
 }

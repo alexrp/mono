@@ -784,16 +784,15 @@ type			: K_CLASS class_ref
 			{
 				$$ = new ArrayType ((TypeReference) $1);
 			}
-			/*
 			| type OPEN_BRACKET bounds CLOSE_BRACKET
 			{
-				BaseTypeRef base_type = GetTypeRef ((BaseTypeRef) $1);
-				ArrayList bound_list = (ArrayList) $3;
-				base_type.MakeBoundArray (bound_list);
+				var type = new ArrayType ((TypeReference) $1);
 
-				$$ = base_type;
+				foreach (var bound in (List<ArrayDimension>) $3)
+					type.Dimensions.Add (bound);
+
+				$$ = type;
 			}
-			*/
 			| type AMPERSAND
 			{
 				$$ = new ByReferenceType ((TypeReference) $1);
@@ -951,53 +950,51 @@ type_spec		: class_ref
 			| type
 			;
 
-/*
 bounds			: bound
 			{
-				ArrayList bound_list = new ArrayList ();
-				bound_list.Add ($1);
-				$$ = bound_list;
+				$$ = new List<ArrayDimension> {
+					(ArrayDimension) $1,
+				};
 			}
 			| bounds COMMA bound
 			{
-				ArrayList bound_list = (ArrayList) $1;
-				bound_list.Add ($3);
+				((List<ArrayDimension>) $1).Add ((ArrayDimension) $3);
 			}
 			;
 
 bound			:
 			{
-				$$ = new DictionaryEntry (TypeRef.Ellipsis, TypeRef.Ellipsis);
+				$$ = new ArrayDimension (null, null);
 			}
 			| ELLIPSIS
 			{
-				$$ = new DictionaryEntry (TypeRef.Ellipsis, TypeRef.Ellipsis);
+				$$ = new ArrayDimension (null, null);
 			}
 			| int32
 			{
-				int size = (int) $1;
+				var size = (int) $1;
 
 				if (size < 0)
-					$$ = new DictionaryEntry (0, TypeRef.Ellipsis);
+					$$ = new ArrayDimension (0, null);
 				else
-					$$ = new DictionaryEntry (TypeRef.Ellipsis, size);
+					$$ = new ArrayDimension (null, size);
 			}
 			| int32 ELLIPSIS int32
 			{
-				int lower = (int) $1;
-				int upper = (int) $3;
+				var lower = (int) $1;
+				var upper = (int) $3;
 
 				if (lower > upper)
-					Report.Error ("Lower bound " + lower + " must be <= upper bound " + upper);
+					report.WriteError (Error.InvalidArrayBound,
+						"Lower bound must be lower than or equal to upper bound.");
 
-				$$ = new DictionaryEntry ($1, $3);
+				$$ = new ArrayDimension (lower, upper);
 			}
 			| int32 ELLIPSIS
 			{
-				$$ = new DictionaryEntry ($1, TypeRef.Ellipsis);
+				$$ = new ArrayDimension ((int) $1, null);
 			}
 			;
-*/
 
 call_conv		: K_INSTANCE call_conv { is_instance_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
 			| K_EXPLICIT call_conv { is_explicit_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
