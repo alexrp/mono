@@ -1312,7 +1312,7 @@ variant_type		:
 			;
 */
 
-field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
+field_decl		: D_FIELD field_offset field_attr type id at_opt init_opt
 			{
 				var isGlobal = codegen.CurrentType == null;
 				var attrs = (FieldAttributes) $3;
@@ -1327,7 +1327,13 @@ field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
 
 				var field = new FieldDefinition((string) $5, attrs, (TypeReference) $4);
 
-				field.Offset = (int) $2;
+				if ($2 != null) {
+					if (!isGlobal)
+						field.Offset = (int) $2;
+					else
+						report.WriteWarning (Warning.GlobalFieldOffsetIgnored,
+							"Offset for global field ignored.");
+				}
 
 				if ($7 != null) {
 					field.Constant = $7 is Null ? null : $7;
@@ -1341,7 +1347,7 @@ field_decl		: D_FIELD repeat_opt field_attr type id at_opt init_opt
 			}
 			;
 
-repeat_opt		:
+field_offset		:
 			| OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				$$ = $2;

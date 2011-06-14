@@ -68,5 +68,9 @@ namespace Mono.ILAsm {
 		/// A module-global field was not marked as static.
 		/// </summary>
 		GlobalFieldMadeStatic = 8,
+		/// <summary>
+		/// A module-global field had an offset specified; ignored.
+		/// </summary>
+		GlobalFieldOffsetIgnored = 9,
 	}
 }
