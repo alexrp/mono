@@ -25,8 +25,6 @@ namespace Mono.ILAsm {
 		bool is_value_class;
 		bool has_public_key;
 		bool has_public_key_token;
-		bool has_assembly_directive;
-		bool has_module_directive;
 		bool is_explicit_call;
 		bool is_instance_call;
 		bool is_parameter_marshal_notation;
@@ -2704,11 +2702,11 @@ module_head		: D_MODULE
 			{
 				var name = ((QualifiedName) $2).FullName;
 
-				if (!has_module_directive) {
+				if (!codegen.HasModuleDirective) {
 					// Microsoft's ILAsm only takes into account the
 					// first .module directive
 					codegen.CurrentModule.Name = name;
-					has_module_directive = true;
+					codegen.HasModuleDirective = true;
 				}
 				else if (name != codegen.CurrentModule.Name)
 					report.WriteWarning (Warning.ModuleDirectiveIgnored,
@@ -2762,12 +2760,16 @@ assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 
 assembly_head		: D_ASSEMBLY asm_attr comp_name
 			{
-				if (has_assembly_directive)
-					report.WriteError(Error.MultipleAssemblyDirectives, "Multiple .assembly directives.");
+				var name = ((QualifiedName) $3).FullName;
+				var asmName = codegen.CurrentModule.Assembly.Name;
 
-				codegen.CurrentModule.Assembly.Name.Attributes = (AssemblyAttributes) $2;
-				codegen.CurrentModule.Assembly.Name.Name = ((QualifiedName) $3).FullName;
-				has_assembly_directive = true;
+				if (codegen.HasAssemblyDirective && name != asmName.Name)
+					report.WriteError (Error.MultipleAssemblyDirectives,
+						"Multiple .assembly directives.");
+
+				asmName.Attributes = (AssemblyAttributes) $2;
+				asmName.Name = name;
+				codegen.HasAssemblyDirective = true;
 			}
 			;
 
@@ -3033,10 +3035,7 @@ comp_qstring		: QSTRING
 
 int32			: INT64
 			{
-				var l = (long) $1;
-				var intb = BitConverter.GetBytes (l);
-
-				$$ = BitConverter.ToInt32 (intb, BitConverter.IsLittleEndian ? 0 : 4);
+				$$ = BitConverter.ToInt32 (BitConverter.GetBytes ((long) $1), BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			;
 
@@ -3046,28 +3045,20 @@ int64			: INT64
 float64			: FLOAT64
 			| K_FLOAT32 OPEN_PARENS INT32 CLOSE_PARENS
 			{
-				var i = (int) $3;
-				var intb = BitConverter.GetBytes (i);
-
-				$$ = (double) BitConverter.ToSingle (intb, 0);
+				$$ = (double) BitConverter.ToSingle (BitConverter.GetBytes ((int) $3), 0);
 			}
 			| K_FLOAT32 OPEN_PARENS INT64 CLOSE_PARENS
 			{
-				var l = (long) $3;
-				var intb = BitConverter.GetBytes (l);
-				$$ = (double) BitConverter.ToSingle (intb, BitConverter.IsLittleEndian ? 0 : 4);
+				$$ = (double) BitConverter.ToSingle (BitConverter.GetBytes ((long) $3),
+					BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			| K_FLOAT64 OPEN_PARENS INT64 CLOSE_PARENS
 			{
-				var intb = BitConverter.GetBytes ((long) $3);
-
-				$$ = BitConverter.ToDouble (intb, 0);
+				$$ = BitConverter.ToDouble (BitConverter.GetBytes ((long) $3), 0);
 			}
 			| K_FLOAT64 OPEN_PARENS INT32 CLOSE_PARENS
 			{
-				var intb = BitConverter.GetBytes ((int) $3);
-
-				$$ = (double) BitConverter.ToSingle (intb, 0);
+				$$ = (double) BitConverter.ToSingle (BitConverter.GetBytes ((int) $3), 0);
 			}
 			;
 
@@ -3092,23 +3083,19 @@ bytes			:
 			}
 			| hexbytes
 			{
-				var byte_list = (List<byte>) $1;
-
-				$$ = byte_list.ToArray ();
+				$$ = ((List<byte>) $1).ToArray ();
 			}
 			;
 
 hexbytes		: hexbyte
 			{
-				var byte_list = new List<byte> ();
-				byte_list.Add (Convert.ToByte ($1));
-
-				$$ = byte_list;
+				$$ = new List<byte> {
+					Convert.ToByte ($1),
+				};
 			}
 			| hexbytes hexbyte
 			{
-				var byte_list = (List<byte>) $1;
-				byte_list.Add (Convert.ToByte ($2));
+				((List<byte>) $1).Add (Convert.ToByte ($2));
 			}
 			;
 
