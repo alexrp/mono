@@ -936,7 +936,7 @@ type_spec		: class_ref
 				var module = (string) $3;
 
 				if (module == codegen.CurrentModule.Name)
-					$$ = codegen.CurrentModule.GetType ("<Module>");
+					$$ = codegen.CurrentModule.GetModuleType ();
 				else {
 					var mod = codegen.GetModuleReference (module);
 
@@ -1248,7 +1248,7 @@ field_decl		: D_FIELD field_offset field_attr marshal_spec type id at_opt init_o
 				}
 
 				if (isGlobal)
-					codegen.CurrentModule.GetType ("<Module>").Fields.Add (field);
+					codegen.CurrentModule.GetModuleType ().Fields.Add (field);
 				else
 					codegen.CurrentType.Fields.Add (field);
 			}
