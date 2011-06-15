@@ -420,7 +420,11 @@ decl			:
 			}
 			| D_STACKRESERVE int64
 			| D_TYPELIST OPEN_BRACE class_refs CLOSE_BRACE // TODO: How can we sort with Cecil?
-			| D_MSCORLIB // TODO: What does this actually do?
+			| D_MSCORLIB
+			{
+				// TODO: We need to set image base to 0x00510000 here.
+				codegen.IsCorlib = true;
+			}
 			| extsource_spec
 			| language_decl
 			;

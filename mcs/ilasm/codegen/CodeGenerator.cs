@@ -35,6 +35,8 @@ namespace Mono.ILAsm {
 		
 		public bool DebuggingSymbols { get; set; }
 		
+		public bool IsCorlib { get; set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public CodeGenerator (Report report, string moduleName, Target target)
