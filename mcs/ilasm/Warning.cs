@@ -82,5 +82,10 @@ namespace Mono.ILAsm {
 		/// a field.
 		/// </summary>
 		ParameterMarshalNotationOnField = 11,
+		/// <summary>
+		/// Happens if some feature that the Mono ILAsm doesn't support yet
+		/// is used.
+		/// </summary>
+		UnimplementedFeatureUsed = 12,
 	}
 }

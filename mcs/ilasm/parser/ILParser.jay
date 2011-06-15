@@ -366,7 +366,15 @@ decl			:
 			| data_decl
 			*/
 			| vtable_decl
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					".vtable is currently unimplemented (directive ignored).");
+			}
 			| vtfixup_decl
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					".vtfixup is currently unimplemented (directive ignored).");
+			}
 			| file_decl
 			| assembly_all
 			| assemblyref_all
