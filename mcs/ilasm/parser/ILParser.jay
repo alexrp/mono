@@ -429,12 +429,14 @@ decl			:
 			| language_decl
 			;
 
+// TODO: Persist these in MDB.
 extsource_spec		: D_LINE int32 SQSTRING
 			| D_LINE int32
 			| D_LINE int32 COLON int32 SQSTRING
 			| D_LINE int32 COLON int32
 			;
 
+// TODO: Persist these in MDB.
 language_decl		: D_LANGUAGE SQSTRING
 			| D_LANGUAGE SQSTRING COMMA SQSTRING
 			| D_LANGUAGE SQSTRING COMMA SQSTRING COMMA SQSTRING
@@ -568,9 +570,7 @@ impl_class_refs		: K_IMPLEMENTS type_spec
 			}
 			| impl_class_refs COMMA type_spec
 			{
-				var al = (List<TypeReference>) $1;
-				al.Add ((TypeReference) $3);
-				$$ = al;
+				((List<TypeReference>) $1).Add ((TypeReference) $3);
 			}
 			;
 
@@ -610,7 +610,6 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 						gp.Constraints.Add (constraint);
 
 				colln.Add (gp);
-				$$ = colln;
 			}
 			;
 
@@ -647,7 +646,6 @@ constraints		: type_spec
 			| constraints COMMA type_spec
 			{
 				((List<GenericInstanceType>) $1).Add ((GenericInstanceType) $3);
-				$$ = $1;
 			}
 			;
 
@@ -802,10 +800,11 @@ type			: K_CLASS class_ref
 			}
 			| type OPEN_BRACKET bounds CLOSE_BRACKET
 			{
-				var type = new ArrayType ((TypeReference) $1);
+				var bounds = (List<ArrayDimension>) $3;
+				var type = new ArrayType ((TypeReference) $1, bounds.Count);
 
-				foreach (var bound in (List<ArrayDimension>) $3)
-					type.Dimensions.Add (bound);
+				for (var i = 0; i < bounds.Count; i++)
+					type.Dimensions [i] = bounds [i];
 
 				$$ = type;
 			}
@@ -990,19 +989,18 @@ bound			:
 			{
 				var size = (int) $1;
 
-				if (size < 0)
-					$$ = new ArrayDimension (0, null);
-				else
-					$$ = new ArrayDimension (null, size);
+				if (size < 0) {
+					report.WriteWarning (Warning.NegativeArraySize,
+						"Negative array size '{0}' set to 0.", size);
+
+					$$ = new ArrayDimension (0, 0);
+				} else
+					$$ = new ArrayDimension (0, size);
 			}
 			| int32 ELLIPSIS int32
 			{
 				var lower = (int) $1;
 				var upper = (int) $3;
-
-				if (lower > upper)
-					report.WriteError (Error.InvalidArrayBound,
-						"Lower bound must be lower than or equal to upper bound.");
 
 				$$ = new ArrayDimension (lower, upper);
 			}

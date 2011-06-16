@@ -33,7 +33,9 @@
     <DefineConstants>TRACE;NET_2_0</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
+    <Reference Include="System">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="Mono.Cecil, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
     </Reference>
@@ -111,5 +113,11 @@
     <None Include="tests\field-005.il" />
     <None Include="tests\field-006.il" />
     <None Include="tests\field-007.il" />
+    <None Include="tests\field-array-001.il" />
+    <None Include="tests\field-array-002.il" />
+    <None Include="tests\field-array-003.il" />
+    <None Include="tests\field-array-004.il" />
+    <None Include="tests\field-array-005.il" />
+    <None Include="tests\field-array-006.il" />
   </ItemGroup>
 </Project>

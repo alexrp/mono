@@ -87,5 +87,10 @@ namespace Mono.ILAsm {
 		/// is used.
 		/// </summary>
 		UnimplementedFeatureUsed = 12,
+		/// <summary>
+		/// Happens when a negative array size is specified in an array type
+		/// signature.
+		/// </summary>
+		NegativeArraySize = 13,
 	}
 }

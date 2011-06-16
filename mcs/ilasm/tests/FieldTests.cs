@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
@@ -37,7 +38,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("<Module>").Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.Contains (
 					y => y.Name == "test001"));
 		}
 		
@@ -50,7 +51,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("<Module>").Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.Contains (
 					y => y.IsStatic));
 		}
 		
@@ -63,7 +64,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("<Module>").Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.Contains (
 					y => y.Offset == -1));
 		}
 		
@@ -113,6 +114,83 @@ namespace Mono.ILAsm.Tests {
 				.ExpectError (Error.InstanceFieldWithDataLocation)
 				.Run ()
 				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestVectorField ()
+		{
+			ILAsm ()
+				.Input ("field-array-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).IsVector));
+		}
+		
+		[Test]
+		public void TestUnboundedArray ()
+		{
+			ILAsm ()
+				.Input ("field-array-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).IsVector));
+		}
+		
+		[Test]
+		public void TestLowerBoundedArray ()
+		{
+			ILAsm ()
+				.Input ("field-array-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
+					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == null));
+		}
+		
+		[Test]
+		public void TestBoundedArray ()
+		{
+			ILAsm ()
+				.Input ("field-array-004.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
+					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 10));
+		}
+		
+		[Test]
+		public void TestSizedArray ()
+		{
+			ILAsm ()
+				.Input ("field-array-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
+					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 5));
+		}
+		
+		[Test]
+		public void TestNegativeSizedArray ()
+		{
+			ILAsm ()
+				.Input ("field-array-006.il")
+				.ExpectWarning (Warning.NegativeArraySize)
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.Contains (
+					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
+					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 0));
 		}
 	}
 }
