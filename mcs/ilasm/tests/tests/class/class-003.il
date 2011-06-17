@@ -1,5 +1,5 @@
 // 
-// class-003.il
+// class-004.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,6 @@
 {
 }
 
-.class value test003
+.class enum test003
 {
 }

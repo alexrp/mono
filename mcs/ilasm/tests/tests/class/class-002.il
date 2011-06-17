@@ -1,5 +1,5 @@
 // 
-// class-002.il
+// class-003.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,6 @@
 {
 }
 
-.class value Pair`2<T1, T2>
+.class value test002
 {
 }

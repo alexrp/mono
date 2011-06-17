@@ -44,50 +44,36 @@ namespace Mono.ILAsm.Tests {
 		}
 		
 		[Test]
-		public void TestGenericClassDirective ()
+		public void TestValueTypeClassDirective ()
 		{
 			ILAsm ()
 				.Input ("class/class-002.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetTypes ().Contains (
-					y => y.GenericParameters.ContainsMany (
-						z => z.Name == "T1",
-						z => z.Name == "T2")));
-		}
-		
-		[Test]
-		public void TestValueTypeClassDirective ()
-		{
-			ILAsm ()
-				.Input ("class/class-003.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("test003").IsValueType);
+				.Expect (x => x.GetType ("test002").IsValueType);
 		}
 		
 		[Test]
 		public void TestEnumClassDirective ()
 		{
 			ILAsm ()
-				.Input ("class/class-004.il")
+				.Input ("class/class-003.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test004").IsEnum);
+				.Expect (x => x.GetType ("test003").IsEnum);
 		}
 		
 		[Test]
 		public void TestInterfaceImplementation ()
 		{
 			ILAsm ()
-				.Input ("class/class-005.il")
+				.Input ("class/class-004.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test005").Interfaces.Contains (
+				.Expect (x => x.GetType ("test004").Interfaces.Contains (
 					y => y.FullName == "System.ICloneable"));
 		}
 		
@@ -95,11 +81,11 @@ namespace Mono.ILAsm.Tests {
 		public void TestMultipleInterfaceImplementations ()
 		{
 			ILAsm ()
-				.Input ("class/class-006.il")
+				.Input ("class/class-005.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test006").Interfaces.ContainsMany (
+				.Expect (x => x.GetType ("test005").Interfaces.ContainsMany (
 					y => y.FullName == "System.ICloneable",
 					y => y.FullName == "System.IDisposable"));
 		}
@@ -108,34 +94,34 @@ namespace Mono.ILAsm.Tests {
 		public void TestSimpleClassInheritance ()
 		{
 			ILAsm ()
-				.Input ("class/class-007.il")
+				.Input ("class/class-006.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test007").BaseType.Name == "test007_base");
+				.Expect (x => x.GetType ("test006").BaseType.Name == "test006_base");
 		}
 		
 		[Test]
 		public void TestInterfaceClassDirective ()
 		{
 			ILAsm ()
-				.Input ("class/class-008.il")
+				.Input ("class/class-007.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test011").IsInterface);
+				.Expect (x => x.GetType ("test007").IsInterface);
 		}
 		
 		[Test]
 		public void TestSimpleInterfaceImplementation ()
 		{
 			ILAsm ()
-				.Input ("class/class-009.il")
+				.Input ("class/class-008.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test012").Interfaces.Contains (
-					y => y.Name == "test012_if"));
+				.Expect (x => x.GetType ("test008").Interfaces.Contains (
+					y => y.Name == "test008_if"));
 		}
 		
 		[Test]
@@ -187,6 +173,19 @@ namespace Mono.ILAsm.Tests {
 				.GetModule ()
 				.Expect (x => x.GetType ("test013").Interfaces.Contains (
 					y => y.FullName == "System.IEquatable`1<test013_dummy>"));
+		}
+		
+		[Test]
+		public void TestGenericClassDirective ()
+		{
+			ILAsm ()
+				.Input ("class-generic/class-generic-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("Pair`2").GenericParameters.ContainsMany (
+					z => z.Name == "T1",
+					z => z.Name == "T2"));
 		}
 	}
 }

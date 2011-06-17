@@ -1,5 +1,5 @@
 // 
-// class-012.il
+// class-generic-005.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,10 +28,6 @@
 {
 }
 
-.class interface test012_if
-{
-}
-
-.class test012 implements test012_if
+.class value Pair`2<T1, T2>
 {
 }

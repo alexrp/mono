@@ -1,5 +1,5 @@
 // 
-// class-007.il
+// class-011.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,10 +28,6 @@
 {
 }
 
-.class test007_base
-{
-}
-
-.class test007 extends test007_base
+.class interface test007
 {
 }

@@ -1,5 +1,5 @@
 // 
-// class-005.il
+// class-006.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,6 @@
 {
 }
 
-.class test005 implements [mscorlib]System.ICloneable
+.class test005 implements [mscorlib]System.ICloneable, [mscorlib]System.IDisposable
 {
 }

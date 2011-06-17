@@ -1,5 +1,5 @@
 // 
-// class-004.il
+// class-005.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,6 @@
 {
 }
 
-.class enum test004
+.class test004 implements [mscorlib]System.ICloneable
 {
 }

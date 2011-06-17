@@ -80,12 +80,6 @@
     <None Include="tests\assembly-extern\assembly-extern-005.il" />
     <None Include="tests\assembly-extern\assembly-extern-006.il" />
     <None Include="tests\class\class-001.il" />
-    <None Include="tests\class\class-002.il" />
-    <None Include="tests\class\class-003.il" />
-    <None Include="tests\class\class-004.il" />
-    <None Include="tests\class\class-005.il" />
-    <None Include="tests\class\class-006.il" />
-    <None Include="tests\class\class-007.il" />
     <None Include="tests\field\field-001.il" />
     <None Include="tests\field\field-002.il" />
     <None Include="tests\field\field-003.il" />
@@ -116,12 +110,18 @@
     <None Include="tests\class-generic\class-generic-003.il" />
     <None Include="tests\class-generic\class-generic-004.il" />
     <None Include="tests\class-generic\class-generic-001.il" />
-    <None Include="tests\class\class-008.il" />
-    <None Include="tests\class\class-009.il" />
     <None Include="tests\data\data-001.il" />
     <None Include="tests\data\data-002.il" />
     <None Include="tests\data\data-003.il" />
     <None Include="tests\data\data-004.il" />
+    <None Include="tests\class-generic\class-generic-005.il" />
+    <None Include="tests\class\class-002.il" />
+    <None Include="tests\class\class-003.il" />
+    <None Include="tests\class\class-004.il" />
+    <None Include="tests\class\class-005.il" />
+    <None Include="tests\class\class-006.il" />
+    <None Include="tests\class\class-007.il" />
+    <None Include="tests\class\class-008.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />

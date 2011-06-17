@@ -1,5 +1,5 @@
 // 
-// class-011.il
+// class-012.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,10 @@
 {
 }
 
-.class interface test011
+.class interface test008_if
+{
+}
+
+.class test008 implements test008_if
 {
 }
