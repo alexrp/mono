@@ -386,10 +386,6 @@ decl			:
 			/*
 			| sec_decl
 			| customattr_decl
-			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
-			}
 			*/
 			| D_SUBSYSTEM int32
 			{
@@ -1213,7 +1209,7 @@ variant_type		: K_NULL
 			| K_CLSID
 			;
 
-field_decl		: D_FIELD field_offset field_attr marshal_spec type id at_opt init_opt
+field_decl		: D_FIELD repeat_opt field_attr marshal_spec type id at_opt init_opt
 			{
 				var isGlobal = codegen.CurrentType == null;
 				var attrs = (FieldAttributes) $3;
@@ -1249,9 +1245,15 @@ field_decl		: D_FIELD field_offset field_attr marshal_spec type id at_opt init_o
 					field.MarshalInfo = (MarshalInfo) $4;
 				}
 
-				if ($7 != null && !isStatic)
-					report.WriteError (Error.InstanceFieldWithDataLocation,
-						"Instance fields cannot have an associated data location.");
+				if ($7 != null) {
+					if (!isStatic)
+						report.WriteError (Error.InstanceFieldWithDataLocation,
+							"Instance fields cannot have an associated data location.");
+
+					var dataLoc = (string) $7;
+					var mapping = codegen.GetFieldDataMapping (codegen.CurrentType);
+					mapping.Add (field, dataLoc);
+				}
 
 				if ($8 != null) {
 					field.Constant = $8 is Null ? null : $8;
@@ -1265,7 +1267,7 @@ field_decl		: D_FIELD field_offset field_attr marshal_spec type id at_opt init_o
 			}
 			;
 
-field_offset		:
+repeat_opt		:
 			| OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				$$ = $2;
@@ -1301,7 +1303,6 @@ marshal_spec		:
 at_opt			:
 			| K_AT id
 			{
-				// TODO: Make use of this.
 				$$ = $2;
 			}
 			;
@@ -1383,37 +1384,42 @@ field_init		: field_init_primitive
 			}
 			;
 
-/*
 data_decl		: data_head data_body
 			{
-				DataDef datadef = (DataDef) $1;
+				if ($1 != null)
+				{
+					foreach (var item in (List<object>) $2)
+						codegen.DataConstants.Add ((string) $1, item);
 
-				if ($2 is ArrayList) {
-					ArrayList const_list = (ArrayList) $2;
-					DataConstant[] const_arr = new DataConstant[const_list.Count];
-
-					for (int i = 0; i < const_arr.Length; i++)
-						const_arr[i] = (DataConstant) const_list[i];
-
-					datadef.PeapiConstant = new ArrayConstant (const_arr);
-				} else {
-					datadef.PeapiConstant = (PEAPI.Constant) $2;
+					report.WriteWarning (Warning.UnimplementedFeatureUsed,
+						"Data constants are currently just copied to static fields.");
 				}
-
-				codegen.AddDataDef (datadef);
+				else
+					report.WriteWarning (Warning.UnimplementedFeatureUsed,
+						"Unlabeled data constants currently have no effect.");
 			}
 			;
 
-data_head		: D_DATA tls id ASSIGN
+data_name		:
+			| id ASSIGN
 			{
-				$$ = new DataDef ((string) $3, (bool) $2);
-			}
-			| D_DATA tls
-			{
-				$$ = new DataDef (String.Empty, (bool) $2);
+				$$ = $2;
 			}
 			;
-*/
+
+data_head		: D_DATA tls cil data_name
+			{
+				if ((bool) $2)
+					report.WriteWarning (Warning.UnimplementedFeatureUsed,
+						"TLS data constants are not currently supported.");
+
+				if ((bool) $3)
+					report.WriteWarning (Warning.UnimplementedFeatureUsed,
+						"CIL data constants are not currently supported.");
+
+				$$ = $3;
+			}
+			;
 
 tls			:
 			{
@@ -1425,157 +1431,110 @@ tls			:
 			}
 			;
 
-/*
+cil			:
+			{
+				$$ = false;
+			}
+			| K_CIL
+			{
+				$$ = true;
+			}
+			;
+
 data_body		: OPEN_BRACE dataitem_list CLOSE_BRACE
 			{
 				$$ = $2;
 			}
 			| dataitem
+			{
+				$$ = new List<object> {
+					$1,
+				};
+			}
 			;
 
 dataitem_list		: dataitem
 			{
-				ArrayList dataitem_list = new ArrayList ();
-				dataitem_list.Add ($1);
-				$$ = dataitem_list;
+				$$ = new List<object> {
+					$1,
+				};
 			}
 			| dataitem_list COMMA dataitem
 			{
-				ArrayList list = (ArrayList) $1;
-				list.Add ($3);
+				((List<object>) $1).Add ($3);
+			}
+			;
+
+data_repeat_opt		: repeat_opt
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Repeated data constants currently have no effect.");
 			}
 			;
 
 dataitem		: K_CHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
 			{
-				$$ = new StringConst ((string) $4);
+				$$ = $4;
 			}
 			| AMPERSAND OPEN_PARENS id CLOSE_PARENS
 			{
-				//DataDef def = codegen.CurrentTypeDef.GetDataDef ((string) $3);
-				//$$ = new AddressConstant ((DataConstant) def.PeapiConstant);
-			}
-			| K_BYTEARRAY ASSIGN bytes_list
-			{
-				$$ = new ByteArrConst ((byte[]) $3);
+				$$ = IntPtr.Zero;
 			}
 			| K_BYTEARRAY bytes_list
 			{
-				$$ = new ByteArrConst ((byte[]) $2);
+				$$ = $2;
 			}
-			| K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS repeat_opt
+			| K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS data_repeat_opt
 			{
-				double d = (double) $3;
-				FloatConst float_const = new FloatConst ((float) d);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (float_const, (int) $5);
-				else
-					$$ = float_const;
+				$$ = $3;
 			}
-			| K_FLOAT64 OPEN_PARENS float64 CLOSE_PARENS repeat_opt
+			| K_FLOAT64 OPEN_PARENS float64 CLOSE_PARENS data_repeat_opt
 			{
-				DoubleConst double_const = new DoubleConst ((double) $3);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (double_const, (int) $5);
-				else
-					$$ = double_const;
+				$$ = (float) (double) $3;
 			}
-			| K_INT64 OPEN_PARENS int64 CLOSE_PARENS repeat_opt
+			| K_INT64 OPEN_PARENS int64 CLOSE_PARENS data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((long) $3);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (int_const, (int) $5);
-				else
-					$$ = int_const;
+				$$ = $3;
 			}
-			| K_INT32 OPEN_PARENS int32 CLOSE_PARENS repeat_opt
+			| K_INT32 OPEN_PARENS int32 CLOSE_PARENS data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((int) $3);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (int_const, (int) $5);
-				else
-					$$ = int_const;
+				$$ = $3;
 			}
-			| K_INT16 OPEN_PARENS int32 CLOSE_PARENS repeat_opt
+			| K_INT16 OPEN_PARENS int32 CLOSE_PARENS data_repeat_opt
 			{
-				int i = (int) $3;
-				IntConst int_const = new IntConst ((short) i);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (int_const, (int) $5);
-				else
-					$$ = int_const;
+				$$ = (short) (int) $3;
 			}
-			| K_INT8 OPEN_PARENS int32 CLOSE_PARENS repeat_opt
+			| K_INT8 OPEN_PARENS int32 CLOSE_PARENS data_repeat_opt
 			{
-				int i = (int) $3;
-				IntConst int_const = new IntConst ((sbyte) i);
-
-				if ($5 != null)
-					$$ = new RepeatedConstant (int_const, (int) $5);
-				else
-					$$ = int_const;
+				$$ = (byte) (int) $3;
 			}
-			| K_FLOAT32 repeat_opt
+			| K_FLOAT32 data_repeat_opt
 			{
-				FloatConst float_const = new FloatConst (0F);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (float_const, (int) $2);
-				else
-					$$ = float_const;
+				$$ = 0.0f;
 			}
-			| K_FLOAT64 repeat_opt
+			| K_FLOAT64 data_repeat_opt
 			{
-				DoubleConst double_const = new DoubleConst (0);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (double_const, (int) $2);
-				else
-					$$ = double_const;
+				$$ = 0.0d;
 			}
-			| K_INT64 repeat_opt
+			| K_INT64 data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((long) 0);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (int_const, (int) $2);
-				else
-					$$ = int_const;
+				$$ = (long) 0;
 			}
-			| K_INT32 repeat_opt
+			| K_INT32 data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((int) 0);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (int_const, (int) $2);
-				else
-					$$ = int_const;
+				$$ = (int) 0;
 			}
-			| K_INT16 repeat_opt
+			| K_INT16 data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((short) 0);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (int_const, (int) $2);
-				else
-					$$ = int_const;
+				$$ = (short) 0;
 			}
-			| K_INT8 repeat_opt
+			| K_INT8 data_repeat_opt
 			{
-				IntConst int_const = new IntConst ((sbyte) 0);
-
-				if ($2 != null)
-					$$ = new RepeatedConstant (int_const, (int) $2);
-				else
-					$$ = int_const;
+				$$ = (byte) 0;
 			}
 			;
 
+/*
 method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 			{
 				codegen.EndMethodDef (tokenizer.Location);

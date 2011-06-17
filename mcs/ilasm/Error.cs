@@ -83,5 +83,10 @@ namespace Mono.ILAsm {
 		/// An unsupported native type was used in a marshaling signature.
 		/// </summary>
 		UnsupportedNativeType = 12,
+		/// <summary>
+		/// Happens when a field's at clause refers to a data constant that
+		/// has not been defined.
+		/// </summary>
+		InvalidDataConstantLabel = 13,
 	}
 }

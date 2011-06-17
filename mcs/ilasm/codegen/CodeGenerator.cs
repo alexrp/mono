@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Mdb;
 
 namespace Mono.ILAsm {
 	internal sealed class CodeGenerator {
 		Corlib corlib;
-		
 		Report report;
 		
 		public Corlib Corlib {
@@ -39,20 +40,88 @@ namespace Mono.ILAsm {
 		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
+		public Dictionary<string, object> DataConstants { get; private set; }
+		
+		public Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> FieldDataMappings { get; private set; }
+		
 		public CodeGenerator (Report report, string moduleName, Target target)
 		{
 			this.report = report;
 			AliasedAssemblyReferences = new Dictionary<string, AliasedAssemblyNameReference> ();
+			DataConstants = new Dictionary<string, object> ();
+			FieldDataMappings = new Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> ();
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
 		}
 		
+		private void EmitDataConstants ()
+		{
+			// This implementation is far from standard-compliant. We can't
+			// currently emit actual data constants, so we emulate the
+			// behavior of field -> data constant mappings by copying the
+			// values from data constants to the InitialValue of fields.
+			
+			foreach (var type in FieldDataMappings) {
+				foreach (var mapping in type.Value) {
+					var label = mapping.Value;
+					var data = DataConstants.TryGet (label);
+					
+					if (data == null)
+						report.WriteError (Error.InvalidDataConstantLabel,
+							"Could not find data location '{0}'.", label);
+					
+					using (var bin = new BinaryWriter (new MemoryStream ())) {
+						if (data is string)
+							bin.Write (Encoding.Unicode.GetBytes ((string) data));
+						else if (data is byte[])
+							bin.Write ((byte[]) data);
+						else if (data is float)
+							bin.Write ((float) data);
+						else if (data is double)
+							bin.Write ((double) data);
+						else if (data is long)
+							bin.Write ((long) data);
+						else if (data is int)
+							bin.Write ((int) data);
+						else if (data is short)
+							bin.Write ((short) data);
+						else if (data is byte)
+							bin.Write ((byte) data);
+						
+						var stream = bin.BaseStream;
+						var length = (int) stream.Length;
+						var value = new byte [length];
+						
+						stream.Position = 0;
+						stream.Read (value, 0, length);
+						
+						mapping.Key.InitialValue = value;
+					}
+				}
+			}
+		}
+		
 		public void Write (string outputFile)
 		{
+			EmitDataConstants ();
+			
 			CurrentModule.Write (outputFile, new WriterParameters {
 				SymbolWriterProvider = new MdbWriterProvider (),
 				WriteSymbols = DebuggingSymbols,
 			});
+		}
+		
+		public Dictionary<FieldDefinition, string> GetFieldDataMapping (TypeDefinition type)
+		{
+			var mapping = FieldDataMappings.TryGet (type);
+			
+			if (mapping != null)
+				return mapping;
+			
+			mapping = new Dictionary<FieldDefinition, string> ();
+			FieldDataMappings.Add (type, mapping);
+			
+			return mapping;
 		}
 		
 		private AssemblyNameReference ResolveAssemblyReference (string name)
