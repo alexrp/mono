@@ -362,9 +362,7 @@ decl			:
 			| method_all
 			*/
 			| field_decl
-			/*
 			| data_decl
-			*/
 			| vtable_decl
 			{
 				report.WriteWarning (Warning.UnimplementedFeatureUsed,
@@ -655,8 +653,8 @@ class_decl		: /*method_all
 			| prop_all
 			*/
 			| field_decl
-			/*
 			| data_decl
+			/*
 			| sec_decl
 			{
 				AddSecDecl ($1, false);
@@ -1417,7 +1415,7 @@ data_head		: D_DATA tls cil data_name
 					report.WriteWarning (Warning.UnimplementedFeatureUsed,
 						"CIL data constants are not currently supported.");
 
-				$$ = $3;
+				$$ = $4;
 			}
 			;
 
@@ -1467,8 +1465,9 @@ dataitem_list		: dataitem
 
 data_repeat_opt		: repeat_opt
 			{
-				report.WriteWarning (Warning.UnimplementedFeatureUsed,
-					"Repeated data constants currently have no effect.");
+				if ($1 != null)
+					report.WriteWarning (Warning.UnimplementedFeatureUsed,
+						"Repeated data constants currently have no effect.");
 			}
 			;
 

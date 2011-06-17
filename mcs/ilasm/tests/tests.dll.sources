@@ -8,3 +8,4 @@ tests/ClassTests.cs
 tests/Extensions.cs
 tests/ModuleTests.cs
 tests/MiscellaneousTests.cs
+tests/DataTests.cs

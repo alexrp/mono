@@ -56,6 +56,7 @@
     <Compile Include="MiscellaneousTests.cs" />
     <Compile Include="ClassTests.cs" />
     <Compile Include="FieldTests.cs" />
+    <Compile Include="DataTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -117,6 +118,10 @@
     <None Include="tests\class-generic\class-generic-001.il" />
     <None Include="tests\class\class-008.il" />
     <None Include="tests\class\class-009.il" />
+    <None Include="tests\data\data-001.il" />
+    <None Include="tests\data\data-002.il" />
+    <None Include="tests\data\data-003.il" />
+    <None Include="tests\data\data-004.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -136,5 +141,6 @@
     <Folder Include="tests\" />
     <Folder Include="tests\" />
     <Folder Include="tests\class-generic\" />
+    <Folder Include="tests\data\" />
   </ItemGroup>
 </Project>
