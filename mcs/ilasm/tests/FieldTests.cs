@@ -34,7 +34,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestStaticModuleField ()
 		{
 			ILAsm ()
-				.Input ("field-001.il")
+				.Input ("field/field-001.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -46,7 +46,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestModuleField ()
 		{
 			ILAsm ()
-				.Input ("field-002.il")
+				.Input ("field/field-002.il")
 				.ExpectWarning (Warning.GlobalFieldMadeStatic)
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -59,7 +59,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestModuleFieldWithOffset ()
 		{
 			ILAsm ()
-				.Input ("field-003.il")
+				.Input ("field/field-003.il")
 				.ExpectWarning (Warning.GlobalFieldOffsetIgnored)
 				.Run ()
 				.Expect (ExitCode.Success)
@@ -72,7 +72,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestClassField ()
 		{
 			ILAsm ()
-				.Input ("field-004.il")
+				.Input ("field/field-004.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -84,7 +84,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestClassFieldWithOffset ()
 		{
 			ILAsm ()
-				.Input ("field-005.il")
+				.Input ("field/field-005.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -96,7 +96,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestMultipleClassFieldsWithOffsets ()
 		{
 			ILAsm ()
-				.Input ("field-006.il")
+				.Input ("field/field-006.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -110,7 +110,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestFieldWithDataLocation ()
 		{
 			ILAsm ()
-				.Input ("field-007.il")
+				.Input ("field/field-007.il")
 				.ExpectError (Error.InstanceFieldWithDataLocation)
 				.Run ()
 				.Expect (ExitCode.Error);
@@ -120,7 +120,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestVectorField ()
 		{
 			ILAsm ()
-				.Input ("field-array-001.il")
+				.Input ("field-array/field-array-001.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -132,7 +132,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestUnboundedArray ()
 		{
 			ILAsm ()
-				.Input ("field-array-002.il")
+				.Input ("field-array/field-array-002.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -144,7 +144,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestLowerBoundedArray ()
 		{
 			ILAsm ()
-				.Input ("field-array-003.il")
+				.Input ("field-array/field-array-003.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -157,7 +157,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestBoundedArray ()
 		{
 			ILAsm ()
-				.Input ("field-array-004.il")
+				.Input ("field-array/field-array-004.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -170,7 +170,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestSizedArray ()
 		{
 			ILAsm ()
-				.Input ("field-array-005.il")
+				.Input ("field-array/field-array-005.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -183,7 +183,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestNegativeSizedArray ()
 		{
 			ILAsm ()
-				.Input ("field-array-006.il")
+				.Input ("field-array/field-array-006.il")
 				.ExpectWarning (Warning.NegativeArraySize)
 				.Run ()
 				.Expect (ExitCode.Success)

@@ -36,7 +36,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestNamespaceDirective ()
 		{
 			ILAsm ()
-				.Input ("namespace-001.il")
+				.Input ("namespace/namespace-001.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
 				.Expect (ExitCode.Success);
@@ -46,7 +46,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestNestedNamespaceDirectives ()
 		{
 			ILAsm ()
-				.Input ("namespace-002.il")
+				.Input ("namespace/namespace-002.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
 				.Expect (ExitCode.Success);
@@ -56,7 +56,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestDottedNamespaceDirectives ()
 		{
 			ILAsm ()
-				.Input ("namespace-003.il")
+				.Input ("namespace/namespace-003.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
 				.Expect (ExitCode.Success);

@@ -34,7 +34,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System">
-      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
@@ -55,7 +54,6 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="NamespaceTests.cs" />
     <Compile Include="MiscellaneousTests.cs" />
-    <Compile Include="ReferenceTests.cs" />
     <Compile Include="ClassTests.cs" />
     <Compile Include="FieldTests.cs" />
   </ItemGroup>
@@ -67,57 +65,76 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="tests\module-001.il" />
-    <None Include="tests\assembly-001.il" />
-    <None Include="tests\assembly-002.il" />
-    <None Include="tests\assembly-003.il" />
-    <None Include="tests\assembly-004.il" />
-    <None Include="tests\module-002.il" />
-    <None Include="tests\assembly-005.il" />
-    <None Include="tests\assembly-006.il" />
-    <None Include="tests\namespace-001.il" />
-    <None Include="tests\namespace-002.il" />
-    <None Include="tests\namespace-003.il" />
-    <None Include="tests\misc-decl-001.il" />
-    <None Include="tests\misc-decl-002.il" />
-    <None Include="tests\misc-decl-003.il" />
-    <None Include="tests\misc-decl-004.il" />
-    <None Include="tests\misc-decl-005.il" />
-    <None Include="tests\misc-decl-006.il" />
-    <None Include="tests\module-extern-001.il" />
-    <None Include="tests\assembly-extern-001.il" />
-    <None Include="tests\assembly-extern-002.il" />
-    <None Include="tests\assembly-extern-003.il" />
-    <None Include="tests\assembly-extern-004.il" />
-    <None Include="tests\module-extern-002.il" />
-    <None Include="tests\assembly-extern-005.il" />
-    <None Include="tests\assembly-extern-006.il" />
-    <None Include="tests\class-001.il" />
-    <None Include="tests\class-002.il" />
-    <None Include="tests\class-003.il" />
-    <None Include="tests\class-004.il" />
-    <None Include="tests\assembly-007.il" />
-    <None Include="tests\class-005.il" />
-    <None Include="tests\class-006.il" />
-    <None Include="tests\class-007.il" />
-    <None Include="tests\class-008.il" />
-    <None Include="tests\class-009.il" />
-    <None Include="tests\class-010.il" />
-    <None Include="tests\class-011.il" />
-    <None Include="tests\class-012.il" />
-    <None Include="tests\class-013.il" />
-    <None Include="tests\field-001.il" />
-    <None Include="tests\field-002.il" />
-    <None Include="tests\field-003.il" />
-    <None Include="tests\field-004.il" />
-    <None Include="tests\field-005.il" />
-    <None Include="tests\field-006.il" />
-    <None Include="tests\field-007.il" />
-    <None Include="tests\field-array-001.il" />
-    <None Include="tests\field-array-002.il" />
-    <None Include="tests\field-array-003.il" />
-    <None Include="tests\field-array-004.il" />
-    <None Include="tests\field-array-005.il" />
-    <None Include="tests\field-array-006.il" />
+    <None Include="tests\assembly\assembly-001.il" />
+    <None Include="tests\assembly\assembly-002.il" />
+    <None Include="tests\assembly\assembly-003.il" />
+    <None Include="tests\assembly\assembly-004.il" />
+    <None Include="tests\assembly\assembly-005.il" />
+    <None Include="tests\assembly\assembly-006.il" />
+    <None Include="tests\assembly\assembly-007.il" />
+    <None Include="tests\assembly-extern\assembly-extern-001.il" />
+    <None Include="tests\assembly-extern\assembly-extern-002.il" />
+    <None Include="tests\assembly-extern\assembly-extern-003.il" />
+    <None Include="tests\assembly-extern\assembly-extern-004.il" />
+    <None Include="tests\assembly-extern\assembly-extern-005.il" />
+    <None Include="tests\assembly-extern\assembly-extern-006.il" />
+    <None Include="tests\class\class-001.il" />
+    <None Include="tests\class\class-002.il" />
+    <None Include="tests\class\class-003.il" />
+    <None Include="tests\class\class-004.il" />
+    <None Include="tests\class\class-005.il" />
+    <None Include="tests\class\class-006.il" />
+    <None Include="tests\class\class-007.il" />
+    <None Include="tests\field\field-001.il" />
+    <None Include="tests\field\field-002.il" />
+    <None Include="tests\field\field-003.il" />
+    <None Include="tests\field\field-004.il" />
+    <None Include="tests\field\field-005.il" />
+    <None Include="tests\field\field-006.il" />
+    <None Include="tests\field\field-007.il" />
+    <None Include="tests\field-array\field-array-001.il" />
+    <None Include="tests\field-array\field-array-002.il" />
+    <None Include="tests\field-array\field-array-003.il" />
+    <None Include="tests\field-array\field-array-004.il" />
+    <None Include="tests\field-array\field-array-005.il" />
+    <None Include="tests\field-array\field-array-006.il" />
+    <None Include="tests\misc-decl\misc-decl-001.il" />
+    <None Include="tests\misc-decl\misc-decl-002.il" />
+    <None Include="tests\misc-decl\misc-decl-003.il" />
+    <None Include="tests\misc-decl\misc-decl-004.il" />
+    <None Include="tests\misc-decl\misc-decl-005.il" />
+    <None Include="tests\misc-decl\misc-decl-006.il" />
+    <None Include="tests\module\module-001.il" />
+    <None Include="tests\module\module-002.il" />
+    <None Include="tests\module-extern\module-extern-001.il" />
+    <None Include="tests\module-extern\module-extern-002.il" />
+    <None Include="tests\namespace\namespace-001.il" />
+    <None Include="tests\namespace\namespace-002.il" />
+    <None Include="tests\namespace\namespace-003.il" />
+    <None Include="tests\class-generic\class-generic-002.il" />
+    <None Include="tests\class-generic\class-generic-003.il" />
+    <None Include="tests\class-generic\class-generic-004.il" />
+    <None Include="tests\class-generic\class-generic-001.il" />
+    <None Include="tests\class\class-008.il" />
+    <None Include="tests\class\class-009.il" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="tests\assembly\" />
+    <Folder Include="tests\assembly-extern\" />
+    <Folder Include="tests\class\" />
+    <Folder Include="tests\field\" />
+    <Folder Include="tests\field-array\" />
+    <Folder Include="tests\misc-decl\" />
+    <Folder Include="tests\module\" />
+    <Folder Include="tests\module-extern\" />
+    <Folder Include="tests\namespace\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\class-generic\" />
   </ItemGroup>
 </Project>

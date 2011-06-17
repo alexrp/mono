@@ -35,7 +35,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestFileAlignment ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-001.il")
+				.Input ("misc-decl/misc-decl-001.il")
 				.Run ()
 				.Expect (ExitCode.Success);
 		}
@@ -44,7 +44,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestNonPowerOfTwoFileAlignment ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-004.il")
+				.Input ("misc-decl/misc-decl-004.il")
 				.ExpectError (Error.InvalidFileAlignment)
 				.Run ()
 				.Expect (ExitCode.Error);
@@ -53,7 +53,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestOutOfRangeFileAlignment ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-005.il")
+				.Input ("misc-decl/misc-decl-005.il")
 				.ExpectError (Error.InvalidFileAlignment)
 				.Run ()
 				.Expect (ExitCode.Error);
@@ -63,7 +63,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestImageBase ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-002.il")
+				.Input ("misc-decl/misc-decl-002.il")
 				.Run ()
 				.Expect (ExitCode.Success);
 		}
@@ -72,7 +72,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestUnalignedImageBase ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-006.il")
+				.Input ("misc-decl/misc-decl-006.il")
 				.ExpectError (Error.InvalidImageBase)
 				.Run ()
 				.Expect (ExitCode.Error);
@@ -82,7 +82,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestStackReserve ()
 		{
 			ILAsm ()
-				.Input ("misc-decl-003.il")
+				.Input ("misc-decl/misc-decl-003.il")
 				.Run ()
 				.Expect (ExitCode.Success);
 		}

@@ -33,7 +33,7 @@ namespace Mono.ILAsm.Tests {
 		public void TestModuleDirective ()
 		{
 			ILAsm ()
-				.Input ("module-001.il")
+				.Input ("module/module-001.il")
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
@@ -44,12 +44,32 @@ namespace Mono.ILAsm.Tests {
 		public void TestMultipleModuleDirectives ()
 		{
 			ILAsm ()
-				.Input ("module-002.il")
+				.Input ("module/module-002.il")
 				.ExpectWarning (Warning.ModuleDirectiveIgnored)
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
 				.Expect (x => x.Name == "test002");
+		}
+		[Test]
+		public void TestModuleExternDirective ()
+		{
+			ILAsm ()
+				.Input ("module-extern/module-extern-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.ModuleReferences.Contains (y => y.Name == "test001.dll"));
+		}
+		
+		[Test]
+		public void TestDuplicateModuleExternDirective ()
+		{
+			ILAsm ()
+				.Input ("module-extern/module-extern-002.il")
+				.ExpectWarning (Warning.ModuleReferenceIgnored)
+				.Run ()
+				.Expect (ExitCode.Success);
 		}
 	}
 }
