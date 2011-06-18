@@ -377,9 +377,7 @@ decl			:
 			| assembly_all
 			| assemblyref_all
 			| exptype_all
-			/*
 			| manifestres_all
-			*/
 			| module_head
 			/*
 			| sec_decl
@@ -2938,42 +2936,103 @@ exptype_decl		: D_FILE comp_name
 			*/
 			;
 
-/*
 manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
+			{
+				var head = $1 as Tuple<ManifestResourceAttributes, string>;
+				var aliasedHead = $1 as Tuple<ManifestResourceAttributes, string, string>;
+
+				string resName;
+				string fileName;
+				ManifestResourceAttributes attr;
+
+				if (aliasedHead != null) {
+					attr = aliasedHead.X;
+					resName = aliasedHead.Y;
+					fileName = aliasedHead.Z;
+				} else {
+					attr = head.X;
+					resName = head.Y;
+					fileName = head.Y;
+				}
+
+				Resource rsc;
+
+				if ($3 != null) {
+					var asmDecl = $3 as string;
+					var fileDecl = $3 as Tuple<string, int>;
+
+					if (asmDecl != null) {
+						var asmRef = codegen.GetAssemblyReference (asmDecl);
+
+						if (asmRef == null)
+							report.WriteError (Error.UndeclaredAssemblyReference,
+								"Undeclared assembly reference '{0}' in .mresource directive.", asmDecl);
+
+						rsc = new AssemblyLinkedResource (resName, attr, asmRef);
+					} else {
+						// TODO: Propagate nometadata/.entrypoint/offset.
+						rsc = new LinkedResource (resName, attr, fileDecl.X);
+					}
+				} else {
+					var bytes = File.ReadAllBytes (fileName);
+					rsc = new EmbeddedResource (resName, attr, bytes);
+				}
+
+				codegen.CurrentModule.Resources.Add (rsc);
+			}
 			;
 
 manifestres_head	: D_MRESOURCE manres_attr comp_name
 			{
-				FileStream s = new FileStream ((string) $3, FileMode.Open, FileAccess.Read);
-				byte [] buff = new byte [s.Length];
-				s.Read (buff, 0, (int) s.Length);
-				s.Close ();
-
-				codegen.AddManifestResource (new ManifestResource ((string) $3, buff,
-					($2 == null) ? 0 : (uint) $2));
+				$$ = new Tuple<ManifestResourceAttributes, string> ((ManifestResourceAttributes) $2,
+					(string) $3);
+			}
+			| D_MRESOURCE manres_attr comp_name K_AS comp_name
+			{
+				$$ = new Tuple<ManifestResourceAttributes, string, string> ((ManifestResourceAttributes) $2,
+					(string) $3, (string) $5);
 			}
 			;
 
 manres_attr		:
+			{
+				$$ = (ManifestResourceAttributes) 0;
+			}
 			| manres_attr K_PUBLIC
 			{
-				$$ = ManifestResource.PublicResource;
+				// Blame Microsoft for this madness.
+				$$ = ((ManifestResourceAttributes) $1 != (ManifestResourceAttributes) 0 &&
+					(ManifestResourceAttributes) $1 != ManifestResourceAttributes.Public) ?
+					(ManifestResourceAttributes) 0 : ManifestResourceAttributes.Public;
 			}
 			| manres_attr K_PRIVATE
 			{
-				$$ = ManifestResource.PrivateResource;
+				$$ = ((ManifestResourceAttributes) $1 != (ManifestResourceAttributes) 0 &&
+					(ManifestResourceAttributes) $1 != ManifestResourceAttributes.Private) ?
+					(ManifestResourceAttributes) 0 : ManifestResourceAttributes.Private;
 			} 
 			;
 
 manifestres_decls	:
 			| manifestres_decls manifestres_decl
+			{
+				// Just use the last declaration.
+				$$ = $2;
+			}
 			;
 
 manifestres_decl	: D_FILE comp_name K_AT int32
+			{
+				$$ = new Tuple<string, int> ((string) $2, (int) $4);
+			}
 			| D_ASSEMBLY K_EXTERN slashed_name
+			{
+				$$ = $3;
+			}
+			/*
 			| customattr_decl
+			*/
 			;
-*/
 
 slashed_name		: comp_name
 			| slashed_name SLASH comp_name

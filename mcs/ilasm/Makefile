@@ -11,11 +11,7 @@ EXTRA_DISTFILES = \
 	scanner/ChangeLog	\
 	tests/ChangeLog		\
 	errors/ChangeLog	\
-	$(wildcard tests/*.il)	\
-	$(wildcard tests/*.c)	\
-	$(wildcard tests/*.cs)	\
-	$(wildcard tests/*.snk)	\
-	$(wildcard errors/*.il)
+	$(wildcard tests/tests/*.il)	\
 
 ILParser.cs: parser/ILParser.jay $(topdir)/jay/skeleton.cs
 	$(topdir)/jay/jay -ct < $(topdir)/jay/skeleton.cs $(CURDIR)/$< >$@

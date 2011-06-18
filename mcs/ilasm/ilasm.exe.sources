@@ -8,6 +8,7 @@ ILAsmException.cs
 Program.cs
 Report.cs
 Target.cs
+Tuple.cs
 Warning.cs
 codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs

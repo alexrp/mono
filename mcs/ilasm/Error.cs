@@ -88,5 +88,10 @@ namespace Mono.ILAsm {
 		/// has not been defined.
 		/// </summary>
 		InvalidDataConstantLabel = 13,
+		/// <summary>
+		/// Happens if an assembly is referenced in a signature but has not
+		/// been referenced with a .assembly extern directive.
+		/// </summary>
+		UndeclaredAssemblyReference = 14,
 	}
 }
