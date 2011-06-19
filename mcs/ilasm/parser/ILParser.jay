@@ -343,6 +343,7 @@ namespace Mono.ILAsm {
 %token K_ILLEGAL
 %token K_UNUSED
 %token K_WRAPPER
+%token K_FORWARDER
 
 %start il_file
 
@@ -734,8 +735,8 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 			{
 				var name = (QualifiedName) $2;
 				var type = (QualifiedName) $4;
-
 				var scope = codegen.GetScope (name.FullName, false);
+
 				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
 			}
 			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name
@@ -746,7 +747,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				var type = (QualifiedName) $5;
 
 				if (module.FullName == codegen.CurrentModule.Name)
-					$$ = codegen.CurrentModule.GetType (type.FullNamespace, type.Name);
+					$$ = codegen.GetTypeByName (type);
 				else {
 					var scope = codegen.GetScope (module.FullName, true);
 					$$ = new TypeReference (type.FullNamespace,
@@ -755,14 +756,19 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 			}
 			| slashed_name
 			{
-				var qn = (QualifiedName) $1;
-				$$ = codegen.CurrentModule.GetType (qn.FullNamespace, qn.Name);
+				$$ = codegen.GetTypeByName ((QualifiedName) $1);
 			}
-			| mdtoken
+			| mdtoken_type
 			// TODO: Implement these.
 			| D_THIS
 			| D_BASE
 			| D_NESTER
+			;
+
+mdtoken_type		: mdtoken
+			{
+				$$ = codegen.GetTypeByMetadataToken ((int) $1);
+			}
 			;
 
 type			: K_CLASS class_ref
@@ -1747,7 +1753,7 @@ sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
 			}
 			| param_attr type sig_marshal_clause id
 			{
-				$$ = new ParameterDefinition ((string) $7, (ParameterAttributes) $1,
+				$$ = new ParameterDefinition ((string) $4, (ParameterAttributes) $1,
 					(TypeReference) $2) {
 					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
 				};
@@ -2937,30 +2943,61 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			;
 
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
+			{
+			}
 			;
 
-exptype_head		: D_CLASS K_EXTERN expt_attr comp_name
-			| D_EXPORT expt_attr comp_name
+exptype_directive	: D_CLASS K_EXTERN
+			| D_EXPORT
+			;
+
+exptype_head		: exptype_directive expt_attr comp_name
+			{
+				var qn = (QualifiedName) $3;
+
+				$$ = new Tuple<QualifiedName, TypeAttributes> (qn, (TypeAttributes) $2);
+			}
 			;
 
 expt_attr 		:
-			| expt_attr K_PRIVATE
-			| expt_attr K_PUBLIC 
-			| expt_attr K_NESTED K_PUBLIC
-			| expt_attr K_NESTED K_PRIVATE
-			| expt_attr K_NESTED K_FAMILY
-			| expt_attr K_NESTED K_ASSEMBLY
-			| expt_attr K_NESTED K_FAMANDASSEM
-			| expt_attr K_NESTED K_FAMORASSEM
+			{
+				$$ = TypeAttributes.NotPublic;
+			}
+			| expt_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.NotPublic; }
+			| expt_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
+			| expt_attr K_FORWARDER			{ $$ = (TypeAttributes) $1 | TypeAttributes.Forwarder; }
+			| expt_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPublic; }
+			| expt_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPrivate; }
+			| expt_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamily; }
+			| expt_attr K_NESTED K_ASSEMBLY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedAssembly; }
+			| expt_attr K_NESTED K_FAMANDASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamANDAssem; }
+			| expt_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamORAssem; }
 			;
 
 exptype_decls		:
 			| exptype_decls exptype_decl
+			{
+				// Just use the last declaration.
+				$$ = $2;
+			}
 			;
 
-exptype_decl		: D_FILE comp_name
+exptype_decl		: D_FILE comp_name // TODO: Handle this case.
 			| D_CLASS K_EXTERN comp_name
+			{
+				$$ = codegen.GetTypeByName ((QualifiedName) $3);
+			}
+			| D_ASSEMBLY K_EXTERN comp_name
+			{
+				var name = ((QualifiedName) $3).FullName;
+
+				$$ = codegen.GetAssemblyReference (name);
+			}
+			| mdtoken_type
 			| D_CLASS int32
+			{
+				$$ = $2;
+			}
 			/*
 			| customattr_decl
 			*/
@@ -2993,11 +3030,6 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 
 					if (asmDecl != null) {
 						var asmRef = codegen.GetAssemblyReference (asmDecl);
-
-						if (asmRef == null)
-							report.WriteError (Error.UndeclaredAssemblyReference,
-								"Undeclared assembly reference '{0}' in .mresource directive.", asmDecl);
-
 						rsc = new AssemblyLinkedResource (resName, attr, asmRef);
 					} else {
 						// TODO: Propagate nometadata/.entrypoint/offset.

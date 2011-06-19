@@ -109,6 +109,32 @@ namespace Mono.ILAsm {
 			});
 		}
 		
+		public TypeDefinition GetTypeByName (QualifiedName name)
+		{
+			var type = CurrentModule.GetType (name.FullNamespace, name.Name);
+			
+			if (type == null)
+				report.WriteError (Error.UndefinedTypeReference,
+					"Reference to undefined type '{0}'", name.FullName);
+			
+			return type;
+		}
+		
+		public TypeDefinition GetTypeByMetadataToken (int mdToken)
+		{
+			TypeDefinition typeDef = null;
+
+			foreach (var type in CurrentModule.Types)
+				if (type.MetadataToken.ToInt32() == mdToken)
+					typeDef = type;
+
+			if (typeDef == null)
+				report.WriteError (Error.InvalidMetadataToken,
+					"Invalid metadata token '{0}'.", mdToken);
+
+			return typeDef;
+		}
+		
 		public Dictionary<FieldDefinition, string> GetFieldDataMapping (TypeDefinition type)
 		{
 			var mapping = FieldDataMappings.TryGet (type);
@@ -145,7 +171,7 @@ namespace Mono.ILAsm {
 			return null;
 		}
 		
-		public AssemblyNameReference GetAssemblyReference (string name)
+		public AssemblyNameReference TryGetAssemblyReference (string name)
 		{
 			foreach (var asm in CurrentModule.AssemblyReferences)
 				if (asm.Name == name)
@@ -154,9 +180,20 @@ namespace Mono.ILAsm {
 			return null;
 		}
 		
+		public AssemblyNameReference GetAssemblyReference (string name)
+		{
+			var asm = TryGetAssemblyReference (name);
+			
+			if (asm == null)
+				report.WriteError (Error.UndeclaredAssemblyReference,
+					"Could not find assembly reference '{0}'.", name);
+			
+			return asm;
+		}
+		
 		public AssemblyNameReference GetAliasedAssemblyReference (string name)
 		{
-			return GetAssemblyReference (name) ?? AliasedAssemblyReferences.TryGet (name);
+			return TryGetAssemblyReference (name) ?? AliasedAssemblyReferences.TryGet (name);
 		}
 		
 		public ModuleReference GetModuleReference (string name)

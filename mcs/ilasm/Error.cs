@@ -111,5 +111,14 @@ namespace Mono.ILAsm {
 		/// Happens when a generic parameter name does not exist.
 		/// </summary>
 		GenericParameterNameInvalid = 18,
+		/// <summary>
+		/// Happens when a token in an mdtoken clause is invalid.
+		/// </summary>
+		InvalidMetadataToken = 19,
+		/// <summary>
+		/// Happens when an undefined type is referenced within the current
+		/// module's scope.
+		/// </summary>
+		UndefinedTypeReference = 20,
 	}
 }
