@@ -654,15 +654,8 @@ class_decl		: /*method_all
 			| data_decl
 			/*
 			| sec_decl
-			{
-				AddSecDecl ($1, false);
-			}
 			| extsource_spec
 			| customattr_decl
-			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
-			}
 			| param_type_decl
 			*/
 			| D_SIZE int32
@@ -820,15 +813,27 @@ type			: K_CLASS class_ref
 			{
 				$$ = new OptionalModifierType ((TypeReference) $4, (TypeReference) $1);
 			}
-			/*
 			| K_METHOD call_conv type STAR OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				$$ = new FunctionPointerType {
+				var func = new FunctionPointerType {
 					CallingConvention = (MethodCallingConvention) $2,
 					ReturnType = (TypeReference) $3,
 				};
+
+				if (is_instance_call)
+					func.HasThis = true;
+
+				if (is_explicit_call)
+					func.ExplicitThis = true;
+
+				is_instance_call = false;
+				is_explicit_call = false;
+
+				foreach (var arg in (List<ParameterDefinition>) $6)
+					func.Parameters.Add (arg);
+
+				$$ = func;
 			}
-			*/
 			| type OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
 			{
 				if ($3 != null) {
@@ -1078,7 +1083,7 @@ marshal_info		:
 					Size = (int) $4,
 				};
 			}
-			| native_type STAR
+			| marshal_type STAR
 			{
 				report.WriteWarning (Warning.DeprecatedNativeType,
 					"Pointer syntax for native types is deprecated.");
@@ -1087,7 +1092,7 @@ marshal_info		:
 				// blame Microsoft's ILAsm.
 				$$ = new MarshalInfo ((NativeType) 0);
 			}
-			| native_type OPEN_BRACKET CLOSE_BRACKET
+			| marshal_type OPEN_BRACKET CLOSE_BRACKET
 			{
 				// This is not Microsoft-compatible. I have no idea how they
 				// calculate the values they emit for jagged arrays.
@@ -1095,14 +1100,14 @@ marshal_info		:
 					ElementType = (NativeType) $1,
 				};
 			}
-			| native_type OPEN_BRACKET int32 CLOSE_BRACKET
+			| marshal_type OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				$$ = new ArrayMarshalInfo {
 					ElementType = (NativeType) $1,
 					Size = (int) $3,
 				};
 			}
-			| native_type OPEN_BRACKET int32 PLUS int32 CLOSE_BRACKET
+			| marshal_type OPEN_BRACKET int32 PLUS int32 CLOSE_BRACKET
 			{
 				is_parameter_marshal_notation = true;
 
@@ -1112,7 +1117,7 @@ marshal_info		:
 					SizeParameterMultiplier = (int) $5,
 				};
 			}
-			| native_type OPEN_BRACKET PLUS int32 CLOSE_BRACKET
+			| marshal_type OPEN_BRACKET PLUS int32 CLOSE_BRACKET
 			{
 				is_parameter_marshal_notation = true;
 
@@ -1677,15 +1682,6 @@ method_name		: D_CTOR
 			| comp_name
 			;
 
-param_attr		:
-			{
-				$$ = new ParamAttr ();
-			}
-			| param_attr OPEN_BRACKET K_IN CLOSE_BRACKET	{ $$ = (ParamAttr) $1 | ParamAttr.In; }
-			| param_attr OPEN_BRACKET K_OUT CLOSE_BRACKET	{ $$ = (ParamAttr) $1 | ParamAttr.Out; }
-			| param_attr OPEN_BRACKET K_OPT CLOSE_BRACKET	{ $$ = (ParamAttr) $1 | ParamAttr.Opt; }
-			;
-
 impl_attr		:
 			{
 				$$ = new ImplAttr ();
@@ -1703,54 +1699,62 @@ impl_attr		:
 			| impl_attr K_SYNCHRONIZED	{ $$ = (ImplAttr) $1 | ImplAttr.Synchronised; }
 			| impl_attr K_NOINLINING	{ $$ = (ImplAttr) $1 | ImplAttr.NoInLining; }
 			;
+*/
+
+param_attr		:
+			{
+				$$ = ParameterAttributes.None;
+			}
+			| param_attr OPEN_BRACKET K_IN CLOSE_BRACKET	{ $$ = (ParameterAttributes) $1 | ParameterAttributes.In; }
+			| param_attr OPEN_BRACKET K_OUT CLOSE_BRACKET	{ $$ = (ParameterAttributes) $1 | ParameterAttributes.Out; }
+			| param_attr OPEN_BRACKET K_OPT CLOSE_BRACKET	{ $$ = (ParameterAttributes) $1 | ParameterAttributes.Optional; }
+			| param_attr OPEN_BRACKET int32 CLOSE_BRACKET	{ $$ = (ParameterAttributes) $1 | (ParameterAttributes) (int) $3; }
+			;
 
 sig_args		:
+			{
+				$$ = new List<ParameterDefinition> ();
+			}
 			| sig_arg_list
 			;
 
 sig_arg_list 		: sig_arg
 			{
-				ArrayList sig_list = new ArrayList ();
-				sig_list.Add ($1);
-				$$ = sig_list;
+				$$ = new List<ParameterDefinition> {
+					(ParameterDefinition) $1,
+				};
 			}
 			| sig_arg_list COMMA sig_arg
 			{
-				ArrayList sig_list = (ArrayList) $1;
-				sig_list.Add ($3);
-				$$ = sig_list;
+				((List<ParameterDefinition>) $1).Add ((ParameterDefinition) $3);
 			}
 			;
 
-sig_arg			: param_attr type
+sig_marshal_clause	:
+			| K_MARSHAL OPEN_PARENS marshal_type CLOSE_PARENS
 			{
-				$$ = new ParamDef ((ParamAttr) $1, null, (BaseTypeRef) $2);
-			}
-			| param_attr type id
-			{
-				$$ = new ParamDef ((ParamAttr) $1, (string) $3, (BaseTypeRef) $2);
-			}
-			| ELLIPSIS
-			{
-				$$ = new ParamDef ((ParamAttr) 0, "...", new SentinelTypeRef ());
-				//$$ = ParamDef.Ellipsis;
-			}
-			| param_attr type K_MARSHAL OPEN_PARENS native_type CLOSE_PARENS
-			{
-				ParamDef param_def = new ParamDef ((ParamAttr) $1, null, (BaseTypeRef) $2);
-				param_def.AddMarshalInfo ((PEAPI.NativeType) $5);
-
-				$$ = param_def;
-			}
-			| param_attr type K_MARSHAL OPEN_PARENS native_type CLOSE_PARENS id
-			{
-				ParamDef param_def = new ParamDef ((ParamAttr) $1, (string) $7, (BaseTypeRef) $2);
-				param_def.AddMarshalInfo ((PEAPI.NativeType) $5);
-
-				$$ = param_def;
+				$$ = new MarshalInfo ((NativeType) $3);
 			}
 			;
 
+sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
+			| param_attr type sig_marshal_clause
+			{
+				$$ = new ParameterDefinition ((TypeReference) $2) {
+					Attributes = (ParameterAttributes) $1,
+					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
+				};
+			}
+			| param_attr type sig_marshal_clause id
+			{
+				$$ = new ParameterDefinition ((string) $7, (ParameterAttributes) $1,
+					(TypeReference) $2) {
+					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
+				};
+			}
+			;
+
+/*
 type_list		:
 			{
 				$$ = new ArrayList ();
