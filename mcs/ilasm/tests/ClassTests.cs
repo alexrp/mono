@@ -132,9 +132,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetTypes ().Contains (
-					y => y.GenericParameters.Contains (
-						z => z.Attributes.HasBitFlag (GenericParameterAttributes.NotNullableValueTypeConstraint))));
+				.Expect (x => x.GetType ("test001").GenericParameters.Contains (
+					z => z.Attributes.HasBitFlag (GenericParameterAttributes.NotNullableValueTypeConstraint)));
 		}
 		
 		[Test]
@@ -145,9 +144,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetTypes ().Contains (
-					y => y.GenericParameters.Contains (
-						z => z.Attributes.HasBitFlag (GenericParameterAttributes.ReferenceTypeConstraint))));
+				.Expect (x => x.GetType ("test002").GenericParameters.Contains (
+					z => z.Attributes.HasBitFlag (GenericParameterAttributes.ReferenceTypeConstraint)));
 		}
 		
 		[Test]
@@ -158,9 +156,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetTypes ().Contains (
-					y => y.GenericParameters.Contains (
-						z => z.Attributes.HasBitFlag (GenericParameterAttributes.DefaultConstructorConstraint))));
+				.Expect (x => x.GetType ("test003").GenericParameters.Contains (
+					z => z.Attributes.HasBitFlag (GenericParameterAttributes.DefaultConstructorConstraint)));
 		}
 		
 		[Test]
@@ -171,8 +168,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test013").Interfaces.Contains (
-					y => y.FullName == "System.IEquatable`1<test013_dummy>"));
+				.Expect (x => x.GetType ("test004").Interfaces.Contains (
+					y => y.FullName == "System.IEquatable`1<test004_dummy>"));
 		}
 		
 		[Test]
@@ -183,7 +180,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("Pair`2").GenericParameters.ContainsMany (
+				.Expect (x => x.GetType ("test005").GenericParameters.ContainsMany (
 					z => z.Name == "T1",
 					z => z.Name == "T2"));
 		}

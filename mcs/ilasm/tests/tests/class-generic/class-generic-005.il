@@ -28,6 +28,6 @@
 {
 }
 
-.class value Pair`2<T1, T2>
+.class value test005<T1, T2>
 {
 }

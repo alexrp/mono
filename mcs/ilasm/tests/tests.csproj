@@ -122,6 +122,8 @@
     <None Include="tests\class\class-006.il" />
     <None Include="tests\class\class-007.il" />
     <None Include="tests\class\class-008.il" />
+    <None Include="tests\field-generic\field-generic-001.il" />
+    <None Include="tests\field-generic\field-generic-002.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -142,5 +144,6 @@
     <Folder Include="tests\" />
     <Folder Include="tests\class-generic\" />
     <Folder Include="tests\data\" />
+    <Folder Include="tests\field-generic\" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 // 
-// class-009.il
+// field-generic-001.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,7 @@
 {
 }
 
-.class test002<class T>
+.class test001_cls<T>
 {
+	.field !T test001
 }

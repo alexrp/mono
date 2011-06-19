@@ -192,5 +192,29 @@ namespace Mono.ILAsm.Tests {
 					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
 					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 0));
 		}
+		
+		[Test]
+		public void TestGenericField ()
+		{
+			ILAsm ()
+				.Input ("field-generic/field-generic-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test001_cls").Fields.Contains (
+					y => y.FieldType.Name == "T"));
+		}
+		
+		[Test]
+		public void TestGenericOrdinalField ()
+		{
+			ILAsm ()
+				.Input ("field-generic/field-generic-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test002_cls").Fields.Contains (
+					y => y.FieldType.Name == "T"));
+		}
 	}
 }

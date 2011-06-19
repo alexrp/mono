@@ -28,10 +28,10 @@
 {
 }
 
-.class test013_dummy
+.class test004_dummy
 {
 }
 
-.class test013 implements class [mscorlib]System.IEquatable`1<class test013_dummy>
+.class test004 implements class [mscorlib]System.IEquatable`1<class test004_dummy>
 {
 }

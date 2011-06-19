@@ -28,6 +28,6 @@
 {
 }
 
-.class test007<valuetype T>
+.class test001<valuetype T>
 {
 }
