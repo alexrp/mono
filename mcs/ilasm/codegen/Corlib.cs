@@ -27,7 +27,7 @@ using System;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
-	public sealed class Corlib {
+	internal sealed class Corlib {
 		public Corlib (ModuleDefinition module, AssemblyNameReference asmName)
 		{
 			foreach (var prop in typeof (Corlib).GetProperties ())

@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 using Mono.Cecil.Cil;
 
 namespace Mono.ILAsm {
-	public static class ILTables {
+	internal static class ILTables {
 		public sealed class ReadOnlyDictionaryAdapter<TKey, TValue> : IDictionary<TKey, TValue> {
 			readonly IDictionary<TKey, TValue> dict;
 			

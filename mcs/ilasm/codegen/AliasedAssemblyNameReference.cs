@@ -27,7 +27,7 @@ using System;
 using Mono.Cecil;
 
 namespace Mono.ILAsm {
-	public sealed class AliasedAssemblyNameReference : AssemblyNameReference {
+	internal sealed class AliasedAssemblyNameReference : AssemblyNameReference {
 		public AliasedAssemblyNameReference (string name, Version version)
 			: base (name, version)
 		{

@@ -28,7 +28,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Mono.ILAsm {
-	public sealed class QualifiedName {
+	internal sealed class QualifiedName {
 		public QualifiedName ()
 		{
 			Name = string.Empty;

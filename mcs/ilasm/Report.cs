@@ -47,7 +47,7 @@ namespace Mono.ILAsm {
 	}
 	
 	public sealed class Report {
-		public Report ()
+		internal Report ()
 		{
 			MessageOutput = Console.Out;
 			WarningOutput = Console.Out;
@@ -64,7 +64,7 @@ namespace Mono.ILAsm {
 
 		public string FilePath { get; internal set; }
 		
-		public ILTokenizer Tokenizer { get; internal set; }
+		internal ILTokenizer Tokenizer { get; set; }
 		
 		public event EventHandler<MessageEventArgs> Message;
 		

@@ -3,7 +3,7 @@
 using System;
 
 namespace Mono.ILAsm {
-	public class ILToken : ICloneable {
+	internal class ILToken : ICloneable {
 		internal int token;
 		internal object val;
 		public static readonly ILToken Invalid = new ILToken (-1, "invalid");

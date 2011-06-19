@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 
 namespace Mono.ILAsm {
-	public class NewTokenEventArgs : EventArgs {
+	internal class NewTokenEventArgs : EventArgs {
 		public ILToken Token { get; private set; }
 
 		public NewTokenEventArgs (ILToken token)
@@ -16,7 +16,7 @@ namespace Mono.ILAsm {
 		}
 	}
 
-	public class ILTokenizer {
+	internal class ILTokenizer {
 		const string id_chars = "_$@?.`";
 		ILToken last_token;
 		readonly StringHelper str_builder;

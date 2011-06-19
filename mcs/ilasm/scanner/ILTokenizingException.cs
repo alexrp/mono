@@ -11,7 +11,7 @@ using System.Runtime.Serialization;
 
 namespace Mono.ILAsm {
 	[Serializable]
-	public class ILTokenizingException : ILAsmException {
+	internal class ILTokenizingException : ILAsmException {
 		public string Token { get; private set; }
 
 		public ILTokenizingException (Location location, string token)

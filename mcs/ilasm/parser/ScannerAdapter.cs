@@ -3,7 +3,7 @@
 using System;
 
 namespace Mono.ILAsm {
-	public sealed class ScannerAdapter : yyParser.yyInput {
+	internal sealed class ScannerAdapter : yyParser.yyInput {
 		public ScannerAdapter (ILTokenizer tokenizer)
 		{
 			BaseStream = tokenizer;

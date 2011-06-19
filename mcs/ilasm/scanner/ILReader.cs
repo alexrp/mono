@@ -6,7 +6,7 @@ using System.Text;
 using System.Collections;
 
 namespace Mono.ILAsm {
-	public sealed class ILReader {
+	internal sealed class ILReader {
 		private readonly Stack putback_stack;
 		private Location marked_location;
 
