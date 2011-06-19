@@ -17,11 +17,16 @@ namespace Mono.ILAsm {
 	}
 
 	internal class ILTokenizer {
+		const string start_id_chars = "#$@_";
 		const string id_chars = "_$@?.`";
-		ILToken last_token;
 		readonly StringHelper str_builder;
 		readonly NumberHelper num_builder;
-		internal bool in_byte_array;
+		
+		public bool InByteArray { get; set; }
+
+		public ILToken LastToken { get; private set; }
+
+		public ILReader Reader { get; private set; }
 
 		public event EventHandler<NewTokenEventArgs> NewToken;
 
@@ -30,14 +35,12 @@ namespace Mono.ILAsm {
 			Reader = new ILReader (reader);
 			str_builder = new StringHelper (this);
 			num_builder = new NumberHelper (this);
-			last_token = ILToken.Invalid.Clone () as ILToken;
+			LastToken = ILToken.Invalid.Clone () as ILToken;
 		}
-
-		public ILReader Reader { get; private set; }
 
 		public ILToken GetNextToken ()
 		{
-			if (last_token == ILToken.EOF)
+			if (LastToken == ILToken.EOF)
 				return ILToken.EOF;
 			
 			int ch;
@@ -68,7 +71,7 @@ namespace Mono.ILAsm {
 
 				// HEXBYTES are flagged by the parser otherwise it is
 				// impossible to figure them out
-				if (in_byte_array) {
+				if (InByteArray) {
 					var hx = string.Empty;
 
 					if (char.IsWhiteSpace ((char) ch))
@@ -79,17 +82,16 @@ namespace Mono.ILAsm {
 						break;
 					}
 
-					if (!IsHex (ch))
+					if (!IsHex ((char) ch))
 						throw new ILTokenizingException (Reader.Location, ((char) ch).ToString ());
 					
 					hx += (char) ch;
-					if (IsHex (Reader.Peek ()))
+					if (IsHex ((char) Reader.Peek ()))
 						hx += (char) Reader.Read ();
 					else if (!char.IsWhiteSpace ((char) Reader.Peek ()) && Reader.Peek () != ')')
 						throw new ILTokenizingException (Reader.Location, ((char) Reader.Peek ()).ToString ());
 					
-					res.token = Token.HEXBYTE;
-					res.val = byte.Parse (hx, NumberStyles.HexNumber);
+					res = new ILToken (Token.HEXBYTE, byte.Parse (hx, NumberStyles.HexNumber));
 
 					while (char.IsWhiteSpace ((char) Reader.Peek ()))
 						Reader.Read ();
@@ -119,7 +121,7 @@ namespace Mono.ILAsm {
 						num_builder.Build ();
 						
 						if (num_builder.ResultToken != ILToken.Invalid) {
-							res.CopyFrom (num_builder.ResultToken);
+							res = new ILToken (num_builder.ResultToken);
 							break;
 						}
 					} else {
@@ -150,7 +152,7 @@ namespace Mono.ILAsm {
 					Reader.Unread (ch);
 					num_builder.Build ();
 					if (num_builder.ResultToken != ILToken.Invalid) {
-						res.CopyFrom (num_builder.ResultToken);
+						res = new ILToken (num_builder.ResultToken);
 						break;
 					}
 				}
@@ -189,11 +191,9 @@ namespace Mono.ILAsm {
 										Reader.Unread (opTail.ToCharArray ());
 										Reader.Unread ('.');
 										Reader.RestoreLocation ();
-										res.val = val;
-									} else {
-										res.token = Token.COMP_NAME;
-										res.val = fullStr;
-									}
+										res = new ILToken (res.TokenId, val);
+									} else
+										res = new ILToken (Token.COMP_NAME, fullStr);
 									
 									break;
 								} else {
@@ -224,37 +224,40 @@ namespace Mono.ILAsm {
 							break;
 						}
 					}
-
-					res.token = str_builder.TokenId;
-					res.val = val;
+					
+					res = new ILToken (str_builder.TokenId, val);
 					break;
 				}
 			}
 
 			OnNewToken (res);
-			last_token.CopyFrom (res);
+			LastToken = new ILToken (res);
 			return res;
 		}
 
-		public ILToken LastToken {
-			get {
-				return last_token;
-			}
-		}
-
-		bool IsHex (int e)
+		public static bool IsHex (char e)
 		{
 			return (e >= '0' && e <= '9') || (e >= 'A' && e <= 'F') || (e >= 'a' && e <= 'f');
 		}
 
-		static bool IsIdStartChar (char ch)
+		public static bool IsSign (char ch)
 		{
-			return (char.IsLetter (ch) || (id_chars.IndexOf (ch) != -1));
+			return ch == '+' || ch == '-';
 		}
 
-		static bool IsIdChar (char ch)
+		public static bool IsE (char ch)
 		{
-			return (char.IsLetterOrDigit (ch) || (id_chars.IndexOf (ch) != -1));
+			return ch == 'e' || ch == 'E';
+		}
+
+		public static bool IsIdStartChar (char ch)
+		{
+			return char.IsLetter (ch) || start_id_chars.IndexOf (ch) != -1;
+		}
+
+		public static bool IsIdChar (char ch)
+		{
+			return char.IsLetterOrDigit (ch) || id_chars.IndexOf (ch) != -1;
 		}
 
 		public static bool IsOpCode (string name)

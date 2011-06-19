@@ -29,7 +29,7 @@ using System.Threading;
 
 namespace Mono.ILAsm {
 	internal static class Program {
-		private static int Main (string[] args)
+		static int Main (string[] args)
 		{
 			// Do everything in Invariant
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;

@@ -6,42 +6,29 @@ using System.Globalization;
 
 namespace Mono.ILAsm {
 	internal sealed class NumberHelper : StringHelperBase {
+		public ILToken ResultToken { get; private set; }
+
 		public NumberHelper (ILTokenizer host)
 			: base (host)
 		{
 			Reset ();
 		}
 
-		private void Reset ()
+		void Reset ()
 		{
 			ResultToken = ILToken.Invalid.Clone () as ILToken;
 		}
 
 		public override bool Start (char ch)
 		{
-			bool res = (char.IsDigit (ch) || ch == '-' || (ch == '.' && char.IsDigit ((char) host.Reader.Peek ())));
+			var res = (char.IsDigit (ch) || ch == '-' || (ch == '.' && char.IsDigit ((char) Tokenizer.Reader.Peek ())));
 			Reset ();
 			return res;
 		}
 
-		private bool IsHex (int e)
-		{
-			return (e >= '0' && e <= '9') || (e >= 'A' && e <= 'F') || (e >= 'a' && e <= 'f');
-		}
-
-		private bool IsSign (int ch)
-		{
-			return ((ch == '+') || (ch == '-'));
-		}
-
-		private bool IsE (int ch)
-		{
-			return ((ch == 'e') || (ch == 'E'));
-		}
-
 		public override string Build ()
 		{
-			var reader = host.Reader;
+			var reader = Tokenizer.Reader;
 			reader.MarkLocation ();
 			var num_builder = new StringBuilder ();
 			var is_real = false;
@@ -56,7 +43,7 @@ namespace Mono.ILAsm {
 			if (ch == '0' && (peek == 'x' || peek == 'X'))
 				return BuildHex ();
 
-			if (IsSign (reader.Peek ()))
+			if (ILTokenizer.IsSign ((char) reader.Peek ()))
 				num_builder.Append ((char) reader.Read ());
 
 			do {
@@ -64,7 +51,7 @@ namespace Mono.ILAsm {
 				peek = reader.Peek ();
 				num_builder.Append ((char) ch);
 
-				if (IsE (ch)) {
+				if (ILTokenizer.IsE ((char) ch)) {
 					if (is_real)
 						throw new ILTokenizingException (reader.Location, num_builder.ToString ());
 
@@ -72,8 +59,8 @@ namespace Mono.ILAsm {
 				}
 				if (ch == '.')
 					dec_found = true;
-				if (!IsHex (peek) && !(peek == '.' && !dec_found) && !IsE (peek) &&
-					!(IsSign (peek) && is_real))
+				if (!ILTokenizer.IsHex ((char) peek) && !(peek == '.' && !dec_found) &&
+					!ILTokenizer.IsE ((char) peek) && !(ILTokenizer.IsSign ((char) peek) && is_real))
 					break;
 			} while (ch != -1);
 
@@ -82,8 +69,7 @@ namespace Mono.ILAsm {
 			// Check for hexbytes
 			if (num.Length == 2)
 			if (char.IsLetter (num [0]) || char.IsLetter (num [1])) {
-				ResultToken.token = Token.HEXBYTE;
-				ResultToken.val = byte.Parse (num, NumberStyles.HexNumber);
+				ResultToken = new ILToken (Token.HEXBYTE, byte.Parse (num, NumberStyles.HexNumber));
 				return num;
 			}
 
@@ -96,29 +82,21 @@ namespace Mono.ILAsm {
 
 			if (!dec_found && !is_real) {
 				try {
-					var i = long.Parse (num, nstyles);
-					ResultToken.token = Token.INT64;
-					ResultToken.val = i;
-
+					ResultToken = new ILToken (Token.INT64, long.Parse (num, nstyles));
 					return num;
-				} catch {
+				} catch (Exception) {
 				}
 
 				try {
-					var i = (long) ulong.Parse (num, nstyles);
-					ResultToken.token = Token.INT64;
-					ResultToken.val = i;
-
+					ResultToken = new ILToken (Token.INT64, (long) ulong.Parse (num, nstyles));
 					return num;
-				} catch {
+				} catch (Exception) {
 				}
 			}
 
 			try {
-				var d = double.Parse (num, nstyles, NumberFormatInfo.InvariantInfo);
-				ResultToken.token = Token.FLOAT64;
-				ResultToken.val = d;
-			} catch {
+				ResultToken = new ILToken (Token.FLOAT64, double.Parse (num, nstyles, NumberFormatInfo.InvariantInfo));
+			} catch (Exception) {
 				reader.Unread (num.ToCharArray ());
 				reader.RestoreLocation ();
 				num = string.Empty;
@@ -131,7 +109,7 @@ namespace Mono.ILAsm {
 
 		public string BuildHex ()
 		{
-			var reader = host.Reader;
+			var reader = Tokenizer.Reader;
 			reader.MarkLocation ();
 			var num_builder = new StringBuilder ();
 			var nstyles = NumberStyles.HexNumber;
@@ -151,7 +129,7 @@ namespace Mono.ILAsm {
 				peek = reader.Peek ();
 				num_builder.Append ((char) ch);
 
-				if (!IsHex ((char) peek))
+				if (!ILTokenizer.IsHex ((char) peek))
 					break;
 
 				if (num_builder.Length == 32)
@@ -161,15 +139,8 @@ namespace Mono.ILAsm {
 			var num = num_builder.ToString ();
 
 			try {
-				var i = (long) ulong.Parse (num, nstyles);
-				//if (i < int.MinValue || i > int.MaxValue) {
-				ResultToken.token = Token.INT64;
-				ResultToken.val = i;
-				//} else {
-				//	ResultToken.token = Token.INT32;
-				//	ResultToken.val = (int) i;
-				//}
-			} catch {
+				ResultToken = new ILToken (Token.INT64, (long) ulong.Parse (num, nstyles));
+			} catch (Exception) {
 				var tnum = num;
 				reader.Unread (num.ToCharArray ());
 				reader.RestoreLocation ();
@@ -180,7 +151,5 @@ namespace Mono.ILAsm {
 			
 			return num;
 		}
-
-		public ILToken ResultToken { get; private set; }
 	}
 }

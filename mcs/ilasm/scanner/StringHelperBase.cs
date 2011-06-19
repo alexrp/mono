@@ -5,12 +5,14 @@ using System.Text;
 
 namespace Mono.ILAsm {
 	internal abstract class StringHelperBase {
-		protected ILTokenizer host;
+		protected ILTokenizer Tokenizer { get; private set; }
+
+		public int TokenId { get; protected set; }
 
 		public StringHelperBase (ILTokenizer host)
 		{
-			this.host = host;
-			this.TokenId = Token.UNKNOWN;
+			Tokenizer = host;
+			TokenId = Token.UNKNOWN;
 		}
 
 		public abstract bool Start (char ch);
@@ -22,11 +24,9 @@ namespace Mono.ILAsm {
 
 		public bool Start ()
 		{
-			return Start (host.Reader.Peek ());
+			return Start (Tokenizer.Reader.Peek ());
 		}
 
 		public abstract string Build ();
-
-		public int TokenId { get; protected set; }
 	}
 }

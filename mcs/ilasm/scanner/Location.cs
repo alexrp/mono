@@ -48,12 +48,6 @@ namespace Mono.ILAsm {
 			return new Location (Line, Column - 1);
 		}
 
-		public void CopyFrom (Location other)
-		{
-			Line = other.Line;
-			Column = other.Column;
-		}
-
 		public override string ToString ()
 		{
 			return "line (" + Line + ") column (" + Column + ")";

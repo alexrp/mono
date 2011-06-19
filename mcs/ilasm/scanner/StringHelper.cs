@@ -5,9 +5,6 @@ using System.Text;
 
 namespace Mono.ILAsm {
 	internal sealed class StringHelper : StringHelperBase {
-		private const string start_id_chars = "#$@_";
-		private const string id_chars = "_$@?`";
-
 		public StringHelper (ILTokenizer host)
 			: base (host)
 		{
@@ -17,7 +14,7 @@ namespace Mono.ILAsm {
 		{
 			TokenId = Token.UNKNOWN;
 
-			if (char.IsLetter (ch) || start_id_chars.IndexOf (ch) != -1)
+			if (ILTokenizer.IsIdStartChar (ch))
 				TokenId = Token.ID;
 			else if (ch == '\'')
 				TokenId = Token.SQSTRING;
@@ -27,19 +24,13 @@ namespace Mono.ILAsm {
 			return TokenId != Token.UNKNOWN;
 		}
 
-		private static bool IsIdChar (int c)
-		{
-			var ch = (char) c;
-			return (char.IsLetterOrDigit (ch) || id_chars.IndexOf (ch) != -1);
-		}
-
 		public override string Build ()
 		{
 			if (TokenId == Token.UNKNOWN)
 				return string.Empty;
 			
 			var ch = 0;
-			var reader = host.Reader;
+			var reader = Tokenizer.Reader;
 			var idsb = new StringBuilder ();
 			
 			if (TokenId == Token.SQSTRING || TokenId == Token.QSTRING) {
@@ -74,14 +65,15 @@ namespace Mono.ILAsm {
 
 					idsb.Append ((char) ch);
 				}
-			} else // ID
+			} else { // ID
 				while ((ch = reader.Read ()) != -1)
-					if (IsIdChar (ch)) {
+					if (ILTokenizer.IsIdChar ((char) ch)) {
 						idsb.Append ((char) ch);
 					} else {
 						reader.Unread (ch);
 						break;
 					}
+			}
 			
 			return idsb.ToString ();
 		}

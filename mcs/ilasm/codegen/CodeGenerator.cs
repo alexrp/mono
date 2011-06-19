@@ -11,9 +11,7 @@ namespace Mono.ILAsm {
 		Report report;
 		
 		public Corlib Corlib {
-			get {
-				return corlib ?? (corlib = GetCorlib ());
-			}
+			get { return corlib ?? (corlib = GetCorlib ()); }
 		}
 		
 		public ModuleDefinition CurrentModule { get; private set; }
@@ -124,7 +122,7 @@ namespace Mono.ILAsm {
 			return mapping;
 		}
 		
-		private AssemblyNameReference ResolveAssemblyReference (string name)
+		AssemblyNameReference ResolveAssemblyReference (string name)
 		{
 			// Attempt to resolve the assembly in the GAC and insert its
 			// version and public key token in a reference.
@@ -213,7 +211,7 @@ namespace Mono.ILAsm {
 			return new AssemblyNameReference (name, new Version ());
 		}
 		
-		private Corlib GetCorlib ()
+		Corlib GetCorlib ()
 		{
 			const string corlibStr = "mscorlib";
 			

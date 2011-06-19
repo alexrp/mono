@@ -20,13 +20,13 @@ using Mono.Security;
 
 namespace Mono.ILAsm {
 	public sealed class Driver {
-		private readonly List<string> il_file_list = new List<string> ();
-		private bool show_tokens;
-		private bool show_parser;
-		private bool scan_only;
-		private bool debugging_info;
-		private bool key_container;
-		private string key_name;
+		readonly List<string> il_file_list = new List<string> ();
+		bool show_tokens;
+		bool show_parser;
+		bool scan_only;
+		bool debugging_info;
+		bool key_container;
+		string key_name;
 		
 		public string OutputFileName { get; set; }
 		
@@ -103,7 +103,7 @@ namespace Mono.ILAsm {
 			return ExitCode.Success;
 		}
 
-		private ExitCode ProcessFile (CodeGenerator codegen, string filePath)
+		ExitCode ProcessFile (CodeGenerator codegen, string filePath)
 		{
 			if (!File.Exists (filePath)) {
 				Report.WriteError (Error.FileNotFound, "File does not exist: {0}", filePath);
@@ -146,7 +146,7 @@ namespace Mono.ILAsm {
 			return ExitCode.Success;
 		}
 
-		private bool ParseArgs (string[] args)
+		bool ParseArgs (string[] args)
 		{
 			string command_arg;
 			foreach (var str in args) {
@@ -259,7 +259,7 @@ namespace Mono.ILAsm {
 			return true;
 		}
 		
-		private static string CreateOutputFileName (IList<string> ilFileList, Target target)
+		static string CreateOutputFileName (IList<string> ilFileList, Target target)
 		{
 			var file_name = ilFileList [0];
 			var ext_index = file_name.LastIndexOf ('.');
@@ -271,7 +271,7 @@ namespace Mono.ILAsm {
 				(target == Target.Dll ? ".dll" : ".exe");
 		}
 
-		private void WriteError (string message, params object[] args)
+		void WriteError (string message, params object[] args)
 		{
 			Console.ForegroundColor = ConsoleColor.Red;
 			Report.ErrorOutput.WriteLine (string.Format (message, args));
@@ -279,7 +279,7 @@ namespace Mono.ILAsm {
 			Console.ResetColor ();
 		}
 
-		private static StrongName LoadKey (bool keyContainer, string keyName)
+		static StrongName LoadKey (bool keyContainer, string keyName)
 		{
 			StrongName sn;
 			
@@ -303,7 +303,7 @@ namespace Mono.ILAsm {
 			return sn;
 		}
 
-		private static bool Sign (StrongName sn, string fileName)
+		static bool Sign (StrongName sn, string fileName)
 		{
 			// note: if the file cannot be signed (no public key in it) then
 			// we do not show an error, or a warning, if the key file doesn't
@@ -311,12 +311,12 @@ namespace Mono.ILAsm {
 			return sn.Sign (fileName);
 		}
 
-		private static void ShowToken (object sender, NewTokenEventArgs args)
+		static void ShowToken (object sender, NewTokenEventArgs args)
 		{
 			Console.WriteLine ("Token: {0}", args.Token);
 		}
 
-		private static string GetCommand (string str, out string command_arg)
+		static string GetCommand (string str, out string command_arg)
 		{
 			var end_index = str.IndexOfAny (new[] { ':', '=' }, 1);
 			var command = str.Substring (1, (end_index == -1 ? str.Length : end_index) - 1);
@@ -329,7 +329,7 @@ namespace Mono.ILAsm {
 			return command.ToLower ();
 		}
 
-		private void Usage (bool dev)
+		void Usage (bool dev)
 		{
 			var n = Environment.NewLine;
 			
@@ -356,13 +356,13 @@ namespace Mono.ILAsm {
 					n);
 		}
 
-		private void About ()
+		void About ()
 		{
 			Output.WriteLine ("For more information on Mono, visit the project Web site{0}" +
 				"   http://www.go-mono.com", Environment.NewLine);
 		}
 
-		private void Version ()
+		void Version ()
 		{
 			var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
 			Output.WriteLine ("Mono IL Assembler version {0}", version);

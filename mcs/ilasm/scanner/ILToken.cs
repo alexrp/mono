@@ -4,8 +4,6 @@ using System;
 
 namespace Mono.ILAsm {
 	internal class ILToken : ICloneable {
-		internal int token;
-		internal object val;
 		public static readonly ILToken Invalid = new ILToken (-1, "invalid");
 		public static readonly ILToken EOF = new ILToken (Token.EOF, "eof");
 		public static readonly ILToken Dot = new ILToken (Token.DOT, ".");
@@ -29,7 +27,7 @@ namespace Mono.ILAsm {
 		public static readonly ILToken Dash = new ILToken (Token.DASH, "-");
 		public static readonly ILToken OpenAngleBracket = new ILToken (Token.OPEN_ANGLE_BRACKET, "<");
 		public static readonly ILToken CloseAngleBracket = new ILToken (Token.CLOSE_ANGLE_BRACKET, ">");
-		private static readonly ILToken[] punctuations = new ILToken[] {
+		static readonly ILToken[] punctuations = new[] {
 			OpenBrace,
 			CloseBrace,
 			OpenBracket,
@@ -46,7 +44,7 @@ namespace Mono.ILAsm {
 			Slash,
 			Bang,
 			OpenAngleBracket,
-			CloseAngleBracket
+			CloseAngleBracket,
 		};
 
 		public ILToken ()
@@ -55,33 +53,19 @@ namespace Mono.ILAsm {
 
 		public ILToken (int token, object val)
 		{
-			this.token = token;
-			this.val = val;
+			TokenId = token;
+			Value = val;
 		}
 
 		public ILToken (ILToken that)
 		{
-			this.token = that.token;
-			this.val = that.val;
+			TokenId = that.TokenId;
+			Value = that.Value;
 		}
 
-		public int TokenId {
-			get {
-				return token;
-			}
-		}
+		public int TokenId { get; private set; }
 
-		public object Value {
-			get {
-				return val;
-			}
-		}
-
-		public virtual void CopyFrom (ILToken that)
-		{
-			this.token = that.token;
-			this.val = that.val;
-		}
+		public object Value { get; private set; }
 
 		public virtual object Clone ()
 		{
@@ -90,16 +74,16 @@ namespace Mono.ILAsm {
 
 		public override int GetHashCode ()
 		{
-			var h = token;
-			if (val != null)
-				h ^= val.GetHashCode ();
+			var h = TokenId;
+			if (Value != null)
+				h ^= Value.GetHashCode ();
 			
 			return h;
 		}
 
 		public override string ToString ()
 		{
-			return token.ToString () + " : " + (val != null ? val.ToString () : "<null>");
+			return TokenId.ToString () + " : " + (Value != null ? Value.ToString () : "<null>");
 		}
 
 		public override bool Equals (object o)
@@ -107,12 +91,12 @@ namespace Mono.ILAsm {
 			var res = o != null;
 
 			if (res) {
-				res = object.ReferenceEquals (this, o);
+				res = ReferenceEquals (this, o);
 				if (!res) {
 					res = o is ILToken;
 					if (res) {
 						var that = o as ILToken;
-						res = this.token == that.token && this.val.Equals (that.val);
+						res = TokenId == that.TokenId && Value.Equals (that.Value);
 					}
 				}
 			}
@@ -120,14 +104,14 @@ namespace Mono.ILAsm {
 			return res;
 		}
 
-		private static bool EqImpl (ILToken t1, ILToken t2)
+		static bool EqImpl (ILToken t1, ILToken t2)
 		{
 			var res = false;
 			
 			if (t1 as object != null)
 				res = t1.Equals (t2);
 			else
-				res = (t2 as object == null);
+				res = t2 as object == null;
 
 			return res;
 		}

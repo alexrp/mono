@@ -3,29 +3,29 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace Mono.ILAsm {
 	internal sealed class ILReader {
-		private readonly Stack putback_stack;
+		private readonly Stack<char> putback_stack;
 		private Location marked_location;
-
-		public ILReader (StreamReader reader)
-		{
-			BaseReader = reader;
-			Location = new Location ();
-			putback_stack = new Stack ();
-			marked_location = Location.Unknown;
-		}
 
 		public Location Location { get; private set; }
 
 		public StreamReader BaseReader { get; private set; }
 
+		public ILReader (StreamReader reader)
+		{
+			BaseReader = reader;
+			Location = new Location ();
+			putback_stack = new Stack<char> ();
+			marked_location = Location.Unknown;
+		}
+
 		private int DoRead ()
 		{
 			if (putback_stack.Count > 0) 
-				return (char) putback_stack.Pop ();
+				return putback_stack.Pop ();
 
 			return BaseReader.Read ();
 		}
@@ -33,7 +33,7 @@ namespace Mono.ILAsm {
 		private int DoPeek ()
 		{
 			if (putback_stack.Count > 0)
-				return (char) putback_stack.Peek ();
+				return putback_stack.Peek ();
 
 			return BaseReader.Peek ();
 		}
@@ -92,8 +92,11 @@ namespace Mono.ILAsm {
 			var sb = new StringBuilder ();
 			var ch = Read ();
 			
-			for (; ch != -1 && !Char.IsWhiteSpace((char) ch); sb.Append ((char) ch), ch = Read ())
-				;
+			while (ch != -1 && !char.IsWhiteSpace ((char) ch))
+			{
+				sb.Append ((char) ch);
+				ch = Read ();
+			}
 			
 			if (ch != -1)
 				Unread (ch);

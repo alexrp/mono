@@ -3102,11 +3102,11 @@ hexbyte			: HEXBYTE
 
 bytes_list		: OPEN_PARENS
 			{
-				tokenizer.in_byte_array  = true;
+				tokenizer.InByteArray  = true;
 			}
 			  bytes CLOSE_PARENS
 			{
-				tokenizer.in_byte_array  = false;
+				tokenizer.InByteArray  = false;
 
 				$$ = $3;
 			}
