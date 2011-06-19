@@ -93,5 +93,23 @@ namespace Mono.ILAsm {
 		/// been referenced with a .assembly extern directive.
 		/// </summary>
 		UndeclaredAssemblyReference = 14,
+		/// <summary>
+		/// A generic parameter was referenced by ordinal or name outside of
+		/// a type definition scope.
+		/// </summary>
+		GenericParameterAccessOutsideType = 15,
+		/// <summary>
+		/// A generic parameter was referenced by ordinal or name outside of
+		/// a method definition scope.
+		/// </summary>
+		GenericParameterAccessOutsideMethod = 16,
+		/// <summary>
+		/// Happens when a generic parameter ordinal is out of range.
+		/// </summary>
+		GenericParameterOrdinalOutOfRange = 17,
+		/// <summary>
+		/// Happens when a generic parameter name does not exist.
+		/// </summary>
+		GenericParameterNameInvalid = 18,
 	}
 }

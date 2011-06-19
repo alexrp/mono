@@ -841,40 +841,74 @@ type			: K_CLASS class_ref
 				} else
 					$$ = $1;
 			}
-			/*
 			| BANG int32
 			{
-				GenParam gpar = new GenParam ((int) $2, "", GenParamType.Var);
-				$$ = new GenericParamRef (gpar, $2.ToString ());
-			}
-			| BANG BANG int32
-			{
-				GenParam gpar = new GenParam ((int) $3, "", GenParamType.MVar);
-				$$ = new GenericParamRef (gpar, $3.ToString ());
+				if (codegen.CurrentType == null)
+					report.WriteError (Error.GenericParameterAccessOutsideType,
+						"Cannot access a generic parameter outside a type definition.");
+
+				var idx = (int) $2;
+				var genParams = codegen.CurrentType.GenericParameters;
+
+				if (idx >= genParams.Count)
+					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+						"Generic parameter ordinal '{0}' is invalid.", idx);
+
+				$$ = genParams [idx];
 			}
 			| BANG id
 			{
-				int num = -1;
-				string name = (string) $2;
+				if (codegen.CurrentType == null)
+					report.WriteError (Error.GenericParameterAccessOutsideType,
+						"Cannot access a generic parameter outside a type definition.");
 
-				if (codegen.CurrentTypeDef != null)
-					num = codegen.CurrentTypeDef.GetGenericParamNum (name);
+				var name = (string) $2;
+				GenericParameter param = null;
 
-				GenParam gpar = new GenParam (num, name, GenParamType.Var);
-				$$ = new GenericParamRef (gpar, name);
+				foreach (var genParam in codegen.CurrentType.GenericParameters)
+					if (genParam.Name == name)
+						param = genParam;
+
+				if (param == null)
+					report.WriteError (Error.GenericParameterNameInvalid,
+						"Generic parameter name '{0}' is invalid.", name);
+
+				$$ = param;
+			}
+			| BANG BANG int32
+			{
+				if (codegen.CurrentMethod == null)
+					report.WriteError (Error.GenericParameterAccessOutsideMethod,
+						"Cannot access a generic parameter outside a method definition.");
+
+				var idx = (int) $3;
+				var genParams = codegen.CurrentMethod.GenericParameters;
+
+				if (idx >= genParams.Count)
+					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+						"Generic parameter ordinal '{0}' is invalid.", idx);
+
+				$$ = genParams [idx];
 			}
 			| BANG BANG id
 			{
-				int num = -1;
-				string name = (string) $3;
+				if (codegen.CurrentMethod == null)
+					report.WriteError (Error.GenericParameterAccessOutsideMethod,
+						"Cannot access a generic parameter outside a method definition.");
 
-				if (codegen.CurrentMethodDef != null)
-					num = codegen.CurrentMethodDef.GetGenericParamNum (name);
+				var name = (string) $3;
+				GenericParameter param = null;
 
-				GenParam gpar = new GenParam (num, name, GenParamType.MVar);
-				$$ = new GenericParamRef (gpar, name);
+				foreach (var genParam in codegen.CurrentMethod.GenericParameters)
+					if (genParam.Name == name)
+						param = genParam;
+
+				if (param == null)
+					report.WriteError (Error.GenericParameterNameInvalid,
+						"Generic parameter name '{0}' is invalid.", name);
+
+				$$ = param;
 			}
-			*/
 			| K_OBJECT			{ $$ = codegen.Corlib.Object; }
 			| K_VOID			{ $$ = codegen.Corlib.Void; }
 			| K_TYPEDREF			{ $$ = codegen.Corlib.TypedReference; }
@@ -2802,13 +2836,7 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			}
 			/*
 			| customattr_decl
-			{
-				codegen.ThisAssembly.AddCustomAttribute ((CustomAttr) $1);
-			}
 			| sec_decl
-			{
-				AddSecDecl ($1, true);
-			}
 			*/
 			;
 			;
@@ -2901,8 +2929,6 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			| K_AUTO // TODO: Implement this.
 			/*
 			| customattr_decl
-			{
-			}
 			*/
 			;
 
