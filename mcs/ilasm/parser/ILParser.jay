@@ -632,13 +632,13 @@ constraints_clause	:
 
 constraints		: type_spec
 			{
-				$$ = new List<GenericInstanceType> () {
-					(GenericInstanceType) $1,
+				$$ = new List<TypeReference> () {
+					(TypeReference) $1,
 				};
 			}
 			| constraints COMMA type_spec
 			{
-				((List<GenericInstanceType>) $1).Add ((GenericInstanceType) $3);
+				((List<TypeReference>) $1).Add ((TypeReference) $3);
 			}
 			;
 

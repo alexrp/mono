@@ -184,5 +184,19 @@ namespace Mono.ILAsm.Tests {
 					z => z.Name == "T1",
 					z => z.Name == "T2"));
 		}
+		
+		[Test]
+		public void TestGenericInterfaceConstraint ()
+		{
+			ILAsm ()
+				.Input ("class-generic/class-generic-006.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test006")
+						.GenericParameters [0]
+						.Constraints [0]
+						.Name == "System.ICloneable");
+		}
 	}
 }
