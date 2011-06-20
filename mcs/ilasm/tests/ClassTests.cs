@@ -197,5 +197,29 @@ namespace Mono.ILAsm.Tests {
 					y => y.Constraints.ContainsOne (
 						z => z.Name == "System.ICloneable")));
 		}
+		
+		[Test]
+		public void TestCovariantTypeParameter ()
+		{
+			ILAsm ()
+				.Input ("class-generic/class-generic-007.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test007").GenericParameters.ContainsOne (
+					y => y.IsCovariant));
+		}
+		
+		[Test]
+		public void TestContravariantTypeParameter ()
+		{
+			ILAsm ()
+				.Input ("class-generic/class-generic-008.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test008").GenericParameters.ContainsOne (
+					y => y.IsContravariant));
+		}
 	}
 }

@@ -1,5 +1,5 @@
 // 
-// class-generic-005.il
+// class-generic-007.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -28,6 +28,6 @@
 {
 }
 
-.class test005<T1, T2>
+.class test007<+ T>
 {
 }
