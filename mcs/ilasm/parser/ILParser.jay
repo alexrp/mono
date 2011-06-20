@@ -1292,7 +1292,7 @@ field_decl		: D_FIELD repeat_opt field_attr marshal_spec type id at_opt init_opt
 							"Instance fields cannot have an associated data location.");
 
 					var dataLoc = (string) $7;
-					var mapping = codegen.GetFieldDataMapping (codegen.CurrentType);
+					var mapping = codegen.GetFieldDataMapping (codegen.CurrentType ?? codegen.CurrentModule.GetModuleType ());
 					mapping.Add (field, dataLoc);
 				}
 
@@ -1444,7 +1444,7 @@ data_decl		: data_head data_body
 data_name		:
 			| id ASSIGN
 			{
-				$$ = $2;
+				$$ = $1;
 			}
 			;
 

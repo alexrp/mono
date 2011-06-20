@@ -68,5 +68,20 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success);
 		}
+		
+		[Test]
+		public void TestDataField ()
+		{
+			ILAsm ()
+				.Input ("data/data-005.il")
+				.ExpectWarning (Warning.UnimplementedFeatureUsed)
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
+					y => y.InitialValue.ListEquals (new byte[] {
+						0x78, 0x56, 0x34, 0x12
+					})));
+		}
 	}
 }

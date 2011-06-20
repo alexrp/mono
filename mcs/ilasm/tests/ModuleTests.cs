@@ -59,7 +59,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.ModuleReferences.Contains (y => y.Name == "test001.dll"));
+				.Expect (x => x.ModuleReferences.ContainsOne (
+					y => y.Name == "test001.dll"));
 		}
 		
 		[Test]

@@ -39,7 +39,9 @@ namespace Mono.ILAsm.Tests {
 				.Input ("namespace/namespace-001.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
-				.Expect (ExitCode.Success);
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test001.test001_cls") != null);
 		}
 		
 		[Test]
@@ -49,7 +51,9 @@ namespace Mono.ILAsm.Tests {
 				.Input ("namespace/namespace-002.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
-				.Expect (ExitCode.Success);
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test002.B.C.test002_cls") != null);
 		}
 		
 		[Test]
@@ -59,7 +63,9 @@ namespace Mono.ILAsm.Tests {
 				.Input ("namespace/namespace-003.il")
 				.ExpectWarning (Warning.LegacyNamespaceSyntax)
 				.Run ()
-				.Expect (ExitCode.Success);
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test003.B.C.D.E.F.test003_cls") != null);
 		}
 	}
 }

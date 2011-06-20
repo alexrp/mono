@@ -125,6 +125,8 @@
     <None Include="tests\field-generic\field-generic-001.il" />
     <None Include="tests\field-generic\field-generic-002.il" />
     <None Include="tests\class-generic\class-generic-006.il" />
+    <None Include="tests\data\data-005.il" />
+    <None Include="tests\misc-decl\misc-decl-007.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />

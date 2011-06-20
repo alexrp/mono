@@ -50,13 +50,14 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.Assembly.Name.PublicKey.ListEquals (new byte[] {
-					0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
-					0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
-				}))
-				.Expect (x => x.Assembly.Name.HashAlgorithm == AssemblyHashAlgorithm.SHA1)
-				.Expect (x => x.Assembly.Name.Culture == "en-US")
-				.Expect (x => x.Assembly.Name.Version.Equals (new Version (1, 2, 3, 4)));
+				.Expect (x => x.Assembly.Name.Expect (
+					y => y.PublicKey.ListEquals (new byte[] {
+						0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+						0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+					}),
+					y => y.HashAlgorithm == AssemblyHashAlgorithm.SHA1,
+					y => y.Culture == "en-US",
+					y => y.Version.Equals (new Version (1, 2, 3, 4))));
 		}
 		
 		[Test]
@@ -117,7 +118,8 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (y => y.Name == "test001"));
+				.Expect (x => x.AssemblyReferences.ContainsOne (
+					y => y.Name == "test001"));
 		}
 		
 		[Test]
@@ -128,7 +130,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (
+				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.PublicKeyToken.ListEquals (new byte[] {
 						0x00, 0x05, 0x10, 0x15,
 						0x20, 0x25, 0x30, 0x35,
@@ -149,7 +151,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (
+				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.PublicKey.ListEquals (new byte[] {
 						0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
 						0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
@@ -164,7 +166,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (
+				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.PublicKey == null,
 					y => y.PublicKeyToken.ListEquals (new byte[] {
 						0x00, 0x05, 0x10, 0x15,
@@ -181,7 +183,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (
+				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.Version.Equals (new Version (1, 0, 0, 0))));
 		}
 		
@@ -194,7 +196,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.AssemblyReferences.Contains (
+				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.Version.Equals (new Version (1, 0, 0, 0))));
 		}
 	}

@@ -48,6 +48,7 @@ namespace Mono.ILAsm {
 			AliasedAssemblyReferences = new Dictionary<string, AliasedAssemblyNameReference> ();
 			DataConstants = new Dictionary<string, object> ();
 			FieldDataMappings = new Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> ();
+			CurrentNamespace = string.Empty;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
 		}
@@ -104,7 +105,7 @@ namespace Mono.ILAsm {
 			EmitDataConstants ();
 			
 			CurrentModule.Write (outputFile, new WriterParameters {
-				SymbolWriterProvider = new MdbWriterProvider (),
+				SymbolWriterProvider = DebuggingSymbols ? new MdbWriterProvider () : null,
 				WriteSymbols = DebuggingSymbols,
 			});
 		}

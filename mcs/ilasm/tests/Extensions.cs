@@ -49,11 +49,20 @@ namespace Mono.ILAsm.Tests {
 			return true;
 		}
 		
+		public static bool Expect<T> (this T obj, params Predicate<T>[] predicates)
+		{
+			foreach (var predicate in predicates)
+				if (!predicate (obj))
+					return false;
+			
+			return true;
+		}
+		
 		public static bool Contains<T> (this IEnumerable<T> list, params Predicate<T>[] predicates)
 		{
-			bool flag = false;
-			
 			foreach (var item in list) {
+				var flag = false;
+				
 				foreach (var predicate in predicates)
 					if (!(flag = predicate (item)))
 						break;
@@ -63,6 +72,26 @@ namespace Mono.ILAsm.Tests {
 			}
 			
 			return false;
+		}
+		
+		public static bool ContainsOne<T> (this IEnumerable<T> list, params Predicate<T>[] predicates)
+		{
+			var flag = false;
+			
+			using (var enumerator = list.GetEnumerator ()) {
+				var count = 0;
+				
+				while (enumerator.MoveNext ()) {
+					if (++count > 1)
+						return false;
+					
+					foreach (var predicate in predicates)
+						if (!(flag = predicate (enumerator.Current)))
+							break;
+				}
+			}
+			
+			return flag;
 		}
 		
 		public static bool ContainsMany<T> (this IEnumerable<T> list, params Predicate<T>[] predicates)

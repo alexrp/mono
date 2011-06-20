@@ -38,7 +38,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.Types.Contains (
+				.Expect (x => x.GetType ("test001").Expect (
 					y => y.Name == "test001",
 					y => y.BaseType.FullName == "System.Object"));
 		}
@@ -73,7 +73,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test004").Interfaces.Contains (
+				.Expect (x => x.GetType ("test004").Interfaces.ContainsOne (
 					y => y.FullName == "System.ICloneable"));
 		}
 		
@@ -120,7 +120,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test008").Interfaces.Contains (
+				.Expect (x => x.GetType ("test008").Interfaces.ContainsOne (
 					y => y.Name == "test008_if"));
 		}
 		
@@ -132,7 +132,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test001").GenericParameters.Contains (
+				.Expect (x => x.GetType ("test001").GenericParameters.ContainsOne (
 					z => z.Attributes.HasBitFlag (GenericParameterAttributes.NotNullableValueTypeConstraint)));
 		}
 		
@@ -144,7 +144,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test002").GenericParameters.Contains (
+				.Expect (x => x.GetType ("test002").GenericParameters.ContainsOne (
 					z => z.Attributes.HasBitFlag (GenericParameterAttributes.ReferenceTypeConstraint)));
 		}
 		
@@ -156,7 +156,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test003").GenericParameters.Contains (
+				.Expect (x => x.GetType ("test003").GenericParameters.ContainsOne (
 					z => z.Attributes.HasBitFlag (GenericParameterAttributes.DefaultConstructorConstraint)));
 		}
 		
@@ -168,7 +168,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test004").Interfaces.Contains (
+				.Expect (x => x.GetType ("test004").Interfaces.ContainsOne (
 					y => y.FullName == "System.IEquatable`1<test004_dummy>"));
 		}
 		
@@ -193,10 +193,9 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test006")
-						.GenericParameters [0]
-						.Constraints [0]
-						.Name == "System.ICloneable");
+				.Expect (x => x.GetType ("test006").GenericParameters.ContainsOne (
+					y => y.Constraints.ContainsOne (
+						z => z.Name == "System.ICloneable")));
 		}
 	}
 }

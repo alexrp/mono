@@ -38,7 +38,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => y.Name == "test001"));
 		}
 		
@@ -51,7 +51,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => y.IsStatic));
 		}
 		
@@ -64,7 +64,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => y.Offset == -1));
 		}
 		
@@ -76,7 +76,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test004_cls").Fields.Contains (
+				.Expect (x => x.GetType ("test004_cls").Fields.ContainsOne (
 					y => y.Name == "test004"));
 		}
 		
@@ -88,7 +88,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test005_cls").Fields.Contains (
+				.Expect (x => x.GetType ("test005_cls").Fields.ContainsOne (
 					y => y.Offset == 4));
 		}
 		
@@ -124,7 +124,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).IsVector));
 		}
 		
@@ -136,7 +136,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).IsVector));
 		}
 		
@@ -148,7 +148,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
 					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == null));
 		}
@@ -161,7 +161,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
 					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 10));
 		}
@@ -174,7 +174,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
 					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 5));
 		}
@@ -188,7 +188,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetModuleType ().Fields.Contains (
+				.Expect (x => x.GetModuleType ().Fields.ContainsOne (
 					y => ((ArrayType) y.FieldType).Dimensions [0].LowerBound == 0,
 					y => ((ArrayType) y.FieldType).Dimensions [0].UpperBound == 0));
 		}
@@ -201,7 +201,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test001_cls").Fields.Contains (
+				.Expect (x => x.GetType ("test001_cls").Fields.ContainsOne (
 					y => y.FieldType.Name == "T"));
 		}
 		
@@ -213,7 +213,7 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Success)
 				.GetModule ()
-				.Expect (x => x.GetType ("test002_cls").Fields.Contains (
+				.Expect (x => x.GetType ("test002_cls").Fields.ContainsOne (
 					y => y.FieldType.Name == "T"));
 		}
 	}

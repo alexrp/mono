@@ -24,12 +24,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-.namespace A
+.namespace test003
 {
 	.namespace B.C
 	{
-		.namespace C.D.E
+		.namespace D.E.F
 		{
+			.class test003_cls
+			{
+			}
 		}
 	}
 }
