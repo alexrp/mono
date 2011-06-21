@@ -124,5 +124,9 @@ namespace Mono.ILAsm {
 		/// A property accessor was invalid (i.e. not in the current module).
 		/// </summary>
 		InvalidPropertyMethod = 21,
+		/// <summary>
+		/// An event accessor was invalid (i.e. not in the current module).
+		/// </summary>
+		InvalidEventMethod = 22,
 	}
 }

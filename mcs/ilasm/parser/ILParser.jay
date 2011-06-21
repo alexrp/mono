@@ -650,8 +650,8 @@ class_decls		:
 
 class_decl		: /*method_all
 			| class_all
-			| event_all
 			*/
+			| event_all
 			| prop_all
 			| field_decl
 			| data_decl
@@ -2381,29 +2381,29 @@ member_ref		: K_METHOD method_ref
 				$$ = codegen.GetGlobalFieldRef ((BaseTypeRef) $2, (string) $3);
 			}
 			;
+*/
 
 event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 			{
-				codegen.CurrentTypeDef.EndEventDef ();
+				codegen.CurrentType.Events.Add (codegen.CurrentEvent);
+				codegen.CurrentEvent = null;
 			}
 			;
 
 event_head		: D_EVENT event_attr type_spec comp_name
 			{
-				EventDef event_def = new EventDef ((FeatureAttr) $2,
-					(BaseTypeRef) $3, (string) $4);
-				codegen.CurrentTypeDef.BeginEventDef (event_def);
-				codegen.CurrentCustomAttrTarget = event_def;
+				codegen.CurrentEvent = new EventDefinition (((QualifiedName) $4).FullName,
+					(EventAttributes) $2, (TypeReference) $3);
 			}
-			| D_EVENT event_attr id
+			| D_EVENT event_attr id // TODO: What do we do here? Infer some type?
 			;
 
 event_attr		:
 			{
-				$$ = new FeatureAttr ();
+				$$ = EventAttributes.None;
 			}
-			| event_attr K_RTSPECIALNAME	{ $$ = (FeatureAttr) $1 & FeatureAttr.Rtspecialname; }
-			| event_attr K_SPECIALNAME	{ $$ = (FeatureAttr) $1 & FeatureAttr.Specialname; }
+			| event_attr K_RTSPECIALNAME	{ $$ = (EventAttributes) $1 & EventAttributes.RTSpecialName; }
+			| event_attr K_SPECIALNAME	{ $$ = (EventAttributes) $1 & EventAttributes.SpecialName; }
 			;
 
 event_decls		:
@@ -2412,29 +2412,69 @@ event_decls		:
 
 event_decl		: D_ADDON method_ref
 			{
-				codegen.CurrentTypeDef.CurrentEvent.AddAddon ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+
+				if (methodRef.DeclaringType == null)
+					methodRef.DeclaringType = codegen.CurrentType;
+
+				var method = methodRef.Resolve ();
+
+				// TODO: We should also error if the resolved method is
+				// not within the current module.
+				if (method == null)
+					report.WriteError (Error.InvalidEventMethod,
+						"Could not resolve add method '{0}'.", methodRef);
+
+				codegen.CurrentEvent.AddMethod = method;
 			}
 			| D_REMOVEON method_ref
 			{
-				codegen.CurrentTypeDef.CurrentEvent.AddRemoveon ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+
+				if (methodRef.DeclaringType == null)
+					methodRef.DeclaringType = codegen.CurrentType;
+
+				var method = methodRef.Resolve ();
+
+				if (method == null)
+					report.WriteError (Error.InvalidEventMethod,
+						"Could not resolve remove method '{0}'.", methodRef);
+
+				codegen.CurrentEvent.RemoveMethod = method;
 			}
 			| D_FIRE method_ref
 			{
-				codegen.CurrentTypeDef.CurrentEvent.AddFire ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+
+				if (methodRef.DeclaringType == null)
+					methodRef.DeclaringType = codegen.CurrentType;
+
+				var method = methodRef.Resolve ();
+
+				if (method == null)
+					report.WriteError (Error.InvalidEventMethod,
+						"Could not resolve fire method '{0}'.", methodRef);
+
+				codegen.CurrentEvent.InvokeMethod = method;
 			}
 			| D_OTHER method_ref
 			{
-				codegen.CurrentTypeDef.CurrentEvent.AddOther ((MethodRef) $2);
+				// Other methods don't get a default type spec.
+				var methodRef = (MethodReference) $2;
+				var method = methodRef.Resolve ();
+
+				if (method == null)
+					report.WriteError (Error.InvalidEventMethod,
+						"Could not resolve other method '{0}'.", methodRef);
+
+				codegen.CurrentEvent.OtherMethods.Add (method);
 			}
+			/*
 			| customattr_decl
-			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
-			}
+			*/
 			| extsource_spec
 			| language_decl
 			;
-*/
 
 prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 			{
@@ -2471,10 +2511,14 @@ prop_decls		:
 prop_decl		: D_SET method_ref
 			{
 				var methodRef = (MethodReference) $2;
+
+				if (methodRef.DeclaringType == null)
+					methodRef.DeclaringType = codegen.CurrentType;
+
 				var method = methodRef.Resolve ();
 
-				// TODO: We should also error if the resolved method's type
-				// is not the same as codegen.CurrentType.
+				// TODO: We should also error if the resolved method is
+				// not within the current module.
 				if (method == null)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve set method '{0}'.", methodRef);
@@ -2484,6 +2528,10 @@ prop_decl		: D_SET method_ref
 			| D_GET method_ref
 			{
 				var methodRef = (MethodReference) $2;
+
+				if (methodRef.DeclaringType == null)
+					methodRef.DeclaringType = codegen.CurrentType;
+
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -2494,6 +2542,7 @@ prop_decl		: D_SET method_ref
 			}
 			| D_OTHER method_ref
 			{
+				// Other methods don't get a default type spec.
 				var methodRef = (MethodReference) $2;
 				var method = methodRef.Resolve ();
 
