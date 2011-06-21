@@ -1696,17 +1696,7 @@ pinv_attr		:
 			| pinv_attr K_CHARMAPERROR COLON K_ON	{ $$ = (PInvokeAttr) $1 | PInvokeAttr.charmaperror_on; }
 			| pinv_attr K_CHARMAPERROR COLON K_OFF	{ $$ = (PInvokeAttr) $1 | PInvokeAttr.charmaperror_off; }
 			;
-*/
 
-method_name		: D_CTOR
-			| D_CCTOR
-			| comp_name
-			{
-				$$ = ((QualifiedName) $1).FullName;
-			}
-			;
-
-/*
 impl_attr		:
 			{
 				$$ = new ImplAttr ();
@@ -2277,6 +2267,14 @@ instr			: INSTR_NONE
 			;
 */
 
+method_name		: D_CTOR
+			| D_CCTOR
+			| comp_name
+			{
+				$$ = ((QualifiedName) $1).FullName;
+			}
+			;
+
 method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args CLOSE_PARENS
 			{
 				var method = new MethodReference ((string) $3, (TypeReference) $2) {
@@ -2419,11 +2417,13 @@ event_decl		: D_ADDON method_ref
 
 				var method = methodRef.Resolve ();
 
-				// TODO: We should also error if the resolved method is
-				// not within the current module.
 				if (method == null)
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve add method '{0}'.", methodRef);
+
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidEventMethod,
+						"Method '{0}' is not within the current module.", method);
 
 				codegen.CurrentEvent.AddMethod = method;
 			}
@@ -2440,6 +2440,10 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve remove method '{0}'.", methodRef);
 
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidEventMethod,
+						"Method '{0}' is not within the current module.", method);
+
 				codegen.CurrentEvent.RemoveMethod = method;
 			}
 			| D_FIRE method_ref
@@ -2455,6 +2459,10 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve fire method '{0}'.", methodRef);
 
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidEventMethod,
+						"Method '{0}' is not within the current module.", method);
+
 				codegen.CurrentEvent.InvokeMethod = method;
 			}
 			| D_OTHER method_ref
@@ -2466,6 +2474,10 @@ event_decl		: D_ADDON method_ref
 				if (method == null)
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve other method '{0}'.", methodRef);
+
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidEventMethod,
+						"Method '{0}' is not within the current module.", method);
 
 				codegen.CurrentEvent.OtherMethods.Add (method);
 			}
@@ -2517,11 +2529,13 @@ prop_decl		: D_SET method_ref
 
 				var method = methodRef.Resolve ();
 
-				// TODO: We should also error if the resolved method is
-				// not within the current module.
 				if (method == null)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve set method '{0}'.", methodRef);
+
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Method '{0}' is not within the current module.", method);
 
 				codegen.CurrentProperty.SetMethod = method;
 			}
@@ -2538,6 +2552,10 @@ prop_decl		: D_SET method_ref
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve get method '{0}'.", methodRef);
 
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Method '{0}' is not within the current module.", method);
+
 				codegen.CurrentProperty.GetMethod = method;
 			}
 			| D_OTHER method_ref
@@ -2549,6 +2567,10 @@ prop_decl		: D_SET method_ref
 				if (method == null)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve other method '{0}'.", methodRef);
+
+				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Method '{0}' is not within the current module.", method);
 
 				codegen.CurrentProperty.OtherMethods.Add (method);
 			}
