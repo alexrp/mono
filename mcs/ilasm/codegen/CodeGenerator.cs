@@ -22,6 +22,10 @@ namespace Mono.ILAsm {
 		
 		public MethodDefinition CurrentMethod { get; set; }
 		
+		public PropertyDefinition CurrentProperty { get; set; }
+		
+		public EventDefinition CurrentEvent { get; set; }
+		
 		public AssemblyNameReference CurrentAssemblyReference { get; set; }
 		
 		public IGenericParameterProvider CurrentGenericParameterProvider { get; set; }

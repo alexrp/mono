@@ -486,9 +486,8 @@ class_head		: D_CLASS class_attr comp_name
 			}
 			  formal_typars_clause extends_clause impl_clause
 			{
-				if ($5 != null)
-					foreach (var arg in (List<GenericParameter>) $5)
-						codegen.CurrentType.GenericParameters.Add (arg);
+				foreach (var arg in (List<GenericParameter>) $5)
+					codegen.CurrentType.GenericParameters.Add (arg);
 
 				codegen.CurrentGenericParameterProvider = null;
 
@@ -515,7 +514,7 @@ class_attr		:
 				$$ = TypeAttributes.NotPublic;
 			}
 			| class_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
-			| class_attr K_PRIVATE			{ $$ = (TypeAttributes) $1 | TypeAttributes.NotPublic; }
+			| class_attr K_PRIVATE
 			| class_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPrivate; }
 			| class_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPublic; }
 			| class_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamily; }
@@ -568,6 +567,9 @@ impl_class_refs		: K_IMPLEMENTS type_spec
 			;
 
 formal_typars_clause	:
+			{
+				$$ = new List<GenericParameter> ();
+			}
 			| OPEN_ANGLE_BRACKET formal_typars CLOSE_ANGLE_BRACKET
 			{
 				$$ = $2;
@@ -649,13 +651,15 @@ class_decls		:
 class_decl		: /*method_all
 			| class_all
 			| event_all
-			| prop_all
 			*/
+			| prop_all
 			| field_decl
 			| data_decl
 			/*
 			| sec_decl
+			*/
 			| extsource_spec
+			/*
 			| customattr_decl
 			| param_type_decl
 			*/
@@ -840,12 +844,14 @@ type			: K_CLASS class_ref
 
 				$$ = func;
 			}
-			| type OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
+			| type typars_clause
 			{
-				if ($3 != null) {
+				var typeArgs = (List<TypeReference>) $2;
+
+				if (typeArgs.Count > 0) {
 					var gti = new GenericInstanceType ((TypeReference) $1);
 
-					foreach (var ga in (List<TypeReference>) $3)
+					foreach (var ga in typeArgs)
 						gti.GenericArguments.Add (ga);
 
 					$$ = gti;
@@ -967,6 +973,16 @@ simple_type		: K_FLOAT32			{ $$ = codegen.Corlib.Single; }
 			| int_type
 			;
 
+typars_clause_opt	:
+			| typars_clause
+			;
+
+typars_clause		: OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
+			{
+				$$ = $2;
+			}
+			;
+
 typars			: type
 			{
 				$$ = new List<TypeReference> () {
@@ -1047,8 +1063,8 @@ bound			:
 			}
 			;
 
-call_conv		: K_INSTANCE call_conv { is_instance_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
-			| K_EXPLICIT call_conv { is_explicit_call = true; $$ = $2 != null ? $2 : MethodCallingConvention.Default; }
+call_conv		: K_INSTANCE call_conv { is_instance_call = true; $$ = $2 ?? MethodCallingConvention.Default; }
+			| K_EXPLICIT call_conv { is_explicit_call = true; $$ = $2 ?? MethodCallingConvention.Default; }
 			| call_kind
 			| K_CALLCONV OPEN_PARENS int32 CLOSE_PARENS
 			{
@@ -1296,10 +1312,8 @@ field_decl		: D_FIELD repeat_opt field_attr marshal_spec type id at_opt init_opt
 					mapping.Add (field, dataLoc);
 				}
 
-				if ($8 != null) {
+				if ($8 != null)
 					field.Constant = $8 is Null ? null : $8;
-					field.HasConstant = true;
-				}
 
 				if (isGlobal)
 					codegen.CurrentModule.GetModuleType ().Fields.Add (field);
@@ -1682,12 +1696,17 @@ pinv_attr		:
 			| pinv_attr K_CHARMAPERROR COLON K_ON	{ $$ = (PInvokeAttr) $1 | PInvokeAttr.charmaperror_on; }
 			| pinv_attr K_CHARMAPERROR COLON K_OFF	{ $$ = (PInvokeAttr) $1 | PInvokeAttr.charmaperror_off; }
 			;
+*/
 
 method_name		: D_CTOR
 			| D_CCTOR
 			| comp_name
+			{
+				$$ = ((QualifiedName) $1).FullName;
+			}
 			;
 
+/*
 impl_attr		:
 			{
 				$$ = new ImplAttr ();
@@ -2256,62 +2275,66 @@ instr			: INSTR_NONE
 				codegen.CurrentMethodDef.AddInstr (new SwitchInstr ((ArrayList) $3, tokenizer.Location));
 			}
 			;
+*/
 
-method_ref		: call_conv type method_name typars_clause OPEN_PARENS type_list CLOSE_PARENS
+method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				ArrayList arg_list = (ArrayList) $6;
-				GenericArguments ga = (GenericArguments) $4;
-				BaseTypeRef[] param_list;
+				var method = new MethodReference ((string) $3, (TypeReference) $2) {
+					CallingConvention = (MethodCallingConvention) $1,
+				};
 
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef [0];
+				if (is_instance_call)
+					method.HasThis = true;
 
-				BaseMethodRef methref = codegen.GetGlobalMethodRef ((BaseTypeRef) $2, (CallConv) $1,
-					(string) $3, param_list, (ga != null ? ga.Count : 0));
+				if (is_explicit_call)
+					method.ExplicitThis = true;
 
-				if (ga != null)
-					methref = methref.GetGenericMethodRef (ga);
+				is_instance_call = false;
+				is_explicit_call = false;
 
-				$$ = methref;
+				foreach (var arg in (List<TypeReference>) $6)
+					method.Parameters.Add (new ParameterDefinition (arg));
+
+				if ($4 != null) {
+					var genMethod = new GenericInstanceMethod (method);
+
+					foreach (var typeArg in (List<TypeReference>) $4)
+						genMethod.GenericArguments.Add (typeArg);
+
+					method = genMethod;
+				}
 			}
-			| call_conv type type_spec DOUBLE_COLON method_name typars_clause OPEN_PARENS type_list CLOSE_PARENS
+			| call_conv type type_spec DOUBLE_COLON method_name typars_clause_opt OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				BaseTypeRef owner = (BaseTypeRef) $3;
-				ArrayList arg_list = (ArrayList) $8;
-				GenericArguments ga = (GenericArguments) $6;
-				BaseTypeRef[] param_list;
-				BaseMethodRef methref;
+				var method = new MethodReference ((string) $5, (TypeReference) $2, (TypeReference) $3) {
+					CallingConvention = (MethodCallingConvention) $1,
+				};
 
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef [0];
+				if (is_instance_call)
+					method.HasThis = true;
 
-				if (codegen.IsThisAssembly ("mscorlib")) {
-					PrimitiveTypeRef prim = owner as PrimitiveTypeRef;
+				if (is_explicit_call)
+					method.ExplicitThis = true;
 
-					if (prim != null && prim.SigMod == "")
-						owner = codegen.GetTypeRef (prim.Name);
+				is_instance_call = false;
+				is_explicit_call = false;
+
+				foreach (var arg in (List<TypeReference>) $8)
+					method.Parameters.Add (new ParameterDefinition (arg));
+
+				if ($6 != null) {
+					var genMethod = new GenericInstanceMethod (method);
+
+					foreach (var typeArg in (List<TypeReference>) $6)
+						genMethod.GenericArguments.Add (typeArg);
+
+					method = genMethod;
 				}
-
-				if (owner.UseTypeSpec) {
-					methref = new TypeSpecMethodRef (owner, (CallConv) $1, (BaseTypeRef) $2,
-						(string) $5, param_list, (ga != null ? ga.Count : 0));
-				} else {
-					methref = owner.GetMethodRef ((BaseTypeRef) $2,
-						(CallConv) $1, (string) $5, param_list,
-						(ga != null ? ga.Count : 0));
-				}
-
-				if (ga != null)
-					methref = methref.GetGenericMethodRef (ga);
-
-				$$ = methref;
 			}
+			| mdtoken
 			;
 
+/*
 labels			:
 			| id
 			{
@@ -2411,33 +2434,34 @@ event_decl		: D_ADDON method_ref
 			| extsource_spec
 			| language_decl
 			;
+*/
 
 prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 			{
-				codegen.CurrentTypeDef.EndPropertyDef ();
+				codegen.CurrentType.Properties.Add (codegen.CurrentProperty);
+				codegen.CurrentProperty = null;
 			}
 			;
 
-prop_head		: D_PROPERTY prop_attr type comp_name OPEN_PARENS type_list CLOSE_PARENS init_opt
+prop_head		: D_PROPERTY prop_attr type comp_name OPEN_PARENS sig_args CLOSE_PARENS init_opt
 			{
-				PropertyDef prop_def = new PropertyDef ((FeatureAttr) $2, (BaseTypeRef) $3,
-					(string) $4, (ArrayList) $6);
+				codegen.CurrentProperty = new PropertyDefinition (((QualifiedName) $4).FullName,
+					(PropertyAttributes) $2, (TypeReference) $3);
 
-				codegen.CurrentTypeDef.BeginPropertyDef (prop_def);
-				codegen.CurrentCustomAttrTarget = prop_def;
+				foreach (var param in (List<TypeReference>) $6)
+					codegen.CurrentProperty.Parameters.Add (new ParameterDefinition (param));
 
 				if ($8 != null)
-					prop_def.AddInitValue ((Constant) $8);
+					codegen.CurrentProperty.Constant = $8 is Null ? null : $8;
 			}
 			;
 
 prop_attr 		:
 			{
-				$$ = new FeatureAttr ();
+				$$ = PropertyAttributes.None;
 			}
-			| prop_attr K_RTSPECIALNAME	{ $$ = (FeatureAttr) $1 | FeatureAttr.Rtspecialname; }
-			| prop_attr K_SPECIALNAME	{ $$ = (FeatureAttr) $1 | FeatureAttr.Specialname; }
-			| prop_attr K_INSTANCE		{ $$ = (FeatureAttr) $1 | FeatureAttr.Instance; }
+			| prop_attr K_RTSPECIALNAME	{ $$ = (PropertyAttributes) $1 | PropertyAttributes.RTSpecialName; }
+			| prop_attr K_SPECIALNAME	{ $$ = (PropertyAttributes) $1 | PropertyAttributes.SpecialName; }
 			;
 
 prop_decls		:
@@ -2446,25 +2470,47 @@ prop_decls		:
 
 prop_decl		: D_SET method_ref
 			{
-				codegen.CurrentTypeDef.CurrentProperty.AddSet ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+				var method = methodRef.Resolve ();
+
+				// TODO: We should also error if the resolved method's type
+				// is not the same as codegen.CurrentType.
+				if (method == null)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Could not resolve set method '{0}'.", methodRef);
+
+				codegen.CurrentProperty.SetMethod = method;
 			}
 			| D_GET method_ref
 			{
-				codegen.CurrentTypeDef.CurrentProperty.AddGet ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+				var method = methodRef.Resolve ();
+
+				if (method == null)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Could not resolve get method '{0}'.", methodRef);
+
+				codegen.CurrentProperty.GetMethod = method;
 			}
 			| D_OTHER method_ref
 			{
-				codegen.CurrentTypeDef.CurrentProperty.AddOther ((MethodRef) $2);
+				var methodRef = (MethodReference) $2;
+				var method = methodRef.Resolve ();
+
+				if (method == null)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Could not resolve other method '{0}'.", methodRef);
+
+				codegen.CurrentProperty.OtherMethods.Add (method);
 			}
+			/*
 			| customattr_decl
-			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
-			}
+			*/
 			| extsource_spec
 			| language_decl
 			;
 
+/*
 customattr_decl		: D_CUSTOM custom_type
 			{
 				$$ = new CustomAttr ((BaseMethodRef) $2, null);

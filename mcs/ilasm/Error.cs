@@ -120,5 +120,9 @@ namespace Mono.ILAsm {
 		/// module's scope.
 		/// </summary>
 		UndefinedTypeReference = 20,
+		/// <summary>
+		/// A property accessor was invalid (i.e. not in the current module).
+		/// </summary>
+		InvalidPropertyMethod = 21,
 	}
 }
