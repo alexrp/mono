@@ -52,5 +52,11 @@ namespace Mono.ILAsm {
 		{
 			return module.GetType ("<Module>");
 		}
+		
+		public static T[] Inflate<T> (this T[] arr, int addedSize)
+		{
+			Array.Resize (ref arr, arr.Length + addedSize);
+			return arr;
+		}
 	}
 }

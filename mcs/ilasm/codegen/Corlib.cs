@@ -35,6 +35,8 @@ namespace Mono.ILAsm {
 					prop.Name, module, asmName), null);
 		}
 		
+		public TypeReference Type { get; private set; }
+		
 		public TypeReference Object { get; private set; }
 		
 		public TypeReference ValueType { get; private set; }

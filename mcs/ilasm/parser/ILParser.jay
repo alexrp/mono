@@ -28,6 +28,7 @@ namespace Mono.ILAsm {
 		bool is_explicit_call;
 		bool is_instance_call;
 		bool is_parameter_marshal_notation;
+		int custom_attr_blob_seq_length;
 
 		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -382,8 +383,12 @@ decl			:
 			| module_head
 			/*
 			| sec_decl
-			| customattr_decl
 			*/
+			| customattr_decl
+			{
+				codegen.CurrentModule.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
+			}
 			| D_SUBSYSTEM int32
 			{
 				codegen.CurrentModule.Kind = (ModuleKind) $2;
@@ -659,8 +664,12 @@ class_decl		: /*method_all
 			| sec_decl
 			*/
 			| extsource_spec
-			/*
 			| customattr_decl
+			{
+				codegen.CurrentType.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
+			}
+			/*
 			| param_type_decl
 			*/
 			| D_SIZE int32
@@ -1425,13 +1434,13 @@ field_init_primitive	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 			{
 				$$ = $3;
 			}
-			;
-
-field_init		: field_init_primitive
 			| K_BYTEARRAY bytes_list
 			{
 				$$ = $2;
 			}
+			;
+
+field_init		: field_init_primitive
 			| comp_qstring
 			| K_NULLREF
 			{
@@ -2265,14 +2274,56 @@ instr			: INSTR_NONE
 				codegen.CurrentMethodDef.AddInstr (new SwitchInstr ((ArrayList) $3, tokenizer.Location));
 			}
 			;
+
+labels			:
+			| id
+			{
+				ArrayList label_list = new ArrayList ();
+				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $1));
+
+				$$ = label_list;
+			}
+			| int32
+			{
+				ArrayList label_list = new ArrayList ();
+				label_list.Add ($1);
+
+				$$ = label_list;
+			}
+			| labels COMMA id
+			{
+				ArrayList label_list = (ArrayList) $1;
+				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $3));
+			}
+			| labels COMMA int32
+			{
+				ArrayList label_list = (ArrayList) $1;
+				label_list.Add ($3);
+			}
+			;
 */
 
-method_name		: D_CTOR
-			| D_CCTOR
-			| comp_name
+member_ref		: K_METHOD method_ref
 			{
-				$$ = ((QualifiedName) $1).FullName;
+				$$ = $2;
 			}
+			| K_FIELD field_ref
+			{
+				$$ = $2;
+			}
+			;
+
+field_ref		: type type_spec DOUBLE_COLON comp_name
+			{
+				$$ = new FieldReference (((QualifiedName) $4).FullName,
+					(TypeReference) $1, (TypeReference) $2);
+			}
+			| type comp_name
+			{
+				$$ = new FieldReference (((QualifiedName) $2).FullName,
+					(TypeReference) $1);
+			}
+			| mdtoken
 			;
 
 method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args CLOSE_PARENS
@@ -2332,54 +2383,17 @@ method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args 
 			| mdtoken
 			;
 
-/*
-labels			:
-			| id
+method_name		: D_CTOR
+			| D_CCTOR
+			| comp_name
 			{
-				ArrayList label_list = new ArrayList ();
-				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $1));
-
-				$$ = label_list;
-			}
-			| int32
-			{
-				ArrayList label_list = new ArrayList ();
-				label_list.Add ($1);
-
-				$$ = label_list;
-			}
-			| labels COMMA id
-			{
-				ArrayList label_list = (ArrayList) $1;
-				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $3));
-			}
-			| labels COMMA int32
-			{
-				ArrayList label_list = (ArrayList) $1;
-				label_list.Add ($3);
+				$$ = ((QualifiedName) $1).FullName;
 			}
 			;
 
 owner_type		: type_spec
 			| member_ref
 			;
-
-member_ref		: K_METHOD method_ref
-			{
-				$$ = $2;
-			}
-			| K_FIELD type type_spec DOUBLE_COLON id
-			{
-				BaseTypeRef owner = (BaseTypeRef) $3;
-
-				$$ = owner.GetFieldRef ((BaseTypeRef) $2, (string) $5);
-			}
-			| K_FIELD type id
-			{
-				$$ = codegen.GetGlobalFieldRef ((BaseTypeRef) $2, (string) $3);
-			}
-			;
-*/
 
 event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 			{
@@ -2481,9 +2495,11 @@ event_decl		: D_ADDON method_ref
 
 				codegen.CurrentEvent.OtherMethods.Add (method);
 			}
-			/*
 			| customattr_decl
-			*/
+			{
+				codegen.CurrentEvent.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
+			}
 			| extsource_spec
 			| language_decl
 			;
@@ -2574,57 +2590,412 @@ prop_decl		: D_SET method_ref
 
 				codegen.CurrentProperty.OtherMethods.Add (method);
 			}
-			/*
 			| customattr_decl
-			*/
+			{
+				codegen.CurrentProperty.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
+			}
 			| extsource_spec
 			| language_decl
 			;
 
+customattr_decl		: customattr
+			| customattr_owner
+			;
+
+customattr		: D_CUSTOM method_ref
+			{
+				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
+			}
+			| D_CUSTOM method_ref ASSIGN comp_qstring
+			{
+				var bytes = Encoding.Unicode.GetBytes ((string) $4);
+
+				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2, bytes);
+			}
+			| D_CUSTOM method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
+			{
+				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
+			}
+			| D_CUSTOM method_ref ASSIGN bytes_list
+			{
+				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2, (byte[]) $4);
+			}
+			;
+
+customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
+			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN comp_qstring
+			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
+			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN bytes_list
+			;
+
+customattr_blob		: customattr_blob_args customattr_blob_nvp
+			;
+
+customattr_blob_args	:
+			| customattr_blob_args customattr_blob_init
+			{
+				var value = $2;
+
+				if (value is TypedNull<string>)
+					value = null;
+				else if (value is TypedNull<TypeReference>)
+					value = null;
+
+				// TODO: Should we try to figure out the type?
+				var arg = new CustomAttributeArgument (null, value);
+
+				codegen.CurrentCustomAttribute.ConstructorArguments.Add (arg);
+			}
+			;
+
+customattr_blob_nvp	:
+			| customattr_blob_nvp prop_or_field customattr_blob_type comp_name ASSIGN customattr_blob_init
+			{
+				TypeReference type = null;
+				var value = $6;
+
+				if (value is TypedNull<string>) {
+					type = codegen.Corlib.String;
+					value = null;
+				} else if (value is TypedNull<TypeReference>) {
+					type = codegen.Corlib.Type;
+					value = null;
+				}
+
+				var arg = new CustomAttributeArgument (type ?? (TypeReference) $3, value);
+				var namedArg = new CustomAttributeNamedArgument (((QualifiedName) $4).FullName, arg);
+
+				if ((TokenType) $2 == TokenType.Field)
+					codegen.CurrentCustomAttribute.Fields.Add (namedArg);
+				else
+					codegen.CurrentCustomAttribute.Properties.Add (namedArg);
+			}
+			;
+
+customattr_blob_type	: simple_type
+			| K_TYPE
+			{
+				$$ = codegen.Corlib.Type;
+			}
+			| K_OBJECT
+			{
+				$$ = codegen.Corlib.Object;
+			}
+			| K_ENUM K_CLASS SQSTRING
+			| K_ENUM class_ref
+			{
+				$$ = $2;
+			}
+			| customattr_blob_type OPEN_BRACKET CLOSE_BRACKET
+			{
+				$$ = new ArrayType ((TypeReference) $1);
+			}
+			;
+
+customattr_blob_init	: field_init_primitive
+			| K_STRING OPEN_PARENS K_NULLREF CLOSE_PARENS
+			{
+				$$ = new TypedNull<string> ();
+			}
+			| K_STRING OPEN_PARENS SQSTRING CLOSE_PARENS
+			{
+				$$ = $3;
+			}
+			| K_TYPE OPEN_PARENS K_CLASS SQSTRING CLOSE_PARENS
+			| K_TYPE OPEN_PARENS class_ref CLOSE_PARENS
+			{
+				$$ = $3;
+			}
+			| K_TYPE OPEN_PARENS K_NULLREF CLOSE_PARENS
+			{
+				$$ = new TypedNull<TypeReference> ();
+			}
+			| K_OBJECT OPEN_PARENS customattr_blob_init CLOSE_PARENS
+			{
+				$$ = $3;
+			}
+			| K_FLOAT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS float32_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_FLOAT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS float64_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_INT8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int8_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_INT16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int16_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_INT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int32_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_INT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int64_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| unsigned_int8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int8_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| unsigned_int16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int16_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| unsigned_int32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int32_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| unsigned_int64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int64_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_CHAR OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int16_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_BOOL OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS bool_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_STRING OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS string_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS class_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			| K_OBJECT OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS obj_seq CLOSE_PARENS
+			{
+				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
+
+				$$ = $6;
+			}
+			;
+
+float32_seq		:
+			{
+				$$ = new float [0];
+			}
+			| float32_seq float64
+			{
+				var arr = (float[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (float) $2;
+				}
+			}
+			| float32_seq int32
+			{
+				var arr = (float[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = BitConverter.ToSingle (BitConverter.GetBytes ((int) $2),
+						BitConverter.IsLittleEndian ? 0 : 4);
+				}
+			}
+			;
+
+float64_seq		:
+			{
+				$$ = new double [0];
+			}
+			| float64_seq float64
+			{
+				var arr = (double[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (double) $2;
+				}
+			}
+			| float64_seq int64
+			{
+				var arr = (double[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = BitConverter.Int64BitsToDouble ((long) $2);
+				}
+			}
+			;
+
+int8_seq		:
+			{
+				$$ = new byte [0];
+			}
+			| int8_seq int32
+			{
+				var arr = (byte[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (byte) $2;
+				}
+			}
+			;
+
+int16_seq		:
+			{
+				$$ = new short [0];
+			}
+			| int16_seq int32
+			{
+				var arr = (short[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (short) $2;
+				}
+			}
+			;
+
+int32_seq		:
+			{
+				$$ = new int [0];
+			}
+			| int32_seq int32
+			{
+				var arr = (int[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (int) $2;
+				}
+			}
+			;
+
+int64_seq		:
+			{
+				$$ = new long [0];
+			}
+			| int64_seq int64
+			{
+				var arr = (long[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (long) $2;
+				}
+			}
+			;
+
+bool_seq		:
+			{
+				$$ = new bool [0];
+			}
+			| bool_seq truefalse
+			{
+				var arr = (bool[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (bool) $2;
+				}
+			}
+			;
+
+string_seq		:
+			{
+				$$ = new string [0];
+			}
+			| string_seq K_NULLREF
+			{
+				var arr = (string[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = null;
+				}
+			}
+			| string_seq SQSTRING
+			{
+				var arr = (string[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (string) $2;
+				}
+			}
+			;
+
+class_seq		:
+			{
+				$$ = new TypeReference [0];
+			}
+			| class_seq K_NULLREF
+			{
+				var arr = (TypeReference[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = null;
+				}
+			}
+			| class_seq K_CLASS SQSTRING
+			| class_seq class_ref
+			{
+				var arr = (TypeReference[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = (TypeReference) $2;
+				}
+			}
+			;
+
+obj_seq			:
+			{
+				$$ = new object [0];
+			}
+			| obj_seq customattr_blob_init
+			{
+				var arr = (object[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = $2;
+				}
+			}
+			;
+
 /*
-customattr_decl		: D_CUSTOM custom_type
-			{
-				$$ = new CustomAttr ((BaseMethodRef) $2, null);
-			}
-			| D_CUSTOM custom_type ASSIGN comp_qstring
-			| D_CUSTOM custom_type ASSIGN bytes_list
-			{
-				$$ = new CustomAttr ((BaseMethodRef) $2, (byte[]) $4);
-			}
-			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS custom_type
-			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS custom_type ASSIGN comp_qstring
-			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS custom_type ASSIGN bytes_list
-			;
-
-custom_type		: call_conv type type_spec DOUBLE_COLON method_name OPEN_PARENS type_list CLOSE_PARENS
-			{
-				BaseTypeRef owner = (BaseTypeRef) $3;
-				ArrayList arg_list = (ArrayList) $7;
-				BaseTypeRef[] param_list;
-
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef[0];
-
-				$$ = owner.GetMethodRef ((BaseTypeRef) $2,
-					(CallConv) $1, (string) $5, param_list, 0);
-			}
-			| call_conv type method_name OPEN_PARENS type_list CLOSE_PARENS
-			{
-				ArrayList arg_list = (ArrayList) $5;
-				BaseTypeRef[] param_list;
-
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef[0];
-
-				$$ = codegen.GetGlobalMethodRef ((BaseTypeRef) $2, (CallConv) $1,
-					(string) $3, param_list, 0);
-			}
-			;
-
 sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PARENS
 			{
 				$$ = TypeSpecToPermPair ($2, $3, (ArrayList) $5);
@@ -2709,16 +3080,6 @@ perm_mbr_nameval_pair	: SQSTRING ASSIGN field_init_primitive
 			| SQSTRING ASSIGN K_STRING OPEN_PARENS SQSTRING CLOSE_PARENS
 			{
 				$$ = new NameValuePair ((string) $1, new StringConst ((string) $5));
-			}
-			;
-
-prop_or_field		: K_PROPERTY
-			{
-				$$ = MemberTypes.Property;
-			}
-			| K_FIELD
-			{
-				$$ = MemberTypes.Field;
 			}
 			;
 
@@ -2831,6 +3192,16 @@ sec_action		: K_REQUEST
 			}
 			;
 */
+
+prop_or_field		: K_PROPERTY
+			{
+				$$ = TokenType.Property;
+			}
+			| K_FIELD
+			{
+				$$ = TokenType.Field;
+			}
+			;
 
 module_head		: D_MODULE
 			| D_MODULE comp_name
@@ -2961,8 +3332,12 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 
 				codegen.CurrentModule.Assembly.Name.HashAlgorithm = algo;
 			}
-			/*
 			| customattr_decl
+			{
+				codegen.CurrentModule.Assembly.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
+			}
+			/*
 			| sec_decl
 			*/
 			;
@@ -3054,9 +3429,7 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 				codegen.CurrentAssemblyReference.Hash = (byte[]) $3;
 			}
 			| K_AUTO // TODO: Implement this.
-			/*
-			| customattr_decl
-			*/
+			| customattr_decl // TODO: How do we set CAs on assembly name refs?
 			;
 
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
@@ -3115,9 +3488,7 @@ exptype_decl		: D_FILE comp_name // TODO: Handle this case.
 			{
 				$$ = $2;
 			}
-			/*
 			| customattr_decl
-			*/
 			;
 
 manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
@@ -3208,9 +3579,7 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 			{
 				$$ = $3;
 			}
-			/*
 			| customattr_decl
-			*/
 			;
 
 slashed_name		: comp_name
@@ -3249,7 +3618,8 @@ comp_qstring		: QSTRING
 
 int32			: INT64
 			{
-				$$ = BitConverter.ToInt32 (BitConverter.GetBytes ((long) $1), BitConverter.IsLittleEndian ? 0 : 4);
+				$$ = BitConverter.ToInt32 (BitConverter.GetBytes ((long) $1),
+					BitConverter.IsLittleEndian ? 0 : 4);
 			}
 			;
 

@@ -28,4 +28,7 @@ using System;
 namespace Mono.ILAsm {
 	internal struct Null {
 	}
+	
+	internal struct TypedNull<T> {
+	}
 }

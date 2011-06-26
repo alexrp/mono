@@ -30,6 +30,8 @@ namespace Mono.ILAsm {
 		
 		public IGenericParameterProvider CurrentGenericParameterProvider { get; set; }
 		
+		public CustomAttribute CurrentCustomAttribute { get; set; }
+		
 		public bool HasAssemblyDirective { get; set; }
 		
 		public bool HasModuleDirective { get; set; }
