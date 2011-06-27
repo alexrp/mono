@@ -506,9 +506,8 @@ class_head		: D_CLASS class_attr comp_name
 				} else
 					codegen.CurrentType.BaseType = (TypeReference) $6;
 
-				if ($7 != null)
-					foreach (var interf in (List<TypeReference>) $7)
-						codegen.CurrentType.Interfaces.Add (interf);
+				foreach (var interf in (List<TypeReference>) $7)
+					codegen.CurrentType.Interfaces.Add (interf);
 			}
 			;
 
@@ -556,10 +555,14 @@ extends_clause		:
 			;
 
 impl_clause		:
+			{
+				$$ = new List<TypeReference> ();
+			}
 			| impl_class_refs
 			;
 
-impl_class_refs		: K_IMPLEMENTS type_spec
+impl_class_refs		:
+			| K_IMPLEMENTS type_spec
 			{
 				$$ = new List<TypeReference> () {
 					(TypeReference) $2,
@@ -588,9 +591,8 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 					Attributes = (GenericParameterAttributes) $1,
 				};
 
-				if ($2 != null)
-					foreach (var constraint in (List<TypeReference>) $2)
-						gp.Constraints.Add (constraint);
+				foreach (var constraint in (List<TypeReference>) $2)
+					gp.Constraints.Add (constraint);
 
 				$$ = new List<GenericParameter> () {
 					gp,
@@ -605,9 +607,8 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 					Attributes = (GenericParameterAttributes) $3,
 				};
 
-				if ($4 != null)
-					foreach (var constraint in (List<TypeReference>) $4)
-						gp.Constraints.Add (constraint);
+				foreach (var constraint in (List<TypeReference>) $4)
+					gp.Constraints.Add (constraint);
 
 				colln.Add (gp);
 			}
@@ -631,6 +632,9 @@ formal_typar		: comp_name
 			;
 
 constraints_clause	:
+			{
+				$$ = new List<TypeReference> ();
+			}
 			| OPEN_PARENS constraints CLOSE_PARENS
 			{
 				$$ = $2;
@@ -1810,10 +1814,6 @@ type_list		:
 			}
 			;
 */
-
-opt_id			:
-			| id
-			;
 
 /*
 method_decls		:
@@ -3512,9 +3512,19 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 
 				Resource rsc;
 
-				if ($3 != null) {
-					var asmDecl = $3 as string;
-					var fileDecl = $3 as Tuple<string, int>;
+				object resourceArg = null;
+				var decls = (List<object>) $3;
+
+				foreach (var decl in decls) {
+					if (!(decl is CustomAttribute)) {
+						decls.Remove (decl);
+						resourceArg = decl;
+					}
+				}
+
+				if (resourceArg != null) {
+					var asmDecl = resourceArg as string;
+					var fileDecl = resourceArg as Tuple<string, int>;
 
 					if (asmDecl != null) {
 						var asmRef = codegen.GetAssemblyReference (asmDecl);
@@ -3527,6 +3537,10 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 					var bytes = File.ReadAllBytes (fileName);
 					rsc = new EmbeddedResource (resName, attr, bytes);
 				}
+
+				// TODO: Cecil doesn't support CAs on resources yet.
+				//foreach (var cattr in decls)
+				//	rsc.CustomAttributes.Add ((CustomAttribute) cattr);
 
 				codegen.CurrentModule.Resources.Add (rsc);
 			}
@@ -3564,10 +3578,18 @@ manres_attr		:
 			;
 
 manifestres_decls	:
+			{
+				$$ = new List<object> ();
+			}
+			| manifestres_decl
+			{
+				$$ = new List<object> {
+					$1,
+				};
+			}
 			| manifestres_decls manifestres_decl
 			{
-				// Just use the last declaration.
-				$$ = $2;
+				((List<object>) $1).Add ($2);
 			}
 			;
 
@@ -3580,6 +3602,9 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 				$$ = $3;
 			}
 			| customattr_decl
+			{
+				$$ = $1;
+			}
 			;
 
 slashed_name		: comp_name
@@ -3691,6 +3716,10 @@ truefalse		: K_TRUE
 			{
 				$$ = false;
 			}
+			;
+
+opt_id			:
+			| id
 			;
 
 id			: ID
