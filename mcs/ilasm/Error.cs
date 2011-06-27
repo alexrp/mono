@@ -143,5 +143,14 @@ namespace Mono.ILAsm {
 		/// is not nested.
 		/// </summary>
 		NoDeclaringType = 25,
+		/// <summary>
+		/// Can happen in a module using .mscorlib if System.Object is referenced
+		/// before it has been defined.
+		/// </summary>
+		SystemObjectUndefined = 26,
+		/// <summary>
+		/// Happens if a base class is specified for an interface definition.
+		/// </summary>
+		BaseClassInInterface = 27,
 	}
 }

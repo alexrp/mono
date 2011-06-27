@@ -478,6 +478,12 @@ namespace_head		: D_NAMESPACE comp_name
 class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			{
 				codegen.CurrentModule.Types.Add (codegen.CurrentType);
+
+				// We've assembled the System.Object type; register it.
+				if (codegen.IsCorlib && codegen.Corlib.Object == null &&
+					codegen.CurrentType.FullName == "System.Object")
+					codegen.Corlib.Object = codegen.CurrentType;
+
 				codegen.CurrentType = null;
 
 				if (typedef_stack.Count > 0)
@@ -495,11 +501,11 @@ class_head		: D_CLASS class_attr comp_name
 					typedef_stack.Push (nester);
 
 					if (!attr.HasAnyBitFlag (TypeAttributes.NestedPublic) &&
-					    !attr.HasAnyBitFlag (TypeAttributes.NestedPrivate) &&
-					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamily) &&
-					    !attr.HasAnyBitFlag (TypeAttributes.NestedAssembly) &&
-					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamANDAssem) &&
-					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamORAssem)) {
+						!attr.HasAnyBitFlag (TypeAttributes.NestedPrivate) &&
+						!attr.HasAnyBitFlag (TypeAttributes.NestedFamily) &&
+						!attr.HasAnyBitFlag (TypeAttributes.NestedAssembly) &&
+						!attr.HasAnyBitFlag (TypeAttributes.NestedFamANDAssem) &&
+						!attr.HasAnyBitFlag (TypeAttributes.NestedFamORAssem)) {
 						report.WriteWarning (Warning.NestedTypeMadeNestedVisibility,
 							"Nested type set to equivalent nested visibility.");
 
@@ -525,15 +531,25 @@ class_head		: D_CLASS class_attr comp_name
 
 				codegen.CurrentGenericParameterProvider = null;
 
-				if ($6 == null) {
-					if (is_value_class)
-						codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
-					else if (is_enum_class)
-						codegen.CurrentType.BaseType = codegen.Corlib.Enum;
-					else
-						codegen.CurrentType.BaseType = codegen.Corlib.Object;
-				} else
-					codegen.CurrentType.BaseType = (TypeReference) $6;
+				// if we're assembling mscorlib and defining System.Object,
+				// no base type should be defined.
+				if (!(codegen.IsCorlib && codegen.Corlib.Object == null &&
+					codegen.CurrentType.FullName == "System.Object")) {
+					if ($6 == null) {
+						if (is_value_class)
+							codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
+						else if (is_enum_class)
+							codegen.CurrentType.BaseType = codegen.Corlib.Enum;
+						else
+							codegen.CurrentType.BaseType = codegen.Corlib.Object;
+					} else {
+						if (codegen.CurrentType.IsInterface)
+							report.WriteError (Error.BaseClassInInterface,
+								"Base type specified on an interface.");
+
+						codegen.CurrentType.BaseType = (TypeReference) $6;
+					}
+				}
 
 				foreach (var interf in (List<TypeReference>) $7)
 					codegen.CurrentType.Interfaces.Add (interf);
@@ -564,7 +580,7 @@ class_attr		:
 			| class_attr K_NESTED K_FAMORASSEM	{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamORAssem; }
 			| class_attr K_VALUE			{ is_value_class = true; }
 			| class_attr K_ENUM			{ is_enum_class = true; }
-			| class_attr K_INTERFACE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Interface; }
+			| class_attr K_INTERFACE		{ $$ = (TypeAttributes) $1 | TypeAttributes.Interface | TypeAttributes.Abstract; }
 			| class_attr K_SEALED			{ $$ = (TypeAttributes) $1 | TypeAttributes.Sealed; }
 			| class_attr K_ABSTRACT			{ $$ = (TypeAttributes) $1 | TypeAttributes.Abstract; }
 			| class_attr K_AUTO
@@ -1006,7 +1022,16 @@ type			: K_CLASS class_ref
 
 				$$ = param;
 			}
-			| K_OBJECT			{ $$ = codegen.Corlib.Object; }
+			| K_OBJECT
+			{
+				var obj = codegen.Corlib.Object;
+
+				if (obj == null)
+					report.WriteError (Error.SystemObjectUndefined,
+						"System.Object has not been defined.");
+
+				$$ = obj;
+			}
 			| K_VOID			{ $$ = codegen.Corlib.Void; }
 			| K_TYPEDREF			{ $$ = codegen.Corlib.TypedReference; }
 			| K_NATIVE K_INT		{ $$ = codegen.Corlib.IntPtr; }

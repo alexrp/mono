@@ -265,6 +265,11 @@ namespace Mono.ILAsm {
 		{
 			const string corlibStr = "mscorlib";
 			
+			// If we're assembling mscorlib, we expect to find the types
+			// exposed on the Corlib class when we parse.
+			if (IsCorlib)
+				return new Corlib (CurrentModule);
+			
 			var asm = GetAliasedAssemblyReference (corlibStr);
 			if (asm != null)
 				return new Corlib (CurrentModule, asm);

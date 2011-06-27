@@ -35,9 +35,18 @@ namespace Mono.ILAsm {
 					prop.Name, module, asmName), null);
 		}
 		
+		public Corlib (ModuleDefinition module)
+		{
+			foreach (var prop in typeof (Corlib).GetProperties ())
+				if (prop.Name != "Object")
+					prop.SetValue (this, new TypeReference ("System",
+						prop.Name, module, module), null);
+		}
+		
 		public TypeReference Type { get; private set; }
 		
-		public TypeReference Object { get; private set; }
+		// This type can be defined if the .mscorlib directive is used.
+		public TypeReference Object { get; set; }
 		
 		public TypeReference ValueType { get; private set; }
 		
