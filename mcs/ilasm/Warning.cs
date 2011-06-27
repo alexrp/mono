@@ -92,5 +92,10 @@ namespace Mono.ILAsm {
 		/// signature.
 		/// </summary>
 		NegativeArraySize = 13,
+		/// <summary>
+		/// Happens when a nested type does not have nested visibility specified
+		/// and we change it to that.
+		/// </summary>
+		NestedTypeMadeNestedVisibility = 14,
 	}
 }

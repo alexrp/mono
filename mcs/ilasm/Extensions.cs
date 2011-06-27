@@ -45,7 +45,15 @@ namespace Mono.ILAsm {
 			var intValue = ((IConvertible) value).ToUInt64 (null);
 			var intFlag = ((IConvertible) flag).ToUInt64 (null);
 			
-			return (intValue & intFlag) != 0;
+			return (intValue & intFlag) == intFlag;
+		}
+		
+		public static bool HasAnyBitFlag (this Enum value, Enum flags)
+		{
+			var intValue = ((IConvertible) value).ToUInt64 (null);
+			var intFlags = ((IConvertible) flags).ToUInt64 (null);
+			
+			return (intValue & intFlags) != 0;
 		}
 		
 		public static TypeDefinition GetModuleType (this ModuleDefinition module)

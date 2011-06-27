@@ -128,5 +128,20 @@ namespace Mono.ILAsm {
 		/// An event accessor was invalid (i.e. not in the current module).
 		/// </summary>
 		InvalidEventMethod = 22,
+		/// <summary>
+		/// One of the .this, .base, or .nester directives were used outside
+		/// of the scope of a type definition.
+		/// </summary>
+		RelativeTypeReferenceOutsideTypeDefinition = 23,
+		/// <summary>
+		/// Happens when the .base directive is used in a type definition that
+		/// has no base type.
+		/// </summary>
+		NoBaseType = 24,
+		/// <summary>
+		/// Happens when the .nester directive is used in a type definition that
+		/// is not nested.
+		/// </summary>
+		NoDeclaringType = 25,
 	}
 }

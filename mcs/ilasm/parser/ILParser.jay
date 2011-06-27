@@ -21,6 +21,7 @@ namespace Mono.ILAsm {
 		readonly ILTokenizer tokenizer;
 		readonly Report report;
 		readonly Stack<string> namespace_stack = new Stack<string> ();
+		readonly Stack<TypeDefinition> typedef_stack = new Stack<TypeDefinition> ();
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -28,6 +29,7 @@ namespace Mono.ILAsm {
 		bool is_explicit_call;
 		bool is_instance_call;
 		bool is_parameter_marshal_notation;
+		bool type_attr_visibility_set;
 		int custom_attr_blob_seq_length;
 
 		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
@@ -477,15 +479,42 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			{
 				codegen.CurrentModule.Types.Add (codegen.CurrentType);
 				codegen.CurrentType = null;
+
+				if (typedef_stack.Count > 0)
+					codegen.CurrentType = typedef_stack.Pop ();
 			}
 			;
 
 class_head		: D_CLASS class_attr comp_name
 			{
 				var qn = (QualifiedName) $3;
+				var attr = (TypeAttributes) $2;
+				var nester = codegen.CurrentType;
+
+				if (nester != null) {
+					typedef_stack.Push (nester);
+
+					if (!attr.HasAnyBitFlag (TypeAttributes.NestedPublic) &&
+					    !attr.HasAnyBitFlag (TypeAttributes.NestedPrivate) &&
+					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamily) &&
+					    !attr.HasAnyBitFlag (TypeAttributes.NestedAssembly) &&
+					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamANDAssem) &&
+					    !attr.HasAnyBitFlag (TypeAttributes.NestedFamORAssem)) {
+						report.WriteWarning (Warning.NestedTypeMadeNestedVisibility,
+							"Nested type set to equivalent nested visibility.");
+
+						if (attr.HasBitFlag (TypeAttributes.Public)) {
+							attr &= ~TypeAttributes.Public;
+							attr |= TypeAttributes.NestedPublic;
+						} else // In the case of NotPublic.
+							attr |= TypeAttributes.NestedPrivate;
+					}
+				}
 
 				codegen.CurrentType = new TypeDefinition (codegen.CurrentNamespace +
-					qn.FullNamespace, qn.Name, (TypeAttributes) $2);
+					qn.FullNamespace, qn.Name, attr) {
+					DeclaringType = nester,
+				};
 
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 			}
@@ -515,10 +544,18 @@ class_attr		:
 			{
 				is_value_class = false;
 				is_enum_class = false;
+				type_attr_visibility_set = false;
 				$$ = TypeAttributes.NotPublic;
 			}
-			| class_attr K_PUBLIC			{ $$ = (TypeAttributes) $1 | TypeAttributes.Public; }
-			| class_attr K_PRIVATE
+			| class_attr K_PUBLIC
+			{
+				if (!type_attr_visibility_set) {
+					type_attr_visibility_set = true;
+					$$ = (TypeAttributes) $1 | TypeAttributes.Public;
+				}
+			}
+			| class_attr K_PRIVATE			{ type_attr_visibility_set = true; }
+			// TODO: We may need to use type_attr_visibility_set for these too.
 			| class_attr K_NESTED K_PRIVATE		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPrivate; }
 			| class_attr K_NESTED K_PUBLIC		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedPublic; }
 			| class_attr K_NESTED K_FAMILY		{ $$ = (TypeAttributes) $1 | TypeAttributes.NestedFamily; }
@@ -618,11 +655,11 @@ formal_typar_attr	:
 			{
 				$$ = GenericParameterAttributes.NonVariant;
 			}
-			| formal_typar_attr PLUS { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Covariant; }
-			| formal_typar_attr DASH { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Contravariant; }
-			| formal_typar_attr D_CTOR { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.DefaultConstructorConstraint; }
-			| formal_typar_attr K_VALUETYPE { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.NotNullableValueTypeConstraint; }
-			| formal_typar_attr K_CLASS { $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.ReferenceTypeConstraint; }
+			| formal_typar_attr PLUS	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Covariant; }
+			| formal_typar_attr DASH	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.Contravariant; }
+			| formal_typar_attr D_CTOR	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.DefaultConstructorConstraint; }
+			| formal_typar_attr K_VALUETYPE	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.NotNullableValueTypeConstraint; }
+			| formal_typar_attr K_CLASS	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.ReferenceTypeConstraint; }
 			;
 
 formal_typar		: comp_name
@@ -658,8 +695,8 @@ class_decls		:
 			;
 
 class_decl		: /*method_all
-			| class_all
 			*/
+			| class_all
 			| event_all
 			| prop_all
 			| field_decl
@@ -776,10 +813,42 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				$$ = codegen.GetTypeByName ((QualifiedName) $1);
 			}
 			| mdtoken_type
-			// TODO: Implement these.
 			| D_THIS
+			{
+				if (codegen.CurrentType == null)
+					report.WriteError (Error.RelativeTypeReferenceOutsideTypeDefinition,
+						".this directive used outside type definition scope.");
+
+				$$ = codegen.CurrentType;
+			}
 			| D_BASE
+			{
+				if (codegen.CurrentType == null)
+					report.WriteError (Error.RelativeTypeReferenceOutsideTypeDefinition,
+						".base directive used outside type definition scope.");
+
+				var baseType = codegen.CurrentType.BaseType;
+
+				if (baseType == null)
+					report.WriteError (Error.NoBaseType,
+						"Type has no base type.");
+
+				$$ = baseType;
+			}
 			| D_NESTER
+			{
+				if (codegen.CurrentType == null)
+					report.WriteError (Error.RelativeTypeReferenceOutsideTypeDefinition,
+						".nester directive used outside type definition scope.");
+
+				var nester = codegen.CurrentType.DeclaringType;
+
+				if (nester == null)
+					report.WriteError (Error.NoDeclaringType,
+						"Type has no declaring type.");
+
+				$$ = nester;
+			}
 			;
 
 mdtoken_type		: mdtoken
@@ -794,12 +863,10 @@ type			: K_CLASS class_ref
 			}
 			| K_VALUE K_CLASS class_ref
 			{
-				// TODO: Warn if not a value type?
 				$$ = $3;
 			}
 			| K_VALUETYPE class_ref
 			{
-				// TODO: Warn if not a value type?
 				$$ = $2;
 			}
 			| type OPEN_BRACKET CLOSE_BRACKET
