@@ -96,7 +96,8 @@ namespace Mono.ILAsm {
 				return ExitCode.Error;
 			} catch (Exception ex) {
 				// An internal error has occurred...
-				WriteError ("{0}{1}{2}", ex.ToString (), Environment.NewLine, ex.StackTrace);
+				WriteError ("{0}{1}{2}{1}{3}", ex.ToString (), Environment.NewLine, ex.StackTrace,
+					"This is an internal error. Please file a bug report.");
 				return ExitCode.Error;
 			}
 
