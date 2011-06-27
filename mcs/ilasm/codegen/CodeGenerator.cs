@@ -164,18 +164,24 @@ namespace Mono.ILAsm {
 				"Attempting to resolve assembly: {0}", name);
 			
 			var asmName = new AssemblyNameReference (name, null);
-			var asm = CurrentModule.AssemblyResolver.Resolve (asmName);
+			AssemblyDefinition asm;
 			
-			if (asm != null) {
-				asmName.Version = asm.Name.Version;
-				asmName.PublicKeyToken = asm.Name.PublicKeyToken;
-				return asmName;
+			try
+			{
+				asm = CurrentModule.AssemblyResolver.Resolve (asmName);
+			}
+			catch (AssemblyResolutionException)
+			{
+				report.WriteWarning (Warning.AutoResolutionFailed,
+					"Could not resolve assembly: {0}", name);
+				
+				return null;
 			}
 			
-			report.WriteWarning (Warning.AutoResolutionFailed,
-				"Could not resolve assembly: {0}", name);
+			asmName.Version = asm.Name.Version;
+			asmName.PublicKeyToken = asm.Name.PublicKeyToken;
 			
-			return null;
+			return asmName;
 		}
 		
 		public AssemblyNameReference TryGetAssemblyReference (string name)
