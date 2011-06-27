@@ -57,6 +57,15 @@
     <Compile Include="ClassTests.cs" />
     <Compile Include="FieldTests.cs" />
     <Compile Include="DataTests.cs" />
+    <Compile Include="CustomAttributeTests.cs" />
+    <Compile Include="CorlibTests.cs" />
+    <Compile Include="PropertyTests.cs" />
+    <Compile Include="EventTests.cs" />
+    <Compile Include="SecurityTests.cs" />
+    <Compile Include="ExportTests.cs" />
+    <Compile Include="ResourceTests.cs" />
+    <Compile Include="VTableTests.cs" />
+    <Compile Include="SourceTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
