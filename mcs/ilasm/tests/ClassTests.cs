@@ -221,5 +221,70 @@ namespace Mono.ILAsm.Tests {
 				.Expect (x => x.GetType ("test008").GenericParameters.ContainsOne (
 					y => y.IsContravariant));
 		}
+		
+		[Test]
+		public void TestNonPowerOfTwoClassPackSize ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-001.il")
+				.ExpectError (Error.InvalidPackSize)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestOutOfRangePackSize ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-002.il")
+				.ExpectError (Error.InvalidPackSize)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestClassPackSize ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test003").PackingSize == 32);
+		}
+		
+		[Test]
+		public void TestPackSizeInAutoLayoutClass ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-004.il")
+				.ExpectWarning (Warning.LayoutInfoInAutoLayoutType)
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test004").PackingSize == 16);
+		}
+		
+		[Test]
+		public void TestClassSize ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test005").ClassSize == 1024);
+		}
+		
+		[Test]
+		public void TestMinusOneClassSize ()
+		{
+			ILAsm ()
+				.Input ("class-layout/class-layout-006.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test006").ClassSize == -1);
+		}
 	}
 }

@@ -101,5 +101,10 @@ namespace Mono.ILAsm {
 		/// Happens if System.Object has a base type in a .mscorlib module.
 		/// </summary>
 		SystemObjectBaseTypeReset = 15,
+		/// <summary>
+		/// Happens if a .pack or .size directives are used in a type with
+		/// automatic memory layout.
+		/// </summary>
+		LayoutInfoInAutoLayoutType = 16,
 	}
 }

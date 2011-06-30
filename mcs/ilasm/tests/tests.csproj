@@ -136,7 +136,6 @@
     <None Include="tests\field-generic\field-generic-002.il" />
     <None Include="tests\class-generic\class-generic-006.il" />
     <None Include="tests\data\data-005.il" />
-    <None Include="tests\misc-decl\misc-decl-007.il" />
     <None Include="tests\class-generic\class-generic-007.il" />
     <None Include="tests\class-generic\class-generic-008.il" />
     <None Include="tests\mresource\mresource-001.il" />
@@ -147,6 +146,12 @@
     <None Include="tests\mscorlib\mscorlib-001.il" />
     <None Include="tests\mscorlib\mscorlib-002.il" />
     <None Include="tests\mscorlib\mscorlib-003.il" />
+    <None Include="tests\class-layout\class-layout-001.il" />
+    <None Include="tests\class-layout\class-layout-002.il" />
+    <None Include="tests\class-layout\class-layout-003.il" />
+    <None Include="tests\class-layout\class-layout-004.il" />
+    <None Include="tests\class-layout\class-layout-005.il" />
+    <None Include="tests\class-layout\class-layout-006.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -170,5 +175,6 @@
     <Folder Include="tests\field-generic\" />
     <Folder Include="tests\mresource\" />
     <Folder Include="tests\mscorlib\" />
+    <Folder Include="tests\class-layout\" />
   </ItemGroup>
 </Project>

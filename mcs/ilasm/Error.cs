@@ -161,5 +161,9 @@ namespace Mono.ILAsm {
 		/// be resolved.
 		/// </summary>
 		InvalidOverrideMethod = 29,
+		/// <summary>
+		/// Happens if an invalid packing size is specified in the .pack directive.
+		/// </summary>
+		InvalidPackSize = 30,
 	}
 }

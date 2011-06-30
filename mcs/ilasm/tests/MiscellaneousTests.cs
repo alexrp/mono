@@ -68,6 +68,7 @@ namespace Mono.ILAsm.Tests {
 				.Expect (ExitCode.Error);
 		}
 		
+		[Test]
 		public void TestOutOfRangeFileAlignment ()
 		{
 			ILAsm ()
@@ -85,15 +86,6 @@ namespace Mono.ILAsm.Tests {
 				.ExpectError (Error.InvalidImageBase)
 				.Run ()
 				.Expect (ExitCode.Error);
-		}
-		
-		[Test]
-		public void TestCorlib ()
-		{
-			ILAsm ()
-				.Input ("misc-decl/misc-decl-007.il")
-				.Run ()
-				.Expect (ExitCode.Success);
 		}
 	}
 }

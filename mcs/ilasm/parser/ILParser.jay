@@ -750,10 +750,26 @@ class_decl		: /*method_all
 			*/
 			| D_SIZE int32
 			{
-				codegen.CurrentType.ClassSize = (int) $2;
+				var size = (int) $2;
+
+				if (codegen.CurrentType.IsAutoLayout && size != -1)
+					report.WriteWarning (Warning.LayoutInfoInAutoLayoutType,
+						"Class layout information specified in auto-layout class.");
+
+				codegen.CurrentType.ClassSize = size;
 			}
 			| D_PACK int32
 			{
+				if (codegen.CurrentType.IsAutoLayout)
+					report.WriteWarning (Warning.LayoutInfoInAutoLayoutType,
+						"Class layout information specified in auto-layout class.");
+
+				var p = (int) $2;
+
+				if (p < 1 || p > 128 || (p & (p - 1)) != 0)
+					report.WriteError (Error.InvalidPackSize,
+						"Class pack size must be a power of two between 1 and 128.");
+
 				codegen.CurrentType.PackingSize = (short) (int) $2;
 			}
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name K_WITH call_conv type type_spec DOUBLE_COLON method_name OPEN_PARENS sig_args CLOSE_PARENS
