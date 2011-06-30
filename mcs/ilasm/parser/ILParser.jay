@@ -359,8 +359,7 @@ decls			:
 			| decls decl
 			;
 
-decl			:
-			class_all
+decl			: class_all
 			| namespace_all
 			/*
 			| method_all
@@ -1943,9 +1942,7 @@ type_list		:
 				type_list.Add ($4);
 			}
 			;
-*/
 
-/*
 method_decls		:
 			| method_decls method_decl
 			;
