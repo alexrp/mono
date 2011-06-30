@@ -756,60 +756,69 @@ class_decl		: /*method_all
 			{
 				codegen.CurrentType.PackingSize = (short) (int) $2;
 			}
-			/*
-			| D_OVERRIDE type_spec DOUBLE_COLON method_name K_WITH call_conv type type_spec DOUBLE_COLON method_name type_list
+			| D_OVERRIDE type_spec DOUBLE_COLON method_name K_WITH call_conv type type_spec DOUBLE_COLON method_name OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				BaseTypeRef owner = (BaseTypeRef) $2;
-				ArrayList arg_list = (ArrayList) $11;
-				BaseTypeRef[] param_list;
-				BaseMethodRef decl;
+				var conv = (MethodCallingConvention) $6;
+				var retType = (TypeReference) $7;
 
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef[0];
+				var overridingMethod = new MethodReference ((string) $10, retType, (TypeReference) $8) {
+					CallingConvention = conv,
+				};
 
-				decl = owner.GetMethodRef ((BaseTypeRef) $7,
-					(CallConv) $6, (string) $4, param_list, 0);
+				var baseMethod = new MethodReference ((string) $4, retType, (TypeReference) $2) {
+					CallingConvention = conv,
+				};
 
-				string sig = MethodDef.CreateSignature (owner,
-					(CallConv) $6, (string) $10, param_list, 0, false);
+				if (is_instance_call) {
+					overridingMethod.HasThis = true;
+					baseMethod.HasThis = true;
+				}
 
-				codegen.CurrentTypeDef.AddOverride (sig, decl);
+				if (is_explicit_call) {
+					overridingMethod.ExplicitThis = true;
+					baseMethod.ExplicitThis = true;
+				}
+
+				is_instance_call = false;
+				is_explicit_call = false;
+
+				foreach (var arg in (List<TypeReference>) $12) {
+					overridingMethod.Parameters.Add (new ParameterDefinition (arg));
+					baseMethod.Parameters.Add (new ParameterDefinition (arg));
+				}
+
+				var resolvedMethod = overridingMethod.Resolve ();
+
+				if (resolvedMethod == null)
+					report.WriteError (Error.InvalidOverrideMethod,
+						"Could not resolve overriding method: {0}",
+						overridingMethod);
+
+				resolvedMethod.Overrides.Add ((MethodReference) $2);
 			}
-			  OPEN_PARENS sig_args CLOSE_PARENS
-			*/
+			| D_OVERRIDE generic_method_ref K_WITH generic_method_ref
+			{
+				var overridingMethod = ((MethodReference) $4).Resolve ();
+
+				if (overridingMethod == null)
+					report.WriteError (Error.InvalidOverrideMethod,
+						"Could not resolve overriding method: {0}",
+						overridingMethod);
+
+				overridingMethod.Overrides.Add ((MethodReference) $2);
+			}
 			| language_decl
 			;
 
 /*
 param_type_decl		: D_PARAM K_TYPE id
-			{
-				if (codegen.CurrentMethodDef != null)
-					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam ((string) $3);
-				else
-					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam ((string) $3);
-
-				if (codegen.CurrentCustomAttrTarget == null)
-					Report.Error (String.Format ("Type parameter '{0}' undefined.", (string) $3));
-			}
 			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
-			{
-				int index = ((int) $4);
-				if (codegen.CurrentMethodDef != null)
-					codegen.CurrentCustomAttrTarget = codegen.CurrentMethodDef.GetGenericParam (index - 1);
-				else
-					codegen.CurrentCustomAttrTarget = codegen.CurrentTypeDef.GetGenericParam (index - 1);
-
-				if (codegen.CurrentCustomAttrTarget == null)
-					Report.Error (String.Format ("Type parameter '{0}' index out of range.", index));
-			}
 			;
 */
 
 class_refs		: class_ref
 			{
-				$$ = new List<TypeReference> () {
+				$$ = new List<TypeReference> {
 					(TypeReference) $1,
 				};
 			}
@@ -1209,14 +1218,8 @@ call_kind		:
 			;
 
 marshal_info		:
-			/*
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
-			{
-			}
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring COMMA comp_qstring COMMA comp_qstring CLOSE_PARENS
-			{
-			}
-			*/
 			| K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				$$ = new FixedSysStringMarshalInfo {
@@ -2499,6 +2502,39 @@ method_name		: D_CTOR
 			| comp_name
 			{
 				$$ = ((QualifiedName) $1).FullName;
+			}
+			;
+
+generic_method_ref	: K_METHOD call_conv type type_spec DOUBLE_COLON method_name generic_arity OPEN_PARENS sig_args CLOSE_PARENS
+			{
+				var method = new MethodReference ((string) $6, (TypeReference) $3, (TypeReference) $4) {
+					CallingConvention = (MethodCallingConvention) $2,
+				};
+
+				if (is_instance_call)
+					method.HasThis = true;
+
+				if (is_explicit_call)
+					method.ExplicitThis = true;
+
+				is_instance_call = false;
+				is_explicit_call = false;
+
+				foreach (var arg in (List<TypeReference>) $9)
+					method.Parameters.Add (new ParameterDefinition (arg));
+
+				if ($7 != null)
+					for (var i = 0; i < (int) $7; i++)
+						method.GenericParameters.Add (new GenericParameter (method));
+
+				$$ = method;
+			}
+			;
+
+generic_arity		:
+			| OPEN_BRACKET OPEN_ANGLE_BRACKET int32 CLOSE_ANGLE_BRACKET CLOSE_BRACKET
+			{
+				$$ = $3;
 			}
 			;
 

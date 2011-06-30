@@ -156,5 +156,10 @@ namespace Mono.ILAsm {
 		/// Happens if an embedded resource file could not be read.
 		/// </summary>
 		ResourceFileError = 28,
+		/// <summary>
+		/// Happens if the overriding method of a .override directive could not
+		/// be resolved.
+		/// </summary>
+		InvalidOverrideMethod = 29,
 	}
 }
