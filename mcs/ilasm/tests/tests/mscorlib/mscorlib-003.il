@@ -1,5 +1,5 @@
 // 
-// CorlibTests.cs
+// mscorlib-003.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -23,43 +23,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public class CorlibTests : AssemblerTester {
-		[Test]
-		public void TestUndefinedSystemObject ()
-		{
-			ILAsm ()
-				.Input ("mscorlib/mscorlib-001.il")
-				.ExpectError (Error.SystemObjectUndefined)
-				.Run ()
-				.Expect (ExitCode.Error);
-		}
-		
-		[Test]
-		public void TestSystemObjectWithBaseType ()
-		{
-			ILAsm ()
-				.Input ("mscorlib/mscorlib-002.il")
-				.ExpectWarning (Warning.SystemObjectBaseTypeReset)
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("System", "Object").BaseType == null);
-		}
-		
-		[Test]
-		public void TestCorrectSystemObject ()
-		{
-			ILAsm ()
-				.Input ("mscorlib/mscorlib-003.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.GetType ("System.Object").BaseType == null);
-		}
-	}
+.mscorlib
+
+.class System.Object
+{
 }

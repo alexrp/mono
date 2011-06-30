@@ -143,6 +143,9 @@
     <None Include="tests\mresource\mresource-003.il" />
     <None Include="tests\mresource\mresource-004.il" />
     <None Include="tests\mresource\mresource-005.il" />
+    <None Include="tests\mscorlib\mscorlib-001.il" />
+    <None Include="tests\mscorlib\mscorlib-002.il" />
+    <None Include="tests\mscorlib\mscorlib-003.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -165,5 +168,6 @@
     <Folder Include="tests\data\" />
     <Folder Include="tests\field-generic\" />
     <Folder Include="tests\mresource\" />
+    <Folder Include="tests\mscorlib\" />
   </ItemGroup>
 </Project>

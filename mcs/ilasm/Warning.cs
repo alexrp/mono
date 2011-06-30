@@ -97,5 +97,9 @@ namespace Mono.ILAsm {
 		/// and we change it to that.
 		/// </summary>
 		NestedTypeMadeNestedVisibility = 14,
+		/// <summary>
+		/// Happens if System.Object has a base type in a .mscorlib module.
+		/// </summary>
+		SystemObjectBaseTypeReset = 15,
 	}
 }

@@ -531,25 +531,44 @@ class_head		: D_CLASS class_attr comp_name
 
 				codegen.CurrentGenericParameterProvider = null;
 
+				TypeReference baseType;
+
 				// if we're assembling mscorlib and defining System.Object,
 				// no base type should be defined.
-				if (!(codegen.IsCorlib && codegen.Corlib.Object == null &&
-					codegen.CurrentType.FullName == "System.Object")) {
-					if ($6 == null) {
-						if (is_value_class)
-							codegen.CurrentType.BaseType = codegen.Corlib.ValueType;
-						else if (is_enum_class)
-							codegen.CurrentType.BaseType = codegen.Corlib.Enum;
-						else
-							codegen.CurrentType.BaseType = codegen.Corlib.Object;
-					} else {
-						if (codegen.CurrentType.IsInterface)
-							report.WriteError (Error.BaseClassInInterface,
-								"Base type specified on an interface.");
+				var isSysObj = codegen.IsCorlib && codegen.Corlib.Object == null &&
+					codegen.CurrentType.FullName == "System.Object";
 
-						codegen.CurrentType.BaseType = (TypeReference) $6;
+				if ($6 == null) {
+					if (is_value_class)
+						baseType = codegen.Corlib.ValueType;
+					else if (is_enum_class)
+						baseType = codegen.Corlib.Enum;
+					else if (isSysObj)
+						baseType = null;
+					else {
+						var obj = codegen.Corlib.Object;
+
+						if (obj == null)
+							report.WriteError (Error.SystemObjectUndefined,
+								"System.Object has not been defined.");
+
+						baseType = obj;
 					}
+				} else {
+					if (codegen.CurrentType.IsInterface)
+						report.WriteError (Error.BaseClassInInterface,
+							"Base type specified on an interface.");
+
+					baseType = (TypeReference) $6;
 				}
+
+				if (isSysObj && baseType != null) {
+					report.WriteWarning (Warning.SystemObjectBaseTypeReset,
+						"System.Object should not have a base type; removed.");
+
+					codegen.CurrentType.BaseType = null;
+				} else
+					codegen.CurrentType.BaseType = baseType;
 
 				foreach (var interf in (List<TypeReference>) $7)
 					codegen.CurrentType.Interfaces.Add (interf);
@@ -3844,6 +3863,17 @@ comp_name		: id
 					Name = (string) $1,
 				};
 			}
+			| COMP_NAME
+			{
+				var strings = ((string) $1).Split ('.');
+
+				var qn = new QualifiedName {
+					Name = strings [1],
+				};
+				qn.Namespaces.Add (strings [0]);
+
+				$$ = qn;
+			}
 			| comp_name DOT comp_name
 			{
 				var n1 = (QualifiedName) $1;
@@ -3860,17 +3890,6 @@ comp_name		: id
 
 				foreach (var ns in n2.Namespaces)
 					qn.Namespaces.Add (ns);
-
-				$$ = qn;
-			}
-			| COMP_NAME
-			{
-				var strings = ((string) $1).Split ('.');
-
-				var qn = new QualifiedName {
-					Name = strings [1],
-				};
-				qn.Namespaces.Add (strings [0]);
 
 				$$ = qn;
 			}
