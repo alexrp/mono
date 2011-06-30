@@ -10,6 +10,7 @@ tests/ResourceTests.cs
 tests/FieldTests.cs
 tests/AssemblyInfo.cs
 tests/ClassTests.cs
+tests/MethodTests.cs
 tests/Extensions.cs
 tests/EventTests.cs
 tests/PropertyTests.cs

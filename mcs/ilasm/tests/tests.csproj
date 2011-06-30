@@ -66,6 +66,7 @@
     <Compile Include="ResourceTests.cs" />
     <Compile Include="VTableTests.cs" />
     <Compile Include="SourceTests.cs" />
+    <Compile Include="MethodTests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
