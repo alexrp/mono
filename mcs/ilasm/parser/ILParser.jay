@@ -3607,7 +3607,9 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 				object resourceArg = null;
 				var decls = (List<object>) $3;
 
-				foreach (var decl in decls) {
+				for (var i = 0; i < decls.Count; i++) {
+					var decl = decls [i];
+
 					if (!(decl is CustomAttribute)) {
 						decls.Remove (decl);
 						resourceArg = decl;
@@ -3616,17 +3618,30 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 
 				if (resourceArg != null) {
 					var asmDecl = resourceArg as string;
-					var fileDecl = resourceArg as Tuple<string, int>;
 
 					if (asmDecl != null) {
 						var asmRef = codegen.GetAssemblyReference (asmDecl);
 						rsc = new AssemblyLinkedResource (resName, attr, asmRef);
 					} else {
 						// TODO: Propagate nometadata/.entrypoint/offset.
+						// TODO: Error if the file was not declared with .file.
+						var fileDecl = resourceArg as Tuple<string, int>;
 						rsc = new LinkedResource (resName, attr, fileDecl.X);
 					}
 				} else {
-					var bytes = File.ReadAllBytes (fileName);
+					byte[] bytes = null;
+
+					try
+					{
+						bytes = File.ReadAllBytes (fileName);
+					}
+					catch (IOException ex)
+					{
+						report.WriteError (Error.ResourceFileError,
+							"Could not read embedded resource file '{0}': {1}",
+								fileName, ex.Message);
+					}
+
 					rsc = new EmbeddedResource (resName, attr, bytes);
 				}
 
@@ -3641,12 +3656,12 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 manifestres_head	: D_MRESOURCE manres_attr comp_name
 			{
 				$$ = new Tuple<ManifestResourceAttributes, string> ((ManifestResourceAttributes) $2,
-					(string) $3);
+					((QualifiedName) $3).FullName);
 			}
 			| D_MRESOURCE manres_attr comp_name K_AS comp_name
 			{
 				$$ = new Tuple<ManifestResourceAttributes, string, string> ((ManifestResourceAttributes) $2,
-					(string) $3, (string) $5);
+					((QualifiedName) $3).FullName, ((QualifiedName) $5).FullName);
 			}
 			;
 
@@ -3685,11 +3700,12 @@ manifestres_decls	:
 
 manifestres_decl	: D_FILE comp_name K_AT int32
 			{
-				$$ = new Tuple<string, int> ((string) $2, (int) $4);
+				$$ = new Tuple<string, int> (((QualifiedName) $2).FullName,
+					(int) $4);
 			}
-			| D_ASSEMBLY K_EXTERN slashed_name
+			| D_ASSEMBLY K_EXTERN comp_name
 			{
-				$$ = $3;
+				$$ = ((QualifiedName) $3).FullName;
 			}
 			| customattr_decl
 			{
@@ -3814,6 +3830,12 @@ opt_id			:
 
 id			: ID
 			| SQSTRING
+			;
+
+comp_name_str		: comp_name
+			{
+				$$ = ((QualifiedName) $1).FullName;
+			}
 			;
 
 comp_name		: id

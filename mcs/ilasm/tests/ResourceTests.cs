@@ -24,10 +24,73 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
 	public class ResourceTests : AssemblerTester {
+		[Test]
+		public void TestAssemblyExternResource ()
+		{
+			ILAsm ()
+				.Input ("mresource/mresource-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Resources.ContainsOne (
+					y => y.Name == "test001",
+					y => ((AssemblyLinkedResource) y).Assembly.Name == "mscorlib"));
+		}
+		
+		[Test]
+		public void TestFileResource ()
+		{
+			ILAsm ()
+				.Input ("mresource/mresource-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Resources.ContainsOne (
+					y => y.Name == "test002_rsc",
+					y => ((LinkedResource) y).File == "test002"));
+		}
+		
+		[Test]
+		public void TestInsaneDefaultResourceVisibility ()
+		{
+			ILAsm ()
+				.Input ("mresource/mresource-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Resources.ContainsOne (
+					y => y.Name == "test003",
+					y => !y.IsPublic && !y.IsPrivate));
+		}
+		
+		[Test]
+		public void TestEmbeddedResource ()
+		{
+			ILAsm ()
+				.Input ("mresource/mresource-004.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Resources.ContainsOne (
+					y => y.Name == "../../tests/mresource/test.txt"));
+		}
+		
+		[Test]
+		public void TestAliasedResource ()
+		{
+			ILAsm ()
+				.Input ("mresource/mresource-005.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Resources.ContainsOne (
+					y => y.Name == "test005"));
+		}
 	}
 }

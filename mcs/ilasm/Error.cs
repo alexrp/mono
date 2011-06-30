@@ -152,5 +152,9 @@ namespace Mono.ILAsm {
 		/// Happens if a base class is specified for an interface definition.
 		/// </summary>
 		BaseClassInInterface = 27,
+		/// <summary>
+		/// Happens if an embedded resource file could not be read.
+		/// </summary>
+		ResourceFileError = 28,
 	}
 }

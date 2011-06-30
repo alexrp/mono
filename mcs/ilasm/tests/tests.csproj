@@ -138,6 +138,11 @@
     <None Include="tests\misc-decl\misc-decl-007.il" />
     <None Include="tests\class-generic\class-generic-007.il" />
     <None Include="tests\class-generic\class-generic-008.il" />
+    <None Include="tests\mresource\mresource-001.il" />
+    <None Include="tests\mresource\mresource-002.il" />
+    <None Include="tests\mresource\mresource-003.il" />
+    <None Include="tests\mresource\mresource-004.il" />
+    <None Include="tests\mresource\mresource-005.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -159,5 +164,6 @@
     <Folder Include="tests\class-generic\" />
     <Folder Include="tests\data\" />
     <Folder Include="tests\field-generic\" />
+    <Folder Include="tests\mresource\" />
   </ItemGroup>
 </Project>
