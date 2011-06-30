@@ -85,13 +85,13 @@ namespace Mono.ILAsm {
 			if (ch >= '0' && ch <= '7') {
 				var octal = new StringBuilder ();
 				octal.Append ((char) ch);
-				var possible_octal_char = reader.Peek ();
+				var possibleOctalChar = reader.Peek ();
 				
-				if (possible_octal_char >= '0' && possible_octal_char <= '7') {
+				if (possibleOctalChar >= '0' && possibleOctalChar <= '7') {
 					octal.Append ((char) reader.Read ());
-					possible_octal_char = reader.Peek ();
+					possibleOctalChar = reader.Peek ();
 					
-					if (possible_octal_char >= '0' && possible_octal_char <= '7')
+					if (possibleOctalChar >= '0' && possibleOctalChar <= '7')
 						octal.Append ((char) reader.Read ());
 				}
 				

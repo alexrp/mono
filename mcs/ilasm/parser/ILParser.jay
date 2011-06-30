@@ -3859,9 +3859,21 @@ comp_name_str		: comp_name
 
 comp_name		: id
 			{
-				$$ = new QualifiedName {
-					Name = (string) $1,
+				// HACK: A bug exists in the tokenizer, which causes it
+				// to feed us an ID token with dots. We work around this
+				// for now.
+				var str = (string) $1;
+				var nspaces = str.Split ('.');
+
+				var qn = new QualifiedName {
+					Name = nspaces [nspaces.Length - 1],
 				};
+
+				for (var i = 0; i < nspaces.Length; i++)
+					if (i != nspaces.Length - 1)
+						qn.Namespaces.Add (nspaces [i]);
+
+				$$ = qn;
 			}
 			| COMP_NAME
 			{

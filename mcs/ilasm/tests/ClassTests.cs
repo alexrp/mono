@@ -195,7 +195,7 @@ namespace Mono.ILAsm.Tests {
 				.GetModule ()
 				.Expect (x => x.GetType ("test006").GenericParameters.ContainsOne (
 					y => y.Constraints.ContainsOne (
-						z => z.Name == "System.ICloneable")));
+						z => z.FullName == "System.ICloneable")));
 		}
 		
 		[Test]
