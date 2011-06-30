@@ -3657,15 +3657,13 @@ manres_attr		:
 			| manres_attr K_PUBLIC
 			{
 				// Blame Microsoft for this madness.
-				$$ = ((ManifestResourceAttributes) $1 != (ManifestResourceAttributes) 0 &&
-					(ManifestResourceAttributes) $1 != ManifestResourceAttributes.Public) ?
-					(ManifestResourceAttributes) 0 : ManifestResourceAttributes.Public;
+				$$ = ((ManifestResourceAttributes) $1 != 0 && (ManifestResourceAttributes) $1 !=
+					ManifestResourceAttributes.Public) ? 0 : ManifestResourceAttributes.Public;
 			}
 			| manres_attr K_PRIVATE
 			{
-				$$ = ((ManifestResourceAttributes) $1 != (ManifestResourceAttributes) 0 &&
-					(ManifestResourceAttributes) $1 != ManifestResourceAttributes.Private) ?
-					(ManifestResourceAttributes) 0 : ManifestResourceAttributes.Private;
+				$$ = ((ManifestResourceAttributes) $1 != 0 && (ManifestResourceAttributes) $1 !=
+					ManifestResourceAttributes.Private) ? 0 : ManifestResourceAttributes.Private;
 			} 
 			;
 
