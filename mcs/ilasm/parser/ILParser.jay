@@ -1946,141 +1946,64 @@ sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
 			}
 			;
 
-/*
 method_decls		:
 			| method_decls method_decl
 			;
 
-method_decl		: D_EMITBYTE int32
-			{
-				codegen.CurrentMethodDef.AddInstr (new EmitByteInstr ((int) $2, tokenizer.Location));
-			}
+method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| D_MAXSTACK int32
 			{
-				codegen.CurrentMethodDef.SetMaxStack ((int) $2);
+				codegen.CurrentMethod.Body.MaxStackSize = (int) $2;
 			}
 			| D_LOCALS OPEN_PARENS local_list CLOSE_PARENS
-			{
-				if ($3 != null)
-					codegen.CurrentMethodDef.AddLocals ((ArrayList) $3);
-			}
 			| D_LOCALS K_INIT OPEN_PARENS local_list CLOSE_PARENS
 			{
-				if ($4 != null) {
-					codegen.CurrentMethodDef.AddLocals ((ArrayList) $4);
-					codegen.CurrentMethodDef.InitLocals ();
-				}
+				codegen.CurrentMethod.Body.InitLocals = true;
 			}
 			| D_ENTRYPOINT
 			{
-				codegen.CurrentMethodDef.EntryPoint ();
-				codegen.HasEntryPoint = true;
+				codegen.CurrentModule.EntryPoint = codegen.CurrentMethod;
 			}
 			| D_ZEROINIT
 			{
-				codegen.CurrentMethodDef.ZeroInit ();
+				codegen.CurrentMethod.Body.InitLocals = true;
 			}
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id
 			| D_VTENTRY int32 COLON int32 
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name
-			{
-				codegen.CurrentTypeDef.AddOverride (codegen.CurrentMethodDef,
-					(BaseTypeRef) $2, (string) $4);
-			}
 			| D_OVERRIDE K_METHOD method_ref
-			{
-				codegen.CurrentTypeDef.AddOverride (codegen.CurrentMethodDef.Signature,
-					(BaseMethodRef) $3);
-			}
-			| D_OVERRIDE K_METHOD call_conv type type_spec DOUBLE_COLON method_name OPEN_ANGLE_BRACKET OPEN_BRACKET int32 CLOSE_BRACKET CLOSE_ANGLE_BRACKET OPEN_PARENS type_list CLOSE_PARENS 
-			{
-				BaseTypeRef owner = (BaseTypeRef) $5;
-				ArrayList arg_list = (ArrayList) $14;
-				BaseTypeRef[] param_list;
-				BaseMethodRef methref;
-
-				if (arg_list != null)
-					param_list = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-				else
-					param_list = new BaseTypeRef [0];
-
-				if (owner.UseTypeSpec) {
-					methref = new TypeSpecMethodRef (owner, (CallConv) $3, (BaseTypeRef) $4,
-						(string) $7, param_list, (int) $10);
-				} else {
-					methref = owner.GetMethodRef ((BaseTypeRef) $4, (CallConv) $3,
-						(string) $7, param_list, (int) $10);
-				}
-
-				codegen.CurrentTypeDef.AddOverride (codegen.CurrentMethodDef.Signature,
-					methref);
-			}
+			| D_OVERRIDE K_METHOD call_conv type type_spec DOUBLE_COLON method_name OPEN_ANGLE_BRACKET OPEN_BRACKET int32 CLOSE_BRACKET CLOSE_ANGLE_BRACKET OPEN_PARENS /*type_list*/ CLOSE_PARENS
 			| scope_block
 			| D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET init_opt
-			{
-				int index = (int) $3;
-				ParamDef param = codegen.CurrentMethodDef.GetParam (index);
-				codegen.CurrentCustomAttrTarget = param;
-
-				if (param == null) {
-					Report.Warning (tokenizer.Location, String.Format ("invalid param index ({0}) with .param",
-						index));
-				} else if ($5 != null) {
-					param.AddDefaultValue ((Constant) $5);
-				}
-			}
+			/*
 			| param_type_decl
+			*/
 			| id COLON
-			{
-				codegen.CurrentMethodDef.AddLabel ((string) $1);
-			}
 			| seh_block
 			| instr
+			/*
 			| sec_decl
-			{
-				AddSecDecl ($1, false);
-			}
+			*/
 			| extsource_spec
 			| language_decl
 			| customattr_decl
 			{
-				if (codegen.CurrentCustomAttrTarget != null)
-					codegen.CurrentCustomAttrTarget.AddCustomAttribute ((CustomAttr) $1);
+				codegen.CurrentMethod.CustomAttributes.Add ((CustomAttribute) $1);
+				codegen.CurrentCustomAttribute = null;
 			}
 			| data_decl
 			;
 
 local_list		:
 			| local
-			{
-				ArrayList local_list = new ArrayList ();
-				local_list.Add ($1);
-				$$ = local_list;
-			}
 			| local_list COMMA local
-			{
-				ArrayList local_list = (ArrayList) $1;
-				local_list.Add ($3);
-			}
 			;
 
 local			: type
-			{
-				$$ = new Local (-1, (BaseTypeRef) $1);
-			}
 			| type id
-			{
-				$$ = new Local (-1, (string) $2, (BaseTypeRef) $1);
-			}
 			| slot_num type
-			{
-				$$ = new Local ((int) $1, (BaseTypeRef) $2);
-			}
 			| slot_num type id
-			{
-				$$ = new Local ((int) $1, (string) $3, (BaseTypeRef) $2);
-			}
 			;
 
 slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
@@ -2090,349 +2013,70 @@ slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
 			;
 
 scope_block		: scope_block_begin method_decls CLOSE_BRACE
-			{
-				$$ = new HandlerBlock ((LabelInfo) $1,
-					codegen.CurrentMethodDef.AddLabel ());
-				codegen.CurrentMethodDef.EndLocalsScope ();
-			}
 			;
 
 scope_block_begin	: OPEN_BRACE
-			{
-				$$ = codegen.CurrentMethodDef.AddLabel ();
-				codegen.CurrentMethodDef.BeginLocalsScope ();
-			}
 			;
+
 seh_block		: try_block seh_clauses
-			{
-				TryBlock try_block = (TryBlock) $1;
-
-				ArrayList clause_list = (ArrayList) $2;
-				foreach (object clause in clause_list)
-					try_block.AddSehClause ((ISehClause) clause);
-
-				codegen.CurrentMethodDef.AddInstr (try_block);
-			}
 			;
 
 try_block		: D_TRY scope_block
-			{
-				$$ = new TryBlock ((HandlerBlock) $2, tokenizer.Location);
-			}
 			| D_TRY id K_TO id
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabelRef ((string) $2);
-				LabelInfo to = codegen.CurrentMethodDef.AddLabelRef ((string) $4);
-
-				$$ = new TryBlock (new HandlerBlock (from, to), tokenizer.Location);
-			}
 			| D_TRY int32 K_TO int32
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabel ((int) $2);
-				LabelInfo to = codegen.CurrentMethodDef.AddLabel ((int) $4);
-
-				$$ = new TryBlock (new HandlerBlock (from, to), tokenizer.Location);
-			}
 			;
 
 seh_clauses		: seh_clause
-			{
-				ArrayList clause_list = new ArrayList ();
-				clause_list.Add ($1);
-
-				$$ = clause_list;
-			}
 			| seh_clauses seh_clause
-			{
-				ArrayList clause_list = (ArrayList) $1;
-				clause_list.Add ($2);
-			}
 			;
 
 seh_clause		: K_CATCH type handler_block
-			{
-				if ($2.GetType () == typeof (PrimitiveTypeRef))
-					Report.Error ("Exception not be of a primitive type.");
-
-				BaseTypeRef type = (BaseTypeRef) $2;
-				CatchBlock cb = new CatchBlock (type);
-				cb.SetHandlerBlock ((HandlerBlock) $3);
-
-				$$ = cb;
-			}
 			| K_FINALLY handler_block
-			{
-				FinallyBlock fb = new FinallyBlock ();
-				fb.SetHandlerBlock ((HandlerBlock) $2);
-
-				$$ = fb;
-			}
 			| K_FAULT handler_block
-			{
-				FaultBlock fb = new FaultBlock ();
-				fb.SetHandlerBlock ((HandlerBlock) $2);
-
-				$$ = fb;
-			}
 			| filter_clause handler_block
-			{
-				FilterBlock fb = (FilterBlock) $1;
-				fb.SetHandlerBlock ((HandlerBlock) $2);
-			}
 			;
 
 filter_clause		: K_FILTER scope_block
-			{
-				HandlerBlock block = (HandlerBlock) $2;
-				FilterBlock fb = new FilterBlock (block);
-
-				$$ = fb;
-			}
 			| K_FILTER id
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabelRef ((string) $2);
-					FilterBlock fb = new FilterBlock (new HandlerBlock (from, null));
-
-				$$ = fb;
-			}
 			| K_FILTER int32
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabel ((int) $2);
-				FilterBlock fb = new FilterBlock (new HandlerBlock (from, null));
-
-				$$ = fb;
-			}
 			;
 
 handler_block		: scope_block
 			| K_HANDLER id K_TO id
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabelRef ((string) $2);
-				LabelInfo to = codegen.CurrentMethodDef.AddLabelRef ((string) $4);
-
-				$$ = new HandlerBlock (from, to);
-			}
 			| K_HANDLER int32 K_TO int32
-			{
-				LabelInfo from = codegen.CurrentMethodDef.AddLabel ((int) $2);
-				LabelInfo to = codegen.CurrentMethodDef.AddLabel ((int) $4);
-
-				$$ = new HandlerBlock (from, to);
-			}
 			;
 
 instr			: INSTR_NONE
-			{
-				codegen.CurrentMethodDef.AddInstr (new SimpInstr ((Op) $1, tokenizer.Location));
-			}
 			| INSTR_LOCAL int32
-			{
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, (int) $2, tokenizer.Location));
-			}
 			| INSTR_LOCAL id
-			{
-				int slot = codegen.CurrentMethodDef.GetNamedLocalSlot ((string) $2);
-				if (slot < 0)
-					Report.Error (String.Format ("Undeclared identifier '{0}'", (string) $2));
-
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, slot, tokenizer.Location));
-			}
 			| INSTR_PARAM int32
-			{
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, (int) $2, tokenizer.Location));
-			}
 			| INSTR_PARAM id
-			{
-				int pos = codegen.CurrentMethodDef.GetNamedParamPos ((string) $2);
-				if (pos < 0)
-					Report.Error (String.Format ("Undeclared identifier '{0}'", (string) $2));
-
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, pos, tokenizer.Location));
-			}
 			| INSTR_I int32
-			{
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, (int) $2, tokenizer.Location));
-			}
 			| INSTR_I id
-			{
-				int slot = codegen.CurrentMethodDef.GetNamedLocalSlot ((string) $2);
-				if (slot < 0)
-					Report.Error (String.Format ("Undeclared identifier '{0}'", (string) $2));
-
-				codegen.CurrentMethodDef.AddInstr (new IntInstr ((IntOp) $1, slot, tokenizer.Location));
-			}
 			| INSTR_I8 int64
-			{
-				if ($1 is MiscInstr) {
-					switch ((MiscInstr) $1) {
-					case MiscInstr.ldc_i8:
-						codegen.CurrentMethodDef.AddInstr (new LdcInstr ((MiscInstr) $1,
-							(long) $2, tokenizer.Location));
-						break;
-					}
-				}
-			}
 			| INSTR_R float64
-			{
-				switch ((MiscInstr) $1) {
-				case MiscInstr.ldc_r4:
-				case MiscInstr.ldc_r8:
-					codegen.CurrentMethodDef.AddInstr (new LdcInstr ((MiscInstr) $1,
-						(double) $2, tokenizer.Location));
-					break;
-				}
-			}
 			| INSTR_R int64
-			{
-				long l = (long) $2;
-
-				switch ((MiscInstr) $1) {
-				case MiscInstr.ldc_r4:
-				case MiscInstr.ldc_r8:
-					codegen.CurrentMethodDef.AddInstr (new LdcInstr ((MiscInstr) $1,
-						(double) l, tokenizer.Location));
-					break;
-				}
-			}
 			| INSTR_R bytes_list
-			{
-				byte[] fpdata;
-
-				switch ((MiscInstr) $1) {
-				case MiscInstr.ldc_r4:
-					fpdata = (byte[]) $2;
-					if (!BitConverter.IsLittleEndian)
-						System.Array.Reverse (fpdata, 0, 4);
-
-					float s = BitConverter.ToSingle (fpdata, 0);
-					codegen.CurrentMethodDef.AddInstr (new LdcInstr ((MiscInstr) $1,
-						s, tokenizer.Location));
-					break;
-				case MiscInstr.ldc_r8:
-					fpdata = (byte[]) $2;
-					if (!BitConverter.IsLittleEndian)
-						System.Array.Reverse (fpdata, 0, 8);
-
-					double d = BitConverter.ToDouble (fpdata, 0);
-					codegen.CurrentMethodDef.AddInstr (new LdcInstr ((MiscInstr) $1,
-						d, tokenizer.Location));
-					break;
-				}
-			}
 			| INSTR_BRTARGET int32
-			{
-				LabelInfo target = codegen.CurrentMethodDef.AddLabel ((int) $2);
-					codegen.CurrentMethodDef.AddInstr (new BranchInstr ((BranchOp) $1,
-					target, tokenizer.Location));  
-			}
 			| INSTR_BRTARGET id
-			{
-				LabelInfo target = codegen.CurrentMethodDef.AddLabelRef ((string) $2);
-					codegen.CurrentMethodDef.AddInstr (new BranchInstr ((BranchOp) $1,
-					target, tokenizer.Location));
-			}
 			| INSTR_METHOD method_ref
-			{
-				codegen.CurrentMethodDef.AddInstr (new MethodInstr ((MethodOp) $1,
-					(BaseMethodRef) $2, tokenizer.Location));
-			}
 			| INSTR_FIELD type type_spec DOUBLE_COLON id
-			{
-				BaseTypeRef owner = (BaseTypeRef) $3;
-				GenericParamRef gpr = $2 as GenericParamRef;
-
-				if (gpr != null && codegen.CurrentMethodDef != null)
-					codegen.CurrentMethodDef.ResolveGenParam ((PEAPI.GenParam) gpr.PeapiType);
-
-				IFieldRef fieldref = owner.GetFieldRef ((BaseTypeRef) $2, (string) $5);
-				codegen.CurrentMethodDef.AddInstr (new FieldInstr ((FieldOp) $1, fieldref, tokenizer.Location));
-			}
 			| INSTR_FIELD type id
-			{
-				GlobalFieldRef fieldref = codegen.GetGlobalFieldRef ((BaseTypeRef) $2, (string) $3);
-				codegen.CurrentMethodDef.AddInstr (new FieldInstr ((FieldOp) $1, fieldref, tokenizer.Location));
-			}
 			| INSTR_TYPE type_spec
-			{
-				codegen.CurrentMethodDef.AddInstr (new TypeInstr ((TypeOp) $1,
-					(BaseTypeRef) $2, tokenizer.Location));
-			}
 			| INSTR_STRING comp_qstring
-			{
-				if ((MiscInstr) $1 == MiscInstr.ldstr)
-					codegen.CurrentMethodDef.AddInstr (new LdstrInstr ((string) $2, tokenizer.Location));
-			}
 			| INSTR_STRING K_BYTEARRAY ASSIGN bytes_list
-			{
-				byte[] bs = (byte[]) $4;
-				if ((MiscInstr) $1 == MiscInstr.ldstr)
-					codegen.CurrentMethodDef.AddInstr (new LdstrInstr (bs, tokenizer.Location));
-			}
 			| INSTR_STRING K_BYTEARRAY bytes_list
-			{
-				byte[] bs = (byte[]) $3;
-				if ((MiscInstr) $1 == MiscInstr.ldstr)
-					codegen.CurrentMethodDef.AddInstr (new LdstrInstr (bs, tokenizer.Location));
-			}
-			| INSTR_SIG call_conv type OPEN_PARENS type_list CLOSE_PARENS
-			{
-				ArrayList arg_list = (ArrayList) $5;
-				BaseTypeRef[] arg_array = null;
-
-				if (arg_list != null)
-					arg_array = (BaseTypeRef[]) arg_list.ToArray (typeof (BaseTypeRef));
-
-				codegen.CurrentMethodDef.AddInstr (new CalliInstr ((CallConv) $2,
-					(BaseTypeRef) $3, arg_array, tokenizer.Location));
-			}
+			| INSTR_SIG call_conv type OPEN_PARENS /*type_list*/ CLOSE_PARENS
 			| INSTR_TOK owner_type
-			{
-				if ((MiscInstr) $1 == MiscInstr.ldtoken) {
-					if ($2 is BaseMethodRef) {
-						codegen.CurrentMethodDef.AddInstr (new LdtokenInstr ((BaseMethodRef) $2,
-							tokenizer.Location));
-					} else if ($2 is IFieldRef) {
-						codegen.CurrentMethodDef.AddInstr (new LdtokenInstr ((IFieldRef) $2,
-							tokenizer.Location));
-					} else {
-						codegen.CurrentMethodDef.AddInstr (new LdtokenInstr ((BaseTypeRef) $2,
-							tokenizer.Location));
-					}
-				}
-			}
 			| INSTR_SWITCH OPEN_PARENS labels CLOSE_PARENS
-			{
-				codegen.CurrentMethodDef.AddInstr (new SwitchInstr ((ArrayList) $3, tokenizer.Location));
-			}
 			;
 
 labels			:
 			| id
-			{
-				ArrayList label_list = new ArrayList ();
-				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $1));
-
-				$$ = label_list;
-			}
 			| int32
-			{
-				ArrayList label_list = new ArrayList ();
-				label_list.Add ($1);
-
-				$$ = label_list;
-			}
 			| labels COMMA id
-			{
-				ArrayList label_list = (ArrayList) $1;
-				label_list.Add (codegen.CurrentMethodDef.AddLabelRef ((string) $3));
-			}
 			| labels COMMA int32
-			{
-				ArrayList label_list = (ArrayList) $1;
-				label_list.Add ($3);
-			}
 			;
-*/
 
 member_ref		: K_METHOD method_ref
 			{
