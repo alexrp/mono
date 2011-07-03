@@ -433,6 +433,13 @@ extsource_spec		: D_LINE int32 SQSTRING
 			| D_LINE int32
 			| D_LINE int32 COLON int32 SQSTRING
 			| D_LINE int32 COLON int32
+			| D_LINE int32 COLON int32 COMMA int32 SQSTRING
+			| D_LINE int32 COLON int32 COMMA int32
+			| D_LINE int32 COMMA int32 COLON int32 SQSTRING
+			| D_LINE int32 COMMA int32 COLON int32
+			| D_LINE int32 COMMA int32 COLON int32 COMMA int32 SQSTRING
+			| D_LINE int32 COMMA int32 COLON int32 COMMA int32
+			| D_LINE int32 QSTRING
 			;
 
 // TODO: Persist these in MDB.
