@@ -32,6 +32,8 @@ namespace Mono.ILAsm {
 		
 		public CustomAttribute CurrentCustomAttribute { get; set; }
 		
+		public PInvokeInfo CurrentPInvokeInfo { get; set; }
+		
 		public bool HasAssemblyDirective { get; set; }
 		
 		public bool HasModuleDirective { get; set; }

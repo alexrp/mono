@@ -165,5 +165,9 @@ namespace Mono.ILAsm {
 		/// Happens if an invalid packing size is specified in the .pack directive.
 		/// </summary>
 		InvalidPackSize = 30,
+		/// <summary>
+		/// Emitted if an attempt to compile native code is made.
+		/// </summary>
+		NativeCodeUnsupported = 31,
 	}
 }
