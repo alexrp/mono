@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.ILAsm {
 	internal class ILParser {
@@ -32,6 +33,7 @@ namespace Mono.ILAsm {
 		bool type_attr_visibility_set;
 		int custom_attr_blob_seq_length;
 		string pinvoke_mod_name;
+		ILProcessor il;
 
 		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -1999,21 +2001,38 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 				codegen.CurrentMethod.Body.MaxStackSize = (int) $2;
 			}
 			| D_LOCALS OPEN_PARENS sig_args CLOSE_PARENS
+			{
+				foreach (var param in (List<ParameterDefinition>) $3)
+					codegen.CurrentMethod.Body.Variables.Add (new VariableDefinition (
+						param.Name, param.ParameterType));
+			}
 			| D_LOCALS K_INIT OPEN_PARENS sig_args CLOSE_PARENS
 			{
+				foreach (var param in (List<ParameterDefinition>) $3)
+					codegen.CurrentMethod.Body.Variables.Add (new VariableDefinition (
+						param.Name, param.ParameterType));
+
 				codegen.CurrentMethod.Body.InitLocals = true;
 			}
 			| D_ENTRYPOINT
 			{
+				if (codegen.CurrentModule.EntryPoint != null)
+					report.WriteError (Error.MultipleEntryPoints,
+						"Multiple .entrypoint directives.");
+
 				codegen.CurrentModule.EntryPoint = codegen.CurrentMethod;
 			}
 			| D_ZEROINIT
 			{
 				codegen.CurrentMethod.Body.InitLocals = true;
 			}
-			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET
+			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET // TODO: How do we deal with this?
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id
-			| D_VTENTRY int32 COLON int32 
+			| D_VTENTRY int32 COLON int32
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					".vtentry is currently unimplemented (directive ignored).");
+			}
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name
 			{
 				var overridenMethod = new MethodReference ((string) $4,
@@ -2026,6 +2045,16 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			}
 			| scope_block
 			| D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET init_opt
+			{
+				var idx = (int) $3;
+
+				if (idx < codegen.CurrentMethod.Parameters.Count) {
+					var param = codegen.CurrentMethod.Parameters [idx];
+					param.Constant = $5 is Null ? null : $5;
+				} else
+					report.WriteWarning (Warning.OutOfRangeParameterIndex,
+						"Parameter at index '{0}' not found.", idx);
+			}
 			/*
 			| param_type_decl
 			*/

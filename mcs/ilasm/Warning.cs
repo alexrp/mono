@@ -106,5 +106,9 @@ namespace Mono.ILAsm {
 		/// automatic memory layout.
 		/// </summary>
 		LayoutInfoInAutoLayoutType = 16,
+		/// <summary>
+		/// Happens when an index in a .param directive is out of range.
+		/// </summary>
+		OutOfRangeParameterIndex = 17,
 	}
 }
