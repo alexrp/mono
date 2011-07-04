@@ -151,6 +151,14 @@ namespace Mono.ILAsm {
 %token D_TYPELIST
 %token D_MSCORLIB
 %token D_PDIRECT
+%token D_TYPEDEF
+%token D_XDEFINE
+%token D_XUNDEF
+%token D_XIFDEF
+%token D_XIFNDEF
+%token D_XELSE
+%token D_XENDIF
+%token D_XINCLUDE
 
 %token K_AT
 %token K_AS
@@ -289,6 +297,7 @@ namespace Mono.ILAsm {
 %token K_WCHAR
 %token K_FROMUNMANAGED
 %token K_CALLMOSTDERIVED
+%token K_RETAINAPPDOMAIN
 %token K_BYTEARRAY
 %token K_WITH
 %token K_INIT
@@ -426,20 +435,26 @@ decl			: class_all
 			}
 			| extsource_spec
 			| language_decl
+			| typedef_decl
+			| comp_control
+			;
+
+line_directive		: D_LINE
+			| D_XLINE
 			;
 
 // TODO: Persist these in MDB.
-extsource_spec		: D_LINE int32 SQSTRING
-			| D_LINE int32
-			| D_LINE int32 COLON int32 SQSTRING
-			| D_LINE int32 COLON int32
-			| D_LINE int32 COLON int32 COMMA int32 SQSTRING
-			| D_LINE int32 COLON int32 COMMA int32
-			| D_LINE int32 COMMA int32 COLON int32 SQSTRING
-			| D_LINE int32 COMMA int32 COLON int32
-			| D_LINE int32 COMMA int32 COLON int32 COMMA int32 SQSTRING
-			| D_LINE int32 COMMA int32 COLON int32 COMMA int32
-			| D_LINE int32 QSTRING
+extsource_spec		: line_directive int32 SQSTRING
+			| line_directive int32
+			| line_directive int32 COLON int32 SQSTRING
+			| line_directive int32 COLON int32
+			| line_directive int32 COLON int32 COMMA int32 SQSTRING
+			| line_directive int32 COLON int32 COMMA int32
+			| line_directive int32 COMMA int32 COLON int32 SQSTRING
+			| line_directive int32 COMMA int32 COLON int32
+			| line_directive int32 COMMA int32 COLON int32 COMMA int32 SQSTRING
+			| line_directive int32 COMMA int32 COLON int32 COMMA int32
+			| line_directive int32 QSTRING
 			;
 
 // TODO: Persist these in MDB.
@@ -459,6 +474,26 @@ vtfixup_attr		:
 			| vtfixup_attr K_INT64
 			| vtfixup_attr K_FROMUNMANAGED
 			| vtfixup_attr K_CALLMOSTDERIVED
+			| vtfixup_attr K_RETAINAPPDOMAIN
+			;
+
+typedef_decl		: D_TYPEDEF type K_AS comp_name
+			| D_TYPEDEF class_ref K_AS comp_name
+			| D_TYPEDEF member_ref K_AS comp_name
+			| D_TYPEDEF customattr K_AS comp_name
+			| D_TYPEDEF customattr_owner K_AS comp_name
+			;
+
+comp_control		:
+			| D_XDEFINE comp_name
+			| D_XDEFINE comp_name QSTRING
+			| D_XUNDEF comp_name
+			| D_XIFDEF comp_name
+			| D_XIFNDEF comp_name
+			| D_XELSE
+			| D_XENDIF
+			| D_XINCLUDE QSTRING
+			| SEMICOLON
 			;
 
 namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
@@ -829,6 +864,7 @@ class_decl		: method_all
 				overridingMethod.Overrides.Add ((MethodReference) $2);
 			}
 			| language_decl
+			| comp_control
 			;
 
 /*
@@ -1962,8 +1998,8 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				codegen.CurrentMethod.Body.MaxStackSize = (int) $2;
 			}
-			| D_LOCALS OPEN_PARENS local_list CLOSE_PARENS
-			| D_LOCALS K_INIT OPEN_PARENS local_list CLOSE_PARENS
+			| D_LOCALS OPEN_PARENS sig_args CLOSE_PARENS
+			| D_LOCALS K_INIT OPEN_PARENS sig_args CLOSE_PARENS
 			{
 				codegen.CurrentMethod.Body.InitLocals = true;
 			}
@@ -1979,8 +2015,15 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id
 			| D_VTENTRY int32 COLON int32 
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name
-			| D_OVERRIDE K_METHOD method_ref
-			| D_OVERRIDE K_METHOD call_conv type type_spec DOUBLE_COLON method_name OPEN_ANGLE_BRACKET OPEN_BRACKET int32 CLOSE_BRACKET CLOSE_ANGLE_BRACKET OPEN_PARENS /*type_list*/ CLOSE_PARENS
+			{
+				var overridenMethod = new MethodReference ((string) $4,
+					codegen.CurrentMethod.ReturnType, (TypeReference) $2);
+				codegen.CurrentMethod.Overrides.Add (overridenMethod);
+			}
+			| D_OVERRIDE generic_method_ref
+			{
+				codegen.CurrentMethod.Overrides.Add ((MethodReference) $2);
+			}
 			| scope_block
 			| D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET init_opt
 			/*
@@ -2000,17 +2043,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 				codegen.CurrentCustomAttribute = null;
 			}
 			| data_decl
-			;
-
-local_list		:
-			| local
-			| local_list COMMA local
-			;
-
-local			: type
-			| type id
-			| slot_num type
-			| slot_num type id
+			| comp_control
 			;
 
 slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
@@ -2019,10 +2052,7 @@ slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
 			}
 			;
 
-scope_block		: scope_block_begin method_decls CLOSE_BRACE
-			;
-
-scope_block_begin	: OPEN_BRACE
+scope_block		: OPEN_BRACE method_decls CLOSE_BRACE
 			;
 
 seh_block		: try_block seh_clauses
@@ -2037,7 +2067,7 @@ seh_clauses		: seh_clause
 			| seh_clauses seh_clause
 			;
 
-seh_clause		: K_CATCH type handler_block
+seh_clause		: K_CATCH type_spec handler_block
 			| K_FINALLY handler_block
 			| K_FAULT handler_block
 			| filter_clause handler_block
@@ -2059,7 +2089,6 @@ instr			: INSTR_NONE
 			| INSTR_PARAM int32
 			| INSTR_PARAM id
 			| INSTR_I int32
-			| INSTR_I id
 			| INSTR_I8 int64
 			| INSTR_R float64
 			| INSTR_R int64
@@ -2067,22 +2096,22 @@ instr			: INSTR_NONE
 			| INSTR_BRTARGET int32
 			| INSTR_BRTARGET id
 			| INSTR_METHOD method_ref
-			| INSTR_FIELD type type_spec DOUBLE_COLON id
-			| INSTR_FIELD type id
+			| INSTR_FIELD field_ref
 			| INSTR_TYPE type_spec
 			| INSTR_STRING comp_qstring
+			| INSTR_STRING K_ANSI comp_qstring
 			| INSTR_STRING K_BYTEARRAY ASSIGN bytes_list
-			| INSTR_STRING K_BYTEARRAY bytes_list
-			| INSTR_SIG call_conv type OPEN_PARENS /*type_list*/ CLOSE_PARENS
+			| INSTR_SIG call_conv type OPEN_PARENS sig_args CLOSE_PARENS
 			| INSTR_TOK owner_type
 			| INSTR_SWITCH OPEN_PARENS labels CLOSE_PARENS
+			| INSTR_PHI int16_seq
 			;
 
 labels			:
 			| id
 			| int32
-			| labels COMMA id
-			| labels COMMA int32
+			| id COMMA labels
+			| int32 COMMA labels
 			;
 
 member_ref		: K_METHOD method_ref
@@ -2317,6 +2346,7 @@ event_decl		: D_ADDON method_ref
 			}
 			| extsource_spec
 			| language_decl
+			| comp_control
 			;
 
 prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
@@ -2412,6 +2442,7 @@ prop_decl		: D_SET method_ref
 			}
 			| extsource_spec
 			| language_decl
+			| comp_control
 			;
 
 customattr_decl		: customattr
@@ -2462,6 +2493,7 @@ customattr_blob_args	:
 
 				codegen.CurrentCustomAttribute.ConstructorArguments.Add (arg);
 			}
+			| customattr_blob_args comp_control
 			;
 
 customattr_blob_nvp	:
@@ -2486,6 +2518,7 @@ customattr_blob_nvp	:
 				else
 					codegen.CurrentCustomAttribute.Properties.Add (namedArg);
 			}
+			| customattr_blob_nvp comp_control
 			;
 
 customattr_blob_type	: simple_type
@@ -3155,7 +3188,7 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			/*
 			| sec_decl
 			*/
-			;
+			| comp_control
 			;
 
 assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
@@ -3245,6 +3278,7 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			}
 			| K_AUTO // TODO: Implement this.
 			| customattr_decl // TODO: How do we set CAs on assembly name refs?
+			| comp_control
 			;
 
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
@@ -3304,6 +3338,7 @@ exptype_decl		: D_FILE comp_name // TODO: Handle this case.
 				$$ = $2;
 			}
 			| customattr_decl
+			| comp_control
 			;
 
 manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
@@ -3434,6 +3469,7 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 			{
 				$$ = $1;
 			}
+			| comp_control
 			;
 
 slashed_name		: comp_name

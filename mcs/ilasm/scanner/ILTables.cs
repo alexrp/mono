@@ -166,6 +166,14 @@ namespace Mono.ILAsm {
 			directives [".mscorlib"] = new ILToken (Token.D_MSCORLIB, ".mscorlib");
 			directives [".localized"] = new ILToken (Token.D_LOCALIZED, ".localized");
 			directives [".pdirect"] = new ILToken (Token.D_PDIRECT, ".pdirect");
+			directives [".typedef"] = new ILToken (Token.D_TYPEDEF, ".typedef");
+			directives ["#define"] = new ILToken (Token.D_XDEFINE, "#define");
+			directives ["#undef"] = new ILToken (Token.D_XUNDEF, "#undef");
+			directives ["#ifdef"] = new ILToken (Token.D_XIFDEF, "#ifdef");
+			directives ["#ifndef"] = new ILToken (Token.D_XIFNDEF, "#ifndef");
+			directives ["#else"] = new ILToken (Token.D_XELSE, "#else");
+			directives ["#endif"] = new ILToken (Token.D_XENDIF, "#endif");
+			directives ["#include"] = new ILToken (Token.D_XINCLUDE, "#include");
 			
 			Directives = new ReadOnlyDictionaryAdapter<string, ILToken> (directives);
 			
@@ -309,6 +317,7 @@ namespace Mono.ILAsm {
 			keywords ["wchar"] = new ILToken (Token.K_WCHAR, "wchar");
 			keywords ["fromunmanaged"] = new ILToken (Token.K_FROMUNMANAGED, "fromunmanaged");
 			keywords ["callmostderived"] = new ILToken (Token.K_CALLMOSTDERIVED, "callmostderived");
+			keywords ["retainappdomain"] = new ILToken (Token.K_RETAINAPPDOMAIN, "retainappdomain");
 			keywords ["bytearray"] = new ILToken (Token.K_BYTEARRAY, "bytearray");
 			keywords ["with"] = new ILToken (Token.K_WITH, "with");
 			keywords ["init"] = new ILToken (Token.K_INIT, "init");
@@ -606,6 +615,8 @@ namespace Mono.ILAsm {
 			opCodes ["calli"] = new ILToken (Token.INSTR_SIG, Cecil.Cil.OpCodes.Calli);
 			opCodes ["ldtoken"] = new ILToken (Token.INSTR_TOK, Cecil.Cil.OpCodes.Ldtoken);
 			opCodes ["no."] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.No);
+			//opCodes ["phi"] = new ILToken (Token.INSTR_PHI, null); // Phi is not standard.
+			// These have no use currently, but are keywords.
 			opCodes ["prefix1"] = new ILToken (Token.INSTR_NONE, null);
 			opCodes ["prefix2"] = new ILToken (Token.INSTR_NONE, null);
 			opCodes ["prefix3"] = new ILToken (Token.INSTR_NONE, null);
