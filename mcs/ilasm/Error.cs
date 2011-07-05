@@ -189,5 +189,10 @@ namespace Mono.ILAsm {
 		/// Happens if a non-public method in an interface type is encountered.
 		/// </summary>
 		NonPublicMethodInInterface = 36,
+		/// <summary>
+		/// Happens when a .param type directive refers to an invalid generic
+		/// parameter in a type or method context.
+		/// </summary>
+		InvalidGenericParameter = 37,
 	}
 }

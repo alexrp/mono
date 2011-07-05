@@ -14,6 +14,7 @@ using System.Globalization;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace Mono.ILAsm {
 	internal class ILParser {
@@ -788,9 +789,7 @@ class_decl		: method_all
 				codegen.CurrentType.CustomAttributes.Add ((CustomAttribute) $1);
 				codegen.CurrentCustomAttribute = null;
 			}
-			/*
 			| param_type_decl
-			*/
 			| D_SIZE int32
 			{
 				var size = (int) $2;
@@ -870,11 +869,33 @@ class_decl		: method_all
 			| comp_control
 			;
 
-/*
 param_type_decl		: D_PARAM K_TYPE id
+			{
+				var name = (string) $3;
+				GenericParameter param = null;
+
+				foreach (var parameter in codegen.CurrentGenericParameterProvider.GenericParameters)
+					if (parameter.Name == name)
+						param = parameter;
+
+				if (param == null)
+					report.WriteError (Error.InvalidGenericParameter,
+						"Generic parameter '{0}' not found.", name);
+
+				codegen.CurrentGenericParameterProvider = param;
+			}
 			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
+			{
+				var id = (int) $4; // One-based.
+				var genParams = codegen.CurrentGenericParameterProvider.GenericParameters;
+
+				if (id <= 0 || id > genParams.Count)
+					report.WriteError (Error.InvalidGenericParameter,
+						"Generic parameter number '{0}' not found.", id);
+
+				codegen.CurrentGenericParameterProvider = genParams [id - 1];
+			}
 			;
-*/
 
 class_refs		: class_ref
 			{
@@ -2083,9 +2104,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 					report.WriteWarning (Warning.OutOfRangeParameterIndex,
 						"Parameter at index '{0}' not found.", idx);
 			}
-			/*
 			| param_type_decl
-			*/
 			| id COLON
 			{
 				var name = (string) $1;
