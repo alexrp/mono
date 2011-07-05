@@ -433,7 +433,7 @@ decl			: class_all
 			| D_TYPELIST OPEN_BRACE class_refs CLOSE_BRACE // TODO: How can we sort with Cecil?
 			| D_MSCORLIB
 			{
-				// TODO: We need to set image base to 0x00510000 here.
+				// TODO: We need to set the native image base to 0x00510000 here.
 				codegen.IsCorlib = true;
 			}
 			| extsource_spec
@@ -1125,7 +1125,7 @@ type			: K_CLASS class_ref
 			| K_NATIVE K_INT		{ $$ = codegen.Corlib.IntPtr; }
 			| K_NATIVE K_UNSIGNED K_INT	{ $$ = codegen.Corlib.UIntPtr; }
 			| K_NATIVE K_UINT		{ $$ = codegen.Corlib.UIntPtr; }
-			| K_NATIVE K_FLOAT		{ $$ = codegen.Corlib.Single; } // TODO: Verify this.
+			| K_NATIVE K_FLOAT		{ $$ = codegen.Corlib.Single; }
 			| simple_type
 			| ELLIPSIS type
 			{
@@ -1793,9 +1793,33 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause method_name formal_typars_clause OPEN_PARENS sig_args CLOSE_PARENS impl_attr
 			{
 				var name = (string) $7;
+				var attr = (MethodAttributes) $2;
+				var isClassMember = codegen.CurrentType != null;
 
-				var method = new MethodDefinition (name, (MethodAttributes) $2,
-					(TypeReference) $5) {
+				if (isClassMember) {
+					if (!codegen.CurrentType.IsAbstract &&
+						attr.HasBitFlag (MethodAttributes.Abstract))
+						report.WriteError (Error.AbstractMethodInNonAbstractClass,
+							"Abstract method in non-abstract class.");
+
+					if (codegen.CurrentType.IsInterface &&
+						!attr.HasBitFlag (MethodAttributes.Public))
+						report.WriteError (Error.NonPublicMethodInInterface,
+							"Non-public method in interface.");
+
+					if (codegen.CurrentType.IsInterface &&
+						(!attr.HasBitFlag (MethodAttributes.Abstract) ||
+						!attr.HasBitFlag (MethodAttributes.Virtual))) {
+						report.WriteWarning (Warning.NonVirtualMethodInInterface,
+							"Non-abstract/non-virtual method in interface; set to such.");
+
+						attr |= MethodAttributes.Abstract | MethodAttributes.Virtual;
+					}
+				}
+
+				
+
+				var method = new MethodDefinition (name, attr, (TypeReference) $5) {
 					CallingConvention = (MethodCallingConvention) $3,
 				};
 
@@ -1808,7 +1832,7 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				if (codegen.CurrentType != null)
+				if (isClassMember)
 					method.DeclaringType = codegen.CurrentType;
 
 				if (codegen.CurrentPInvokeInfo != null) {

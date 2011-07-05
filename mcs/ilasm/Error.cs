@@ -181,5 +181,13 @@ namespace Mono.ILAsm {
 		/// Happens if an instruction refers to an invalid label.
 		/// </summary>
 		InvalidLabel = 34,
+		/// <summary>
+		/// Happens if an abstract method is encountered in a non-abstract class.
+		/// </summary>
+		AbstractMethodInNonAbstractClass = 35,
+		/// <summary>
+		/// Happens if a non-public method in an interface type is encountered.
+		/// </summary>
+		NonPublicMethodInInterface = 36,
 	}
 }

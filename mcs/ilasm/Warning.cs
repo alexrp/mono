@@ -110,5 +110,15 @@ namespace Mono.ILAsm {
 		/// Happens when an index in a .param directive is out of range.
 		/// </summary>
 		OutOfRangeParameterIndex = 17,
+		/// <summary>
+		/// Happens if an empty method body is encountered and a default ret
+		/// instruction is emitted.
+		/// </summary>
+		DefaultReturnEmitted = 18,
+		/// <summary>
+		/// Happens if a method in an interface is not set to abstract and
+		/// virtual.
+		/// </summary>
+		NonVirtualMethodInInterface = 19,
 	}
 }
