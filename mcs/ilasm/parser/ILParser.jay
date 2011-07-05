@@ -1072,7 +1072,7 @@ type			: K_CLASS class_ref
 				var idx = (int) $2;
 				var genParams = codegen.CurrentType.GenericParameters;
 
-				if (idx >= genParams.Count)
+				if (idx < 0 || idx >= genParams.Count)
 					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
 						"Generic parameter ordinal '{0}' is invalid.", idx);
 
@@ -1106,7 +1106,7 @@ type			: K_CLASS class_ref
 				var idx = (int) $3;
 				var genParams = codegen.CurrentMethod.GenericParameters;
 
-				if (idx >= genParams.Count)
+				if (idx < 0 || idx >= genParams.Count)
 					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
 						"Generic parameter ordinal '{0}' is invalid.", idx);
 
@@ -2097,7 +2097,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var idx = (int) $3;
 
-				if (idx < codegen.CurrentMethod.Parameters.Count) {
+				if (idx < 0 || idx >= codegen.CurrentMethod.Parameters.Count) {
 					var param = codegen.CurrentMethod.Parameters [idx];
 					param.Constant = $5 is Null ? null : $5;
 				} else
@@ -2171,13 +2171,7 @@ instr			: INSTR_NONE
 			}
 			| INSTR_LOCAL int32
 			{
-				var idx = (int) $2;
-
-				if (idx > il.Body.Variables.Count)
-					report.WriteError (Error.InvalidLocal,
-						"Local variable at index '{0}' not found.", idx);
-
-				il.Emit ((OpCode) $1, il.Body.Variables [idx]);
+				il.Emit ((OpCode) $1, (int) $2);
 			}
 			| INSTR_LOCAL id
 			{
@@ -2196,13 +2190,7 @@ instr			: INSTR_NONE
 			}
 			| INSTR_PARAM int32
 			{
-				var idx = (int) $2;
-
-				if (idx > codegen.CurrentMethod.Parameters.Count)
-					report.WriteError (Error.InvalidParameter,
-						"Parameter at index '{0}' not found.", idx);
-
-				il.Emit ((OpCode) $1, codegen.CurrentMethod.Parameters [idx]);
+				il.Emit ((OpCode) $1, (int) $2);
 			}
 			| INSTR_PARAM id
 			{
@@ -2401,7 +2389,7 @@ label			: id
 			{
 				var idx = (int) $1;
 
-				if (idx < il.Body.Instructions.Count)
+				if (idx < 0 || idx >= il.Body.Instructions.Count)
 					report.WriteError (Error.InvalidLabel,
 						"Instruction at index '{0}' not found.", idx);
 
