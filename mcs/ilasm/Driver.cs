@@ -178,7 +178,7 @@ namespace Mono.ILAsm {
 				case "deb":
 				case "debu":
 				case "debug":
-					// TODO: support impl and opt
+					// TODO: Support impl and opt.
 					debugging_info = true;
 					break;
 				case "nol":

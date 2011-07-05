@@ -29,9 +29,6 @@ using NUnit.Framework;
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
 	public sealed class NamespaceTests : AssemblerTester {
-		// TODO: Write tests to verify that classes get put into the correct
-		// namespaces when we can actually emit them.
-		
 		[Test]
 		public void TestNamespaceDirective ()
 		{
