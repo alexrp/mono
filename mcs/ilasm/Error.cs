@@ -169,5 +169,17 @@ namespace Mono.ILAsm {
 		/// Emitted if an attempt to compile native code is made.
 		/// </summary>
 		NativeCodeUnsupported = 31,
+		/// <summary>
+		/// Happens if an instruction refers to an invalid local varible.
+		/// </summary>
+		InvalidLocal = 32,
+		/// <summary>
+		/// Happens if an instruction refers to an invalid parameter.
+		/// </summary>
+		InvalidParameter = 33,
+		/// <summary>
+		/// Happens if an instruction refers to an invalid label.
+		/// </summary>
+		InvalidLabel = 34,
 	}
 }

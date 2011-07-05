@@ -71,7 +71,7 @@ namespace Mono.ILAsm {
 				if (scan_only)
 					return 0;
 				
-				if (Target != Target.Dll && !codegen.HasEntryPoint)
+				if (Target != Target.Dll && codegen.CurrentModule.EntryPoint == null)
 					Report.WriteError (Error.NoEntryPoint, "No entry point found.");
 				
 				if (key_name != null) {

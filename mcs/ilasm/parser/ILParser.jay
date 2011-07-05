@@ -23,6 +23,7 @@ namespace Mono.ILAsm {
 		readonly Report report;
 		readonly Stack<string> namespace_stack = new Stack<string> ();
 		readonly Stack<TypeDefinition> typedef_stack = new Stack<TypeDefinition> ();
+		readonly Dictionary<string, Label> labels = new Dictionary<string, Label> ();
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -1783,6 +1784,8 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 				else
 					codegen.CurrentModule.GetModuleType ().Methods.Add (codegen.CurrentMethod);
 
+				il = null;
+				labels.Clear ();
 				codegen.CurrentMethod = null;
 			}
 			;
@@ -1793,7 +1796,7 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 
 				var method = new MethodDefinition (name, (MethodAttributes) $2,
 					(TypeReference) $5) {
-					CallingConvention = (MethodCallingConvention) $1,
+					CallingConvention = (MethodCallingConvention) $3,
 				};
 
 				if (is_instance_call)
@@ -1832,11 +1835,12 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 				foreach (var arg in (List<GenericParameter>) $8)
 					method.GenericParameters.Add (arg);
 
-				foreach (var arg in (List<TypeReference>) $10)
-					method.Parameters.Add (new ParameterDefinition (arg));
+				foreach (var arg in (List<ParameterDefinition>) $10)
+					method.Parameters.Add (arg);
 
 				method.ImplAttributes = (MethodImplAttributes) $12;
 
+				il = method.Body.GetILProcessor ();
 				codegen.CurrentMethod = method;
 				codegen.CurrentGenericParameterProvider = method;
 			}
@@ -2043,7 +2047,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				codegen.CurrentMethod.Overrides.Add ((MethodReference) $2);
 			}
-			| scope_block
+			| scope_block // TODO: Implement local variable scopes.
 			| D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET init_opt
 			{
 				var idx = (int) $3;
@@ -2059,8 +2063,20 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| param_type_decl
 			*/
 			| id COLON
-			| seh_block
+			{
+				var name = (string) $1;
+
+				codegen.CurrentLabel = new Label (name);
+				labels.Add (name, codegen.CurrentLabel);
+			}
+			| seh_block // TODO: Implement exceptions.
 			| instr
+			{
+				if (codegen.CurrentLabel != null) {
+					codegen.CurrentLabel.Instruction = (Instruction) $1;
+					codegen.CurrentLabel = null;
+				}
+			}
 			/*
 			| sec_decl
 			*/
@@ -2073,12 +2089,6 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			}
 			| data_decl
 			| comp_control
-			;
-
-slot_num		: OPEN_BRACKET int32 CLOSE_BRACKET
-			{
-				$$ = $2;
-			}
 			;
 
 scope_block		: OPEN_BRACE method_decls CLOSE_BRACE
@@ -2113,34 +2123,257 @@ handler_block		: scope_block
 			;
 
 instr			: INSTR_NONE
+			{
+				il.Emit ((OpCode) $1);
+			}
 			| INSTR_LOCAL int32
+			{
+				var idx = (int) $2;
+
+				if (idx > il.Body.Variables.Count)
+					report.WriteError (Error.InvalidLocal,
+						"Local variable at index '{0}' not found.", idx);
+
+				il.Emit ((OpCode) $1, il.Body.Variables [idx]);
+			}
 			| INSTR_LOCAL id
+			{
+				var name = (string) $2;
+				VariableDefinition variable = null;
+
+				foreach (var local in il.Body.Variables)
+					if (local.Name == name)
+						variable = local;
+
+				if (variable == null)
+					report.WriteError (Error.InvalidLocal,
+						"Local variable '{0}' not found.", name);
+
+				il.Emit ((OpCode) $1, variable);
+			}
 			| INSTR_PARAM int32
+			{
+				var idx = (int) $2;
+
+				if (idx > codegen.CurrentMethod.Parameters.Count)
+					report.WriteError (Error.InvalidParameter,
+						"Parameter at index '{0}' not found.", idx);
+
+				il.Emit ((OpCode) $1, codegen.CurrentMethod.Parameters [idx]);
+			}
 			| INSTR_PARAM id
+			{
+				var name = (string) $2;
+				ParameterDefinition param = null;
+
+				foreach (var parameter in codegen.CurrentMethod.Parameters)
+					if (parameter.Name == name)
+						param = parameter;
+
+				if (param == null)
+					report.WriteError (Error.InvalidLocal,
+						"Parameter '{0}' not found.", name);
+
+				il.Emit ((OpCode) $1, param);
+			}
 			| INSTR_I int32
+			{
+				var instr = il.Create ((OpCode) $1, (int) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_I8 int64
+			{
+				var instr = il.Create ((OpCode) $1, (long) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_R float64
+			{
+				var op = (OpCode) $1;
+				Instruction instr;
+
+				if (op == OpCodes.Ldc_R4) {
+					instr = il.Create (op, (float) (double) $2);
+				} else {
+					instr = il.Create (op, (double) $2);
+				}
+
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_R int64
+			{
+				var op = (OpCode) $1;
+				Instruction instr;
+
+				if (op == OpCodes.Ldc_R4) {
+					var val = BitConverter.ToSingle (BitConverter.GetBytes ((int) (long) $2),
+						BitConverter.IsLittleEndian ? 0 : 4);
+
+					instr = il.Create (op, val);
+				} else {
+					var val = BitConverter.Int64BitsToDouble ((long) $2);
+
+					instr = il.Create (op, val);
+				}
+
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_R bytes_list
-			| INSTR_BRTARGET int32
-			| INSTR_BRTARGET id
+			{
+				var op = (OpCode) $1;
+				Instruction instr;
+
+				if (op == OpCodes.Ldc_R4) {
+					var val = BitConverter.ToSingle ((byte[]) $2,
+						BitConverter.IsLittleEndian ? 0 : 4);
+
+					instr = il.Create (op, val);
+				} else {
+					var val = BitConverter.ToDouble ((byte[]) $2,
+						BitConverter.IsLittleEndian ? 0 : 8);
+
+					instr = il.Create (op, val);
+				}
+
+				il.Append (instr);
+
+				$$ = instr;
+			}
+			| INSTR_BRTARGET label
+			{
+				var instr = il.Create ((OpCode) $1, (Instruction) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_METHOD method_ref
+			{
+				var instr = il.Create ((OpCode) $1, (MethodReference) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_FIELD field_ref
+			{
+				var instr = il.Create ((OpCode) $1, (FieldReference) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_TYPE type_spec
+			{
+				var instr = il.Create ((OpCode) $1, (TypeReference) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_STRING comp_qstring
+			{
+				var instr = il.Create ((OpCode) $1, (string) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_STRING K_ANSI comp_qstring
+			{
+				// TODO: Do we reencode the string or something?
+				var instr = il.Create ((OpCode) $1, (string) $2);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_STRING K_BYTEARRAY ASSIGN bytes_list
+			{
+				var text = Encoding.Unicode.GetString ((byte[]) $4);
+				var instr = il.Create ((OpCode) $1, text);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_SIG call_conv type OPEN_PARENS sig_args CLOSE_PARENS
+			{
+				var call = new CallSite ((TypeReference) $3);
+
+				if (is_instance_call)
+					call.HasThis = true;
+
+				if (is_explicit_call)
+					call.ExplicitThis = true;
+
+				is_instance_call = false;
+				is_explicit_call = false;
+
+				foreach (var param in (List<ParameterDefinition>) $5)
+					call.Parameters.Add (param);
+
+				var instr = il.Create ((OpCode) $1, call);
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_TOK owner_type
+			{
+				Instruction instr;
+
+				if ($2 is TypeReference)
+					instr = il.Create ((OpCode) $1, (TypeReference) $2);
+				else if ($2 is FieldReference)
+					instr = il.Create ((OpCode) $1, (FieldReference) $2);
+				else
+					instr = il.Create ((OpCode) $1, (MethodReference) $2);
+
+				il.Append (instr);
+
+				$$ = instr;
+			}
 			| INSTR_SWITCH OPEN_PARENS labels CLOSE_PARENS
-			| INSTR_PHI int16_seq
+			{
+				var instr = il.Create ((OpCode) $1, ((List<Instruction>) $3).ToArray ());
+				il.Append (instr);
+
+				$$ = instr;
+			}
+			| INSTR_PHI int16_seq // Not actually used.
+			;
+
+label			: id
+			{
+				var name = (string) $1;
+				Label label;
+
+				if (!labels.TryGetValue (name, out label))
+					report.WriteError (Error.InvalidLabel,
+						"Label '{0}' not found.", name);
+
+				$$ = label.Instruction;
+			}
+			| int32
+			{
+				var idx = (int) $1;
+
+				if (idx < il.Body.Instructions.Count)
+					report.WriteError (Error.InvalidLabel,
+						"Instruction at index '{0}' not found.", idx);
+
+				$$ = il.Body.Instructions [idx];
+			}
 			;
 
 labels			:
-			| id
-			| int32
-			| id COMMA labels
-			| int32 COMMA labels
+			{
+				$$ = new List<Instruction> ();
+			}
+			| label COMMA labels
+			{
+				((List<Instruction>) $3).Add ((Instruction) $1);
+			}
 			;
 
 member_ref		: K_METHOD method_ref
@@ -2181,8 +2414,8 @@ method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args 
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				foreach (var arg in (List<TypeReference>) $6)
-					method.Parameters.Add (new ParameterDefinition (arg));
+				foreach (var arg in (List<ParameterDefinition>) $6)
+					method.Parameters.Add (arg);
 
 				if ($4 != null) {
 					var genMethod = new GenericInstanceMethod (method);
@@ -2192,6 +2425,8 @@ method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args 
 
 					method = genMethod;
 				}
+
+				$$ = method;
 			}
 			| call_conv type type_spec DOUBLE_COLON method_name typars_clause_opt OPEN_PARENS sig_args CLOSE_PARENS
 			{
@@ -2208,8 +2443,8 @@ method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args 
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				foreach (var arg in (List<TypeReference>) $8)
-					method.Parameters.Add (new ParameterDefinition (arg));
+				foreach (var arg in (List<ParameterDefinition>) $8)
+					method.Parameters.Add (arg);
 
 				if ($6 != null) {
 					var genMethod = new GenericInstanceMethod (method);
@@ -2219,6 +2454,8 @@ method_ref		: call_conv type method_name typars_clause_opt OPEN_PARENS sig_args 
 
 					method = genMethod;
 				}
+
+				$$ = method;
 			}
 			| mdtoken
 			;

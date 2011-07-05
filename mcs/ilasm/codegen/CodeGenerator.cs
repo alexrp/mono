@@ -34,11 +34,11 @@ namespace Mono.ILAsm {
 		
 		public PInvokeInfo CurrentPInvokeInfo { get; set; }
 		
+		public Label CurrentLabel { get; set; }
+		
 		public bool HasAssemblyDirective { get; set; }
 		
 		public bool HasModuleDirective { get; set; }
-		
-		public bool HasEntryPoint { get; set; }
 		
 		public bool DebuggingSymbols { get; set; }
 		
