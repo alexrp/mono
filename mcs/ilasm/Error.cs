@@ -194,5 +194,9 @@ namespace Mono.ILAsm {
 		/// parameter in a type or method context.
 		/// </summary>
 		InvalidGenericParameter = 37,
+		/// <summary>
+		/// Happens when a duplicate label in a method body is encountered.
+		/// </summary>
+		DuplicateLabel = 38,
 	}
 }

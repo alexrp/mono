@@ -2109,6 +2109,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var name = (string) $1;
 
+				if (labels.ContainsKey (name))
+					report.WriteError (Error.DuplicateLabel,
+						"Duplicate label: {0}", name);
+
 				codegen.CurrentLabel = new Label (name);
 				labels.Add (name, codegen.CurrentLabel);
 			}
