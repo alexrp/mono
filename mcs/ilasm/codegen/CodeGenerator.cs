@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Cecil.Mdb;
 
 namespace Mono.ILAsm {
@@ -35,6 +36,8 @@ namespace Mono.ILAsm {
 		public PInvokeInfo CurrentPInvokeInfo { get; set; }
 		
 		public Label CurrentLabel { get; set; }
+		
+		public Scope CurrentScope { get; set; }
 		
 		public bool HasAssemblyDirective { get; set; }
 		

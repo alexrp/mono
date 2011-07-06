@@ -25,6 +25,7 @@ namespace Mono.ILAsm {
 		readonly Stack<string> namespace_stack = new Stack<string> ();
 		readonly Stack<TypeDefinition> typedef_stack = new Stack<TypeDefinition> ();
 		readonly Dictionary<string, Label> labels = new Dictionary<string, Label> ();
+		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -42,6 +43,8 @@ namespace Mono.ILAsm {
 			this.report = report;
 			this.codegen = codegen;
 			this.tokenizer = tokenizer;
+			
+			scope_stack.Push (null);
 		}
 
 %}
@@ -530,9 +533,12 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 					codegen.Corlib.Object = codegen.CurrentType;
 
 				codegen.CurrentType = null;
+				codegen.CurrentGenericParameterProvider = null;
 
-				if (typedef_stack.Count > 0)
+				if (typedef_stack.Count > 0) {
 					codegen.CurrentType = typedef_stack.Pop ();
+					codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+				}
 			}
 			;
 
@@ -573,8 +579,6 @@ class_head		: D_CLASS class_attr comp_name
 			{
 				foreach (var arg in (List<GenericParameter>) $5)
 					codegen.CurrentType.GenericParameters.Add (arg);
-
-				codegen.CurrentGenericParameterProvider = null;
 
 				TypeReference baseType;
 
@@ -1800,14 +1804,30 @@ dataitem		: K_CHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
 
 method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 			{
-				if (codegen.CurrentType != null)
+				// Add all variables from all scopes to the method's body.
+				Action<Scope> f = s =>
+				{
+					foreach (var variable in s.Variables)
+						il.Body.Variables.Add (variable);
+
+					foreach (var scope in s.Scopes)
+						f (scope);
+				};
+
+				f (il.Body.Scope);
+
+				var isClass = codegen.CurrentType != null;
+
+				if (isClass)
 					codegen.CurrentType.Methods.Add (codegen.CurrentMethod);
 				else
 					codegen.CurrentModule.GetModuleType ().Methods.Add (codegen.CurrentMethod);
 
-				il = null;
-				labels.Clear ();
 				codegen.CurrentMethod = null;
+				codegen.CurrentGenericParameterProvider = isClass ? codegen.CurrentType : null;
+				il = null;
+				codegen.CurrentScope = null;
+				labels.Clear ();
 			}
 			;
 
@@ -1843,6 +1863,8 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 				var method = new MethodDefinition (name, attr, (TypeReference) $5) {
 					CallingConvention = (MethodCallingConvention) $3,
 				};
+
+				method.Body.Scope = new Scope ();
 
 				if (is_instance_call)
 					method.HasThis = true;
@@ -1885,9 +1907,10 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 
 				method.ImplAttributes = (MethodImplAttributes) $12;
 
-				il = method.Body.GetILProcessor ();
 				codegen.CurrentMethod = method;
 				codegen.CurrentGenericParameterProvider = method;
+				il = method.Body.GetILProcessor ();
+				codegen.CurrentScope = method.Body.Scope;
 			}
 			;
 
@@ -2047,21 +2070,21 @@ method_decls		:
 method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| D_MAXSTACK int32
 			{
-				codegen.CurrentMethod.Body.MaxStackSize = (int) $2;
+				il.Body.MaxStackSize = (int) $2;
 			}
 			| D_LOCALS OPEN_PARENS sig_args CLOSE_PARENS
 			{
 				foreach (var param in (List<ParameterDefinition>) $3)
-					codegen.CurrentMethod.Body.Variables.Add (new VariableDefinition (
+					codegen.CurrentScope.Variables.Add (new VariableDefinition (
 						param.Name, param.ParameterType));
 			}
 			| D_LOCALS K_INIT OPEN_PARENS sig_args CLOSE_PARENS
 			{
 				foreach (var param in (List<ParameterDefinition>) $3)
-					codegen.CurrentMethod.Body.Variables.Add (new VariableDefinition (
+					codegen.CurrentScope.Variables.Add (new VariableDefinition (
 						param.Name, param.ParameterType));
 
-				codegen.CurrentMethod.Body.InitLocals = true;
+				il.Body.InitLocals = true;
 			}
 			| D_ENTRYPOINT
 			{
@@ -2073,7 +2096,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			}
 			| D_ZEROINIT
 			{
-				codegen.CurrentMethod.Body.InitLocals = true;
+				il.Body.InitLocals = true;
 			}
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET // TODO: How do we deal with this?
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id
@@ -2086,6 +2109,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var overridenMethod = new MethodReference ((string) $4,
 					codegen.CurrentMethod.ReturnType, (TypeReference) $2);
+
 				codegen.CurrentMethod.Overrides.Add (overridenMethod);
 			}
 			| D_OVERRIDE generic_method_ref
@@ -2138,7 +2162,18 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| comp_control
 			;
 
-scope_block		: OPEN_BRACE method_decls CLOSE_BRACE
+scope_block		: OPEN_BRACE
+			{
+				var scope = new Scope ();
+
+				scope_stack.Push (codegen.CurrentScope);
+				codegen.CurrentScope.Scopes.Add (scope);
+				codegen.CurrentScope = scope;
+			}
+			  method_decls CLOSE_BRACE
+			{
+				codegen.CurrentScope = scope_stack.Pop ();
+			}
 			;
 
 seh_block		: try_block seh_clauses
@@ -2182,9 +2217,15 @@ instr			: INSTR_NONE
 				var name = (string) $2;
 				VariableDefinition variable = null;
 
-				foreach (var local in il.Body.Variables)
+				foreach (var local in codegen.CurrentScope.Variables)
 					if (local.Name == name)
 						variable = local;
+
+				if (variable == null)
+					foreach (var scope in scope_stack.QueueReverse ())
+						foreach (var local in scope.Variables)
+							if (local.Name == name)
+								variable = local;
 
 				if (variable == null)
 					report.WriteError (Error.InvalidLocal,

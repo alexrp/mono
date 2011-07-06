@@ -82,6 +82,7 @@
     <Compile Include="codegen\Null.cs" />
     <Compile Include="Tuple.cs" />
     <Compile Include="codegen\Label.cs" />
+    <Compile Include="Action.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

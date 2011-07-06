@@ -66,5 +66,17 @@ namespace Mono.ILAsm {
 			Array.Resize (ref arr, arr.Length + addedSize);
 			return arr;
 		}
+		
+		public static IEnumerable<T> QueueReverse<T> (this IEnumerable<T> self)
+		{
+			// This could probably be done in a more optimal manner. However,
+			// this is prettier and easier to read. Sue me.
+			var q = new Queue<T> ();
+			
+			foreach (var item in self)
+				q.Enqueue (item);
+			
+			return q;
+		}
 	}
 }
