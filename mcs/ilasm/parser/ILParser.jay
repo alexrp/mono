@@ -2118,7 +2118,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				codegen.CurrentMethod.Overrides.Add ((MethodReference) $2);
 			}
-			| scope_block // TODO: Implement local variable scopes.
+			| scope_block
 			| D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET init_opt
 			{
 				var idx = (int) $3;
@@ -2191,9 +2191,9 @@ seh_clauses		: seh_clause
 			;
 
 seh_clause		: K_CATCH type_spec handler_block
+			| filter_clause handler_block
 			| K_FINALLY handler_block
 			| K_FAULT handler_block
-			| filter_clause handler_block
 			;
 
 filter_clause		: K_FILTER scope_block

@@ -62,13 +62,14 @@ namespace Mono.ILAsm {
 
 		public override string ToString ()
 		{
-			var location_str = string.Empty;
+			var locationStr = string.Empty;
+			
 			if (Location != null)
-				location_str = FilePath + ":" + Location.Line + "," +
+				locationStr = FilePath + ":" + Location.Line + "," +
 					Location.Column + ": ";
 
 			return string.Format ("{0}Error ILE{1}: {2}",
-				location_str, ((int) Error).ToString ("0000"), Message);
+				locationStr, ((int) Error).ToString ("0000"), Message);
 		}
 	}
 }

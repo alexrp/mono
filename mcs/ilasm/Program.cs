@@ -31,11 +31,12 @@ namespace Mono.ILAsm {
 	internal static class Program {
 		static int Main (string[] args)
 		{
-			// Do everything in Invariant
+			// Do everything in invariant.
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 			
 			var driver = new Driver ();
 			var result = driver.Run (args);
+			
 			if (result == null)
 				return 0; // We just silently return success.
 			

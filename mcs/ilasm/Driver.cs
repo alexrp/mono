@@ -64,6 +64,7 @@ namespace Mono.ILAsm {
 			try {
 				foreach (var file_path in il_file_list) {
 					var fileResult = ProcessFile (codegen, file_path);
+					
 					if (fileResult != ExitCode.Success)
 						return fileResult;
 				}
@@ -262,13 +263,13 @@ namespace Mono.ILAsm {
 		
 		static string CreateOutputFileName (IList<string> ilFileList, Target target)
 		{
-			var file_name = ilFileList [0];
-			var ext_index = file_name.LastIndexOf ('.');
+			var fileName = ilFileList [0];
+			var extIndex = fileName.LastIndexOf ('.');
 
-			if (ext_index == -1)
-				ext_index = file_name.Length;
+			if (extIndex == -1)
+				extIndex = fileName.Length;
 
-			return file_name.Substring (0, ext_index) +
+			return fileName.Substring (0, extIndex) +
 				(target == Target.Dll ? ".dll" : ".exe");
 		}
 
@@ -317,15 +318,15 @@ namespace Mono.ILAsm {
 			Console.WriteLine ("Token: {0}", args.Token);
 		}
 
-		static string GetCommand (string str, out string command_arg)
+		static string GetCommand (string str, out string commandArg)
 		{
 			var end_index = str.IndexOfAny (new[] { ':', '=' }, 1);
 			var command = str.Substring (1, (end_index == -1 ? str.Length : end_index) - 1);
 
 			if (end_index != -1)
-				command_arg = str.Substring (end_index + 1);
+				commandArg = str.Substring (end_index + 1);
 			else
-				command_arg = null;
+				commandArg = null;
 
 			return command.ToLower ();
 		}
