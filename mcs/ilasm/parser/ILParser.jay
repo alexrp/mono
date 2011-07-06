@@ -1858,8 +1858,6 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 					}
 				}
 
-				
-
 				var method = new MethodDefinition (name, attr, (TypeReference) $5) {
 					CallingConvention = (MethodCallingConvention) $3,
 				};
@@ -1880,9 +1878,13 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 
 				if (codegen.CurrentPInvokeInfo != null) {
 					if (codegen.GetModuleReference (pinvoke_mod_name) != null) {
-						var module = new ModuleReference (pinvoke_mod_name);
+						var module = codegen.GetModuleReference (pinvoke_mod_name);
 
-						codegen.CurrentModule.ModuleReferences.Add (module);
+						if (module == null) {
+							module = new ModuleReference (pinvoke_mod_name);
+							codegen.CurrentModule.ModuleReferences.Add (module);
+						}
+
 						codegen.CurrentPInvokeInfo.Module = module;
 						pinvoke_mod_name = null;
 					}
