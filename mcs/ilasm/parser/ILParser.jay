@@ -34,9 +34,11 @@ namespace Mono.ILAsm {
 		bool is_instance_call;
 		bool is_parameter_marshal_notation;
 		bool type_attr_visibility_set;
+		bool is_inside_scope;
 		int custom_attr_blob_seq_length;
 		string pinvoke_mod_name;
 		ILProcessor il;
+		Instruction last_instr;
 
 		public ILParser (Report report, CodeGenerator codegen, ILTokenizer tokenizer)
 		{
@@ -45,6 +47,26 @@ namespace Mono.ILAsm {
 			this.tokenizer = tokenizer;
 			
 			scope_stack.Push (null);
+		}
+
+		Instruction FindInstruction (int idx)
+		{
+			if (idx < 0 || idx >= il.Body.Instructions.Count)
+				report.WriteError (Error.InvalidLabel,
+					"Instruction at index '{0}' not found.", idx);
+
+			return il.Body.Instructions [idx];
+		}
+
+		Instruction FindInstruction (string name)
+		{
+			Label label;
+
+			if (!labels.TryGetValue (name, out label))
+				report.WriteError (Error.InvalidLabel,
+					"Label '{0}' not found.", name);
+
+			return label.Instruction;
 		}
 
 %}
@@ -1822,6 +1844,16 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 						"Method has no body; ret emitted.");
 
 					il.Emit (OpCodes.Ret);
+				} else {
+					// We need to adjust the end instruction of exception
+					// handlers and their protected regions.
+					foreach (var handler in il.Body.ExceptionHandlers) {
+						// Next might be null, but this is OK; this is
+						// the behavior we want if there is no following
+						// instruction.
+						handler.TryEnd = handler.TryEnd.Next;
+						handler.HandlerEnd = handler.HandlerEnd.Next;
+					}
 				}
 
 				var isClass = codegen.CurrentType != null;
@@ -2150,13 +2182,22 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 				codegen.CurrentLabel = new Label (name);
 				labels.Add (name, codegen.CurrentLabel);
 			}
-			| seh_block // TODO: Implement exceptions.
+			| seh_block
 			| instr
 			{
+				var instr = (Instruction) $1;
+
+				if (is_inside_scope) {
+					codegen.CurrentScope.Start = instr;
+					is_inside_scope = false;
+				}
+
 				if (codegen.CurrentLabel != null) {
-					codegen.CurrentLabel.Instruction = (Instruction) $1;
+					codegen.CurrentLabel.Instruction = instr;
 					codegen.CurrentLabel = null;
 				}
+
+				last_instr = instr;
 			}
 			/*
 			| sec_decl
@@ -2176,51 +2217,165 @@ scope_block		: OPEN_BRACE
 			{
 				var scope = new Scope ();
 
+				is_inside_scope = true;
 				scope_stack.Push (codegen.CurrentScope);
+
 				codegen.CurrentScope.Scopes.Add (scope);
 				codegen.CurrentScope = scope;
 			}
 			  method_decls CLOSE_BRACE
 			{
+				var scope = codegen.CurrentScope;
+
+				if (!is_inside_scope)
+					scope.End = last_instr;
+
+				is_inside_scope = false;
+
+				$$ = scope;
+
 				codegen.CurrentScope = scope_stack.Pop ();
 			}
 			;
 
 seh_block		: try_block seh_clauses
+			{
+				var area = (Tuple<Instruction, Instruction>) $1;
+
+				foreach (var handler in (List<ExceptionHandler>) $2) {
+					handler.TryStart = area.X;
+					handler.TryEnd = area.Y;
+
+					il.Body.ExceptionHandlers.Add (handler);
+				}
+			}
 			;
 
 try_block		: D_TRY scope_block
+			{
+				var scope = (Scope) $2;
+
+				$$ = new Tuple<Instruction, Instruction> (scope.Start,
+					scope.End);
+			}
 			| D_TRY id K_TO id
+			{
+				var label1 = FindInstruction ((string) $2);
+				var label2 = FindInstruction ((string) $4);
+
+				$$ = new Tuple<Instruction, Instruction> (label1, label2);
+			}
 			| D_TRY int32 K_TO int32
+			{
+				var label1 = FindInstruction ((int) $2);
+				var label2 = FindInstruction ((int) $4);
+
+				$$ = new Tuple<Instruction, Instruction> (label1, label2);
+			}
 			;
 
 seh_clauses		: seh_clause
+			{
+				$$ = new List<ExceptionHandler> {
+					(ExceptionHandler) $1,
+				};
+			}
 			| seh_clauses seh_clause
+			{
+				((List<ExceptionHandler>) $1).Add ((ExceptionHandler) $2);
+			}
 			;
 
 seh_clause		: K_CATCH type_spec handler_block
+			{
+				var clause = (Tuple<Instruction, Instruction>) $3;
+
+				$$ = new ExceptionHandler (ExceptionHandlerType.Catch) {
+					CatchType = (TypeReference) $2,
+					HandlerStart = clause.X,
+					HandlerEnd = clause.Y,
+				};
+			}
 			| filter_clause handler_block
+			{
+				var clause = (Tuple<Instruction, Instruction>) $2;
+
+				$$ = new ExceptionHandler (ExceptionHandlerType.Filter) {
+					FilterStart = (Instruction) $1,
+					HandlerStart = clause.X,
+					HandlerEnd = clause.Y,
+				};
+			}
 			| K_FINALLY handler_block
+			{
+				var clause = (Tuple<Instruction, Instruction>) $2;
+
+				$$ = new ExceptionHandler (ExceptionHandlerType.Finally) {
+					HandlerStart = clause.X,
+					HandlerEnd = clause.Y,
+				};
+			}
 			| K_FAULT handler_block
+			{
+				var clause = (Tuple<Instruction, Instruction>) $2;
+
+				$$ = new ExceptionHandler (ExceptionHandlerType.Fault) {
+					HandlerStart = clause.X,
+					HandlerEnd = clause.Y,
+				};
+			}
 			;
 
 filter_clause		: K_FILTER scope_block
+			{
+				$$ = ((Scope) $2).Start;
+			}
 			| K_FILTER id
+			{
+				$$ = FindInstruction ((string) $2);
+			}
 			| K_FILTER int32
+			{
+				$$ = FindInstruction ((int) $2);
+			}
 			;
 
 handler_block		: scope_block
+			{
+				var scope = (Scope) $1;
+
+				$$ = new Tuple<Instruction, Instruction> (scope.Start,
+					scope.End);
+			}
 			| K_HANDLER id K_TO id
+			{
+				var label1 = FindInstruction ((string) $2);
+				var label2 = FindInstruction ((string) $4);
+
+				$$ = new Tuple<Instruction, Instruction> (label1, label2);
+			}
 			| K_HANDLER int32 K_TO int32
+			{
+				var label1 = FindInstruction ((int) $2);
+				var label2 = FindInstruction ((int) $4);
+
+				$$ = new Tuple<Instruction, Instruction> (label1, label2);
+			}
 			;
 
 instr			: INSTR_NONE
 			{
-				il.Emit ((OpCode) $1);
+				var instr = il.Create ((OpCode) $1);
+				il.Append (instr);
+
+				$$ = instr;
 			}
 			| INSTR_LOCAL int32
 			{
-				il.Emit ((OpCode) $1, (int) $2);
+				var instr = il.Create ((OpCode) $1, (int) $2);
+				il.Append (instr);
+
+				$$ = instr;
 			}
 			| INSTR_LOCAL id
 			{
@@ -2241,11 +2396,17 @@ instr			: INSTR_NONE
 					report.WriteError (Error.InvalidLocal,
 						"Local variable '{0}' not found.", name);
 
-				il.Emit ((OpCode) $1, variable);
+				var instr = il.Create ((OpCode) $1, variable);
+				il.Append (instr);
+
+				$$ = instr;
 			}
 			| INSTR_PARAM int32
 			{
-				il.Emit ((OpCode) $1, (int) $2);
+				var instr = il.Create ((OpCode) $1, (int) $2);
+				il.Append (instr);
+
+				$$ = instr;
 			}
 			| INSTR_PARAM id
 			{
@@ -2260,7 +2421,10 @@ instr			: INSTR_NONE
 					report.WriteError (Error.InvalidLocal,
 						"Parameter '{0}' not found.", name);
 
-				il.Emit ((OpCode) $1, param);
+				var instr = il.Create ((OpCode) $1, param);
+				il.Append (instr);
+
+				$$ = instr;
 			}
 			| INSTR_I int32
 			{
@@ -2281,11 +2445,10 @@ instr			: INSTR_NONE
 				var op = (OpCode) $1;
 				Instruction instr;
 
-				if (op == OpCodes.Ldc_R4) {
+				if (op == OpCodes.Ldc_R4)
 					instr = il.Create (op, (float) (double) $2);
-				} else {
+				else
 					instr = il.Create (op, (double) $2);
-				}
 
 				il.Append (instr);
 
@@ -2431,24 +2594,11 @@ instr			: INSTR_NONE
 
 label			: id
 			{
-				var name = (string) $1;
-				Label label;
-
-				if (!labels.TryGetValue (name, out label))
-					report.WriteError (Error.InvalidLabel,
-						"Label '{0}' not found.", name);
-
-				$$ = label.Instruction;
+				$$ = FindInstruction ((string) $1);
 			}
 			| int32
 			{
-				var idx = (int) $1;
-
-				if (idx < 0 || idx >= il.Body.Instructions.Count)
-					report.WriteError (Error.InvalidLabel,
-						"Instruction at index '{0}' not found.", idx);
-
-				$$ = il.Body.Instructions [idx];
+				$$ = FindInstruction ((int) $1);
 			}
 			;
 
@@ -3634,8 +3784,6 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			;
 
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
-			{
-			}
 			;
 
 exptype_directive	: D_CLASS K_EXTERN
