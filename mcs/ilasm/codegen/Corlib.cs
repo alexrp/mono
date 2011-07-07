@@ -28,19 +28,34 @@ using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	internal sealed class Corlib {
-		public Corlib (ModuleDefinition module, AssemblyNameReference asmName)
+		public Corlib (ModuleDefinition module, IMetadataScope scope, bool isCorlib)
 		{
-			foreach (var prop in typeof (Corlib).GetProperties ())
-				prop.SetValue (this, new TypeReference ("System",
-					prop.Name, module, asmName), null);
-		}
-		
-		public Corlib (ModuleDefinition module)
-		{
-			foreach (var prop in typeof (Corlib).GetProperties ())
-				if (prop.Name != "Object")
-					prop.SetValue (this, new TypeReference ("System",
-						prop.Name, module, module), null);
+			// For these, we use Cecil's type system.
+			if (!isCorlib)
+				Object = module.TypeSystem.Object;
+			
+			Boolean = module.TypeSystem.Boolean;
+			Char = module.TypeSystem.Char;
+			String = module.TypeSystem.String;
+			Byte = module.TypeSystem.Byte;
+			SByte = module.TypeSystem.SByte;
+			Int16 = module.TypeSystem.Int16;
+			UInt16 = module.TypeSystem.UInt16;
+			Int32 = module.TypeSystem.Int32;
+			UInt32 = module.TypeSystem.UInt32;
+			Int64 = module.TypeSystem.Int64;
+			UInt64 = module.TypeSystem.UInt64;
+			Single = module.TypeSystem.Single;
+			Double = module.TypeSystem.Double;
+			IntPtr = module.TypeSystem.IntPtr;
+			UIntPtr = module.TypeSystem.UIntPtr;
+			TypedReference = module.TypeSystem.TypedReference;
+			Void = module.TypeSystem.Void;
+			
+			Type = new TypeReference ("System", "Type", module, scope);
+			ValueType = new TypeReference ("System", "ValueType", module, scope);
+			Enum = new TypeReference ("System", "Enum", module, scope);
+			Decimal = new TypeReference ("System", "Decimal", module, scope);
 		}
 		
 		public TypeReference Type { get; private set; }

@@ -273,18 +273,18 @@ namespace Mono.ILAsm {
 			// If we're assembling mscorlib, we expect to find the types
 			// exposed on the Corlib class when we parse.
 			if (IsCorlib)
-				return new Corlib (CurrentModule);
+				return new Corlib (CurrentModule, CurrentModule, true);
 			
 			var asm = GetAliasedAssemblyReference (corlibStr);
 			if (asm != null)
-				return new Corlib (CurrentModule, asm);
+				return new Corlib (CurrentModule, asm, false);
 			
 			// TODO: Should we error if we can't resolve it?
 			asm = ResolveAssemblyReference (corlibStr) ??
 				new AssemblyNameReference (corlibStr, new Version ());
 			CurrentModule.AssemblyReferences.Add (asm);
 			
-			return new Corlib (CurrentModule, asm);
+			return new Corlib (CurrentModule, asm, false);
 		}
 	}
 }

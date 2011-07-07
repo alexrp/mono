@@ -354,7 +354,7 @@ namespace Mono.ILAsm {
 				Output.WriteLine ("Developer options:{0}" +
 					"   /mono_scanonly      Only perform tokenization.{0}" +
 					"   /mono_showtokens    Show tokens as they're scanned.{0}" +
-					"   /mono_showparser    Show parser debug output.{0}",
+					"   /mono_showparser    Show parser debug output.",
 					n);
 		}
 
