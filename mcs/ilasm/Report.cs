@@ -61,6 +61,8 @@ namespace Mono.ILAsm {
 		public TextWriter ErrorOutput { get; set; }
 		
 		public bool Quiet { get; set; }
+		
+		public bool Verbose { get; set; }
 
 		public string FilePath { get; internal set; }
 		
@@ -130,6 +132,20 @@ namespace Mono.ILAsm {
 				evnt (null, new MessageEventArgs (msg));
 			
 			if (Quiet)
+				return;
+			
+			MessageOutput.WriteLine (msg);
+		}
+		
+		internal void WriteVerbose (string message, params object[] args)
+		{
+			var msg = string.Format (message, args);
+			
+			var evnt = Message;
+			if (evnt != null)
+				evnt (null, new MessageEventArgs (msg));
+			
+			if (!Verbose)
 				return;
 			
 			MessageOutput.WriteLine (msg);

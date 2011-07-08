@@ -26,6 +26,7 @@ namespace Mono.ILAsm {
 		readonly Stack<TypeDefinition> typedef_stack = new Stack<TypeDefinition> ();
 		readonly Dictionary<string, Label> labels = new Dictionary<string, Label> ();
 		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
+		readonly Dictionary<Instruction, object> label_jumps = new Dictionary<Instruction, object> ();
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -547,8 +548,6 @@ namespace_head		: D_NAMESPACE comp_name
 
 class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 			{
-				codegen.CurrentModule.Types.Add (codegen.CurrentType);
-
 				// We've assembled the System.Object type; register it.
 				if (codegen.IsCorlib && codegen.Corlib.Object == null &&
 					codegen.CurrentType.FullName == "System.Object")
@@ -643,6 +642,8 @@ class_head		: D_CLASS class_attr comp_name
 
 				foreach (var interf in (List<TypeReference>) $7)
 					codegen.CurrentType.Interfaces.Add (interf);
+
+				codegen.CurrentModule.Types.Add (codegen.CurrentType);
 			}
 			;
 
@@ -1826,18 +1827,6 @@ dataitem		: K_CHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
 
 method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 			{
-				// Add all variables from all scopes to the method's body.
-				Action<Scope> f = s =>
-				{
-					foreach (var variable in s.Variables)
-						il.Body.Variables.Add (variable);
-
-					foreach (var scope in s.Scopes)
-						f (scope);
-				};
-
-				f (il.Body.Scope);
-
 				// If the method has no code, we emit a ret.
 				if (il.Body.Instructions.Count == 0) {
 					report.WriteWarning (Warning.DefaultReturnEmitted,
@@ -1848,30 +1837,51 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 					// We need to adjust the end instruction of exception
 					// handlers and their protected regions.
 					foreach (var handler in il.Body.ExceptionHandlers) {
-						// Next might be null, but this is OK; this is
-						// the behavior we want if there is no following
-						// instruction.
-						handler.TryEnd = handler.TryEnd.Next;
-						handler.HandlerEnd = handler.HandlerEnd.Next;
+						if (handler.TryEnd != null)
+							handler.TryEnd = handler.TryEnd.Next;
+
+						if (handler.HandlerEnd != null)
+							handler.HandlerEnd = handler.HandlerEnd.Next;
+					}
+
+					// Go over all branching instructions and attempt to map
+					// them to a label. If we can't find a label, we error.
+					foreach (var jump in label_jumps) {
+						if (jump.Value is List<object>) {
+							var jumpLabels = new List<Instruction> ();
+
+							foreach (var obj in (List<object>) jump.Value) {
+								if (obj is int)
+									jumpLabels.Add (FindInstruction ((int) obj));
+								else
+									jumpLabels.Add (FindInstruction ((string) obj));
+							}
+
+							jump.Key.Operand = jumpLabels.ToArray ();
+						} else {
+							Instruction target;
+
+							if (jump.Value is int)
+								target = FindInstruction ((int) jump.Value);
+							else
+								target = FindInstruction ((string) jump.Value);
+
+							jump.Key.Operand = target;
+						}
 					}
 				}
 
-				var isClass = codegen.CurrentType != null;
-
-				if (isClass)
-					codegen.CurrentType.Methods.Add (codegen.CurrentMethod);
-				else
-					codegen.CurrentModule.GetModuleType ().Methods.Add (codegen.CurrentMethod);
-
 				codegen.CurrentMethod = null;
-				codegen.CurrentGenericParameterProvider = isClass ? codegen.CurrentType : null;
+				codegen.CurrentGenericParameterProvider = codegen.CurrentType != null ?
+					codegen.CurrentType : null;
 				il = null;
 				codegen.CurrentScope = null;
 				labels.Clear ();
+				label_jumps.Clear ();
 			}
 			;
 
-method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause method_name formal_typars_clause OPEN_PARENS sig_args CLOSE_PARENS impl_attr
+method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause method_name
 			{
 				var name = (string) $7;
 				var attr = (MethodAttributes) $2;
@@ -1889,8 +1899,9 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 							"Non-public method in interface.");
 
 					if (codegen.CurrentType.IsInterface &&
-						(!attr.HasBitFlag (MethodAttributes.Abstract) ||
-						!attr.HasBitFlag (MethodAttributes.Virtual))) {
+						!attr.HasBitFlag (MethodAttributes.Abstract) &&
+						!attr.HasBitFlag (MethodAttributes.Virtual) &&
+						!attr.HasBitFlag (MethodAttributes.Static)) {
 						report.WriteWarning (Warning.NonVirtualMethodInInterface,
 							"Non-abstract/non-virtual method in interface; set to such.");
 
@@ -1901,6 +1912,11 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 				var method = new MethodDefinition (name, attr, (TypeReference) $5) {
 					CallingConvention = (MethodCallingConvention) $3,
 				};
+
+				// Even though this doesn't make much sense, we have to
+				// do it in order to be compatible.
+				if (!method.HasBody)
+					method.Body = new MethodBody (method);
 
 				method.Body.Scope = new Scope ();
 
@@ -1941,18 +1957,30 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 
 				method.MethodReturnType.MarshalInfo = $6 != null ? (MarshalInfo) $6 : null;
 
-				foreach (var arg in (List<GenericParameter>) $8)
-					method.GenericParameters.Add (arg);
-
-				foreach (var arg in (List<ParameterDefinition>) $10)
-					method.Parameters.Add (arg);
-
-				method.ImplAttributes = (MethodImplAttributes) $12;
-
 				codegen.CurrentMethod = method;
 				codegen.CurrentGenericParameterProvider = method;
-				il = method.Body.GetILProcessor ();
-				codegen.CurrentScope = method.Body.Scope;
+			}
+			  formal_typars_clause
+			{
+				foreach (var arg in (List<GenericParameter>) $9)
+					codegen.CurrentMethod.GenericParameters.Add (arg);
+			}
+			  OPEN_PARENS sig_args CLOSE_PARENS impl_attr
+			{
+
+				foreach (var arg in (List<ParameterDefinition>) $12)
+					codegen.CurrentMethod.Parameters.Add (arg);
+
+				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $14;
+
+				codegen.CurrentScope = codegen.CurrentMethod.Body.Scope;
+
+				il = codegen.CurrentMethod.Body.GetILProcessor ();
+
+				if (codegen.CurrentType != null)
+					codegen.CurrentType.Methods.Add (codegen.CurrentMethod);
+				else
+					codegen.CurrentModule.GetModuleType ().Methods.Add (codegen.CurrentMethod);
 			}
 			;
 
@@ -2116,15 +2144,21 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			}
 			| D_LOCALS OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				foreach (var param in (List<ParameterDefinition>) $3)
-					codegen.CurrentScope.Variables.Add (new VariableDefinition (
-						param.Name, param.ParameterType));
+				foreach (var param in (List<ParameterDefinition>) $3) {
+					var variable = new VariableDefinition (param.Name, param.ParameterType);
+
+					il.Body.Variables.Add (variable);
+					codegen.CurrentScope.Variables.Add (variable);
+				}
 			}
 			| D_LOCALS K_INIT OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				foreach (var param in (List<ParameterDefinition>) $3)
-					codegen.CurrentScope.Variables.Add (new VariableDefinition (
-						param.Name, param.ParameterType));
+				foreach (var param in (List<ParameterDefinition>) $4) {
+					var variable = new VariableDefinition (param.Name, param.ParameterType);
+
+					il.Body.Variables.Add (variable);
+					codegen.CurrentScope.Variables.Add (variable);
+				}
 
 				il.Body.InitLocals = true;
 			}
@@ -2372,7 +2406,14 @@ instr			: INSTR_NONE
 			}
 			| INSTR_LOCAL int32
 			{
-				var instr = il.Create ((OpCode) $1, (int) $2);
+				var idx = (int) $2;
+
+				if (idx < 0 || idx >= il.Body.Variables.Count)
+					report.WriteError (Error.InvalidLocal,
+						"Local variable at index '{0}' not found.", idx);
+
+				var variable = il.Body.Variables [idx];
+				var instr = il.Create ((OpCode) $1, variable);
 				il.Append (instr);
 
 				$$ = instr;
@@ -2388,9 +2429,10 @@ instr			: INSTR_NONE
 
 				if (variable == null)
 					foreach (var scope in scope_stack.QueueReverse ())
-						foreach (var local in scope.Variables)
-							if (local.Name == name)
-								variable = local;
+						if (scope != null)
+							foreach (var local in scope.Variables)
+								if (local.Name == name)
+									variable = local;
 
 				if (variable == null)
 					report.WriteError (Error.InvalidLocal,
@@ -2403,7 +2445,14 @@ instr			: INSTR_NONE
 			}
 			| INSTR_PARAM int32
 			{
-				var instr = il.Create ((OpCode) $1, (int) $2);
+				var idx = (int) $2;
+
+				if (idx < 0 || idx >= codegen.CurrentMethod.Parameters.Count)
+					report.WriteError (Error.InvalidParameter,
+						"Parameter at index '{0}' not found.", idx);
+
+				var param = codegen.CurrentMethod.Parameters [idx];
+				var instr = il.Create ((OpCode) $1, param);
 				il.Append (instr);
 
 				$$ = instr;
@@ -2428,7 +2477,18 @@ instr			: INSTR_NONE
 			}
 			| INSTR_I int32
 			{
-				var instr = il.Create ((OpCode) $1, (int) $2);
+				var op = (OpCode) $1;
+				Instruction instr;
+
+				if (op.OperandType == OperandType.ShortInlineI) {
+					if (op == OpCodes.Ldc_I4_S)
+						instr = il.Create (op, (sbyte) (int) $2);
+					else
+						instr = il.Create (op, (byte) (int) $2);
+				}
+				else
+					instr = il.Create (op, (int) $2);
+
 				il.Append (instr);
 
 				$$ = instr;
@@ -2497,7 +2557,11 @@ instr			: INSTR_NONE
 			}
 			| INSTR_BRTARGET label
 			{
-				var instr = il.Create ((OpCode) $1, (Instruction) $2);
+				// Some hackery so we can jump to not-yet-created labels.
+				var instr = il.Create (OpCodes.Nop);
+				instr.OpCode = (OpCode) $1;
+
+				label_jumps.Add (instr, $2);
 				il.Append (instr);
 
 				$$ = instr;
@@ -2584,7 +2648,11 @@ instr			: INSTR_NONE
 			}
 			| INSTR_SWITCH OPEN_PARENS labels CLOSE_PARENS
 			{
-				var instr = il.Create ((OpCode) $1, ((List<Instruction>) $3).ToArray ());
+				// See the note in INSTR_BRTARGET.
+				var instr = il.Create (OpCodes.Nop);
+				instr.OpCode = (OpCode) $1;
+
+				label_jumps.Add (instr, $3);
 				il.Append (instr);
 
 				$$ = instr;
@@ -2593,22 +2661,24 @@ instr			: INSTR_NONE
 			;
 
 label			: id
-			{
-				$$ = FindInstruction ((string) $1);
-			}
 			| int32
-			{
-				$$ = FindInstruction ((int) $1);
-			}
 			;
 
 labels			:
 			{
-				$$ = new List<Instruction> ();
+				$$ = new List<object> ();
+			}
+			| label
+			{
+				$$ = new List<object> {
+					$1,
+				};
 			}
 			| label COMMA labels
 			{
-				((List<Instruction>) $3).Add ((Instruction) $1);
+				((List<object>) $3).Add ((object) $1);
+
+				$$ = $3;
 			}
 			;
 
@@ -2961,20 +3031,20 @@ customattr		: D_CUSTOM method_ref
 
 				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2, bytes);
 			}
-			| D_CUSTOM method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
-			{
-				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
-			}
 			| D_CUSTOM method_ref ASSIGN bytes_list
 			{
 				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2, (byte[]) $4);
+			}
+			| D_CUSTOM method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
+			{
+				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
 			}
 			;
 
 customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
 			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN comp_qstring
-			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
 			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN bytes_list
+			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
 			;
 
 customattr_blob		: customattr_blob_args customattr_blob_nvp
@@ -2983,15 +3053,8 @@ customattr_blob		: customattr_blob_args customattr_blob_nvp
 customattr_blob_args	:
 			| customattr_blob_args customattr_blob_init
 			{
-				var value = $2;
-
-				if (value is TypedNull<string>)
-					value = null;
-				else if (value is TypedNull<TypeReference>)
-					value = null;
-
-				// TODO: Should we try to figure out the type?
-				var arg = new CustomAttributeArgument (null, value);
+				// TODO: Fix.
+				var arg = new CustomAttributeArgument (null, $2);
 
 				codegen.CurrentCustomAttribute.ConstructorArguments.Add (arg);
 			}
@@ -3001,18 +3064,8 @@ customattr_blob_args	:
 customattr_blob_nvp	:
 			| customattr_blob_nvp prop_or_field customattr_blob_type comp_name ASSIGN customattr_blob_init
 			{
-				TypeReference type = null;
-				var value = $6;
-
-				if (value is TypedNull<string>) {
-					type = codegen.Corlib.String;
-					value = null;
-				} else if (value is TypedNull<TypeReference>) {
-					type = codegen.Corlib.Type;
-					value = null;
-				}
-
-				var arg = new CustomAttributeArgument (type ?? (TypeReference) $3, value);
+				// TODO: Fix.
+				var arg = new CustomAttributeArgument ((TypeReference) $3, $6);
 				var namedArg = new CustomAttributeNamedArgument (((QualifiedName) $4).FullName, arg);
 
 				if ((TokenType) $2 == TokenType.Field)
