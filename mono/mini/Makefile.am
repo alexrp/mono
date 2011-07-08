@@ -580,7 +580,7 @@ iltests.il: iltests.il.in Makefile.am
 	cpp -Darch=$(arch_define) < $(srcdir)/iltests.il.in | sed 's/^#.*//' >> iltests.il
 
 %.exe: %.il
-	$(ILASM) -output=$@ $<
+	$(ILASM) --verbose -output=$@ $<
 
 TestDriver.dll: $(srcdir)/TestDriver.cs
 	$(MCS) -out:$@ -target:library $<
