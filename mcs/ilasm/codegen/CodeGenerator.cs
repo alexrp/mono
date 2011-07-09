@@ -39,6 +39,8 @@ namespace Mono.ILAsm {
 		
 		public Scope CurrentScope { get; set; }
 		
+		public MethodReference CurrentMethodReference { get; set; }
+		
 		public bool HasAssemblyDirective { get; set; }
 		
 		public bool HasModuleDirective { get; set; }

@@ -78,7 +78,7 @@ namespace Mono.ILAsm {
 				
 				if (key_name != null) {
 					sn = LoadKey (key_container, key_name);
-					// this overrides any attribute or .publickey directive in the source
+					// This overrides any attribute or .publickey directive in the source.
 					codegen.CurrentModule.Assembly.Name.PublicKey = sn.PublicKey;
 				}
 				

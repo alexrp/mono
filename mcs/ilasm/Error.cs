@@ -198,5 +198,9 @@ namespace Mono.ILAsm {
 		/// Happens when a duplicate label in a method body is encountered.
 		/// </summary>
 		DuplicateLabel = 38,
+		/// <summary>
+		/// Happens when a module-level method could not be resolved.
+		/// </summary>
+		UnresolvedModuleMethod = 39,
 	}
 }
