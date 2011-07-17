@@ -27,6 +27,8 @@ namespace Mono.ILAsm {
 		readonly Dictionary<string, Label> labels = new Dictionary<string, Label> ();
 		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
 		readonly Dictionary<Instruction, object> label_jumps = new Dictionary<Instruction, object> ();
+		MethodReference dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
+		TypeReference dummy_type = new TypeReference (null, null, null, null);
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -37,6 +39,8 @@ namespace Mono.ILAsm {
 		bool type_attr_visibility_set;
 		bool is_inside_scope;
 		bool generic_typeref_in_method;
+		bool generic_typeref_in_methoddef;
+		bool generic_typeref_in_field;
 		int custom_attr_blob_seq_length;
 		string pinvoke_mod_name;
 		ILProcessor il;
@@ -100,6 +104,43 @@ namespace Mono.ILAsm {
 				method = ((GenericInstanceMethod) method).ElementMethod;
 
 			var genParams = method.GenericParameters;
+
+			if (idx < 0 || idx >= genParams.Count)
+				report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+					"Generic parameter ordinal '{0}' is invalid.", idx);
+
+			return genParams [idx];
+		}
+
+		GenericParameter GetGenericParameter (TypeReference type, string name)
+		{
+			if (type == null)
+				report.WriteError (Error.GenericParameterAccessOutsideType,
+					"Cannot access a generic parameter outside a type definition.");
+
+			GenericParameter param = null;
+
+			foreach (var genParam in type.GenericParameters)
+				if (genParam.Name == name)
+					param = genParam;
+
+			if (param == null)
+				report.WriteError (Error.GenericParameterNameInvalid,
+					"Generic parameter '{0}' not found.", name);
+
+			return param;
+		}
+
+		GenericParameter GetGenericParameter (TypeReference type, int idx)
+		{
+			if (type == null)
+				report.WriteError (Error.GenericParameterAccessOutsideType,
+					"Cannot access a generic parameter outside a type definition.");
+
+			if (type is GenericInstanceType)
+				type = ((GenericInstanceType) type).ElementType;
+
+			var genParams = type.GenericParameters;
 
 			if (idx < 0 || idx >= genParams.Count)
 				report.WriteError (Error.GenericParameterOrdinalOutOfRange,
@@ -808,9 +849,6 @@ formal_typar_attr	:
 			;
 
 formal_typar		: comp_name
-			{
-				$$ = $1;
-			}
 			;
 
 constraints_clause	:
@@ -1125,56 +1163,86 @@ type			: K_CLASS class_ref
 						gti.GenericArguments.Add (ga);
 
 					$$ = gti;
-				} else
-					$$ = $1;
+				}
 			}
 			| BANG int32
 			{
-				if (codegen.CurrentType == null)
-					report.WriteError (Error.GenericParameterAccessOutsideType,
-						"Cannot access a generic parameter outside a type definition.");
+				var pos = (int) $2;
 
-				var idx = (int) $2;
-				var genParams = codegen.CurrentType.GenericParameters;
+				if (!generic_typeref_in_field)
+					$$ = GetGenericParameter (codegen.CurrentType, pos);
+				else {
+					GenericParameter cachedGp = null;
 
-				if (idx < 0 || idx >= genParams.Count)
-					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-						"Generic parameter ordinal '{0}' is invalid.", idx);
+					foreach (var genParam in dummy_type.GenericParameters)
+						if (genParam.Position == pos)
+							if ((cachedGp = genParam) != null)
+								break;
 
-				$$ = genParams [idx];
+					if (cachedGp == null) {
+						if (pos >= dummy_type.GenericParameters.Count)
+							dummy_type.GenericParameters.NullResize (pos + 1);
+
+						var gp = new GenericParameter (dummy_type);
+						dummy_type.GenericParameters [pos] = gp;
+
+						$$ = gp;
+					} else
+						$$ = cachedGp;
+				}
 			}
 			| BANG id
 			{
-				if (codegen.CurrentType == null)
-					report.WriteError (Error.GenericParameterAccessOutsideType,
-						"Cannot access a generic parameter outside a type definition.");
-
-				var name = (string) $2;
-				GenericParameter param = null;
-
-				foreach (var genParam in codegen.CurrentType.GenericParameters)
-					if (genParam.Name == name)
-						param = genParam;
-
-				if (param == null)
-					report.WriteError (Error.GenericParameterNameInvalid,
-						"Generic parameter '{0}' not found.", name);
-
-				$$ = param;
+				$$ = GetGenericParameter (codegen.CurrentType, (string) $2);
 			}
 			| BANG BANG int32
 			{
+				var pos = (int) $3;
+
 				if (!generic_typeref_in_method)
-					$$ = GetGenericParameter (codegen.CurrentMethod, (int) $3);
-				else
-					$$ = $3;
+					$$ = GetGenericParameter (codegen.CurrentMethod, pos);
+				else {
+					GenericParameter cachedGp = null;
+
+					foreach (var genParam in dummy_method.GenericParameters)
+						if (genParam.Position == pos)
+							if ((cachedGp = genParam) != null)
+								break;
+
+					if (cachedGp == null) {
+						if (pos >= dummy_method.GenericParameters.Count)
+							dummy_method.GenericParameters.NullResize (pos + 1);
+
+						var gp = new GenericParameter (dummy_method);
+						dummy_method.GenericParameters [pos] = gp;
+
+						$$ = gp;
+					} else
+						$$ = cachedGp;
+				}
 			}
 			| BANG BANG id
 			{
-				if (!generic_typeref_in_method)
-					$$ = GetGenericParameter (codegen.CurrentMethod, (string) $3);
-				else
-					$$ = $3;
+				var name = (string) $3;
+
+				if (!generic_typeref_in_methoddef)
+					$$ = GetGenericParameter (codegen.CurrentMethod, name);
+				else {
+					GenericParameter cachedGp = null;
+
+					foreach (var genParam in dummy_method.GenericParameters)
+						if (genParam.Name == name)
+							if ((cachedGp = genParam) != null)
+								break;
+
+					if (cachedGp == null) {
+						var gp = new GenericParameter (name, dummy_method);
+						dummy_method.GenericParameters.Add (gp);
+
+						$$ = gp;
+					} else
+						$$ = cachedGp;
+				}
 			}
 			| K_OBJECT
 			{
@@ -1251,7 +1319,6 @@ typars			: type
 			| typars COMMA type
 			{
 				((List<TypeReference>) $1).Add ((TypeReference) $3);
-				$$ = $1;
 			}
 			;
 
@@ -1710,9 +1777,6 @@ data_decl		: data_head data_body
 
 data_name		:
 			| id ASSIGN
-			{
-				$$ = $1;
-			}
 			;
 
 data_head		: D_DATA tls cil data_name
@@ -1904,11 +1968,11 @@ method_head		: D_METHOD
 				// This is some dirty hackery because we can't verify the
 				// validity of the generic parameter (!!T syntax) for the
 				// return type until we get further into the method def.
-				generic_typeref_in_method = true;
+				generic_typeref_in_methoddef = true;
 			}
 			  meth_attr call_conv param_attr type sig_marshal_clause method_name
 			{
-				generic_typeref_in_method = false;
+				generic_typeref_in_methoddef = false;
 
 				var name = (string) $8;
 				var attr = (MethodAttributes) $3;
@@ -1936,8 +2000,7 @@ method_head		: D_METHOD
 					}
 				}
 
-				// Use a dummy return type until we actually set it.
-				var method = new MethodDefinition (name, attr, new TypeReference (null, null, null, null)) {
+				var method = new MethodDefinition (name, attr, (TypeReference) $6) {
 					CallingConvention = (MethodCallingConvention) $4,
 				};
 
@@ -1992,21 +2055,26 @@ method_head		: D_METHOD
 			{
 				foreach (var arg in (List<GenericParameter>) $10)
 					codegen.CurrentMethod.GenericParameters.Add (arg);
+
+				generic_typeref_in_methoddef = true;
 			}
 			  OPEN_PARENS sig_args CLOSE_PARENS impl_attr
 			{
+				generic_typeref_in_methoddef = false;
+
 				foreach (var arg in (List<ParameterDefinition>) $13)
 					codegen.CurrentMethod.Parameters.Add (arg);
 
-				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $15;
+				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
+					var genParam = dummy_method.GenericParameters [i];
+					GetGenericParameter (codegen.CurrentMethod, genParam.Name);
 
-				// We can resolve the return type now...
-				if ($6 is TypeReference)
-					codegen.CurrentMethod.ReturnType = (TypeReference) $6;
-				else if ($6 is string)
-					codegen.CurrentMethod.ReturnType = GetGenericParameter (codegen.CurrentMethod, (string) $6);
-				else
-					codegen.CurrentMethod.ReturnType = GetGenericParameter (codegen.CurrentMethod, (int) $6);
+					codegen.CurrentMethod.GenericParameters [i] = genParam;
+				}
+
+				dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
+
+				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $15;
 
 				codegen.CurrentScope = codegen.CurrentMethod.Body.Scope;
 
@@ -2154,33 +2222,15 @@ sig_marshal_clause	:
 sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
 			| param_attr type sig_marshal_clause
 			{
-				TypeReference type;
-
-				if ($2 is TypeReference)
-					type = (TypeReference) $2;
-				else if ($2 is string)
-					type = GetGenericParameter (codegen.CurrentMethodReference, (string) $2);
-				else
-					type = GetGenericParameter (codegen.CurrentMethodReference, (int) $2);
-
-				$$ = new ParameterDefinition (type) {
+				$$ = new ParameterDefinition ((TypeReference) $2) {
 					Attributes = (ParameterAttributes) $1,
 					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
 				};
 			}
 			| param_attr type sig_marshal_clause id
 			{
-				TypeReference type;
-
-				if ($2 is TypeReference)
-					type = (TypeReference) $2;
-				else if ($2 is string)
-					type = GetGenericParameter (codegen.CurrentMethodReference, (string) $2);
-				else
-					type = GetGenericParameter (codegen.CurrentMethodReference, (int) $2);
-
 				$$ = new ParameterDefinition ((string) $4, (ParameterAttributes) $1,
-					type) {
+					(TypeReference) $2) {
 					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
 				};
 			}
@@ -2745,15 +2795,48 @@ member_ref		: K_METHOD method_ref
 			}
 			;
 
-field_ref		: type type_spec DOUBLE_COLON comp_name
+field_ref		:
 			{
-				$$ = new FieldReference (((QualifiedName) $4).FullName,
-					(TypeReference) $1, (TypeReference) $2);
+				generic_typeref_in_field = true;
 			}
-			| type comp_name
+			  type
 			{
-				$$ = new FieldReference (((QualifiedName) $2).FullName,
-					(TypeReference) $1);
+				generic_typeref_in_field = false;
+			}
+			  declaring_type comp_name
+			{
+				var declType = (TypeReference) $4;
+
+				if (dummy_type.GenericParameters.Count > 0 &&
+					!(declType is GenericInstanceType))
+					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+						"Declaring type is not generic.");
+
+				for (var i = 0; i < dummy_type.GenericParameters.Count; i++) {
+					var genParam = dummy_type.GenericParameters [i];
+
+					if (genParam == null) {
+						var gp = new GenericParameter (declType.GetElementType ());
+
+						dummy_type.GenericParameters [i] = gp;
+						declType.GenericParameters.Add (gp);
+
+						continue;
+					}
+
+					var pos = genParam.Position;
+
+					if (pos >= ((GenericInstanceType) declType).GenericArguments.Count)
+						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+							"Generic argument '{0}' not found.", pos);
+
+					declType.GetElementType ().GenericParameters.Add (genParam);
+				}
+
+				dummy_type = new TypeReference (null, null, null, null);
+
+				$$ = new FieldReference (((QualifiedName) $5).FullName,
+					(TypeReference) $2, declType);
 			}
 			| mdtoken
 			;
@@ -2775,11 +2858,14 @@ method_ref		: call_conv
 				// See the note in method_head.
 				generic_typeref_in_method = true;
 			}
-			  type declaring_type method_name
+			  type
 			{
-				var method = new MethodReference ((string) $5,
-					new TypeReference (null, null, null, null),
-					(TypeReference) $4) {
+				generic_typeref_in_method = false;
+			}
+			  declaring_type method_name
+			{
+				var method = new MethodReference ((string) $6,
+					(TypeReference) $3, (TypeReference) $5) {
 					CallingConvention = (MethodCallingConvention) $1,
 				};
 
@@ -2796,17 +2882,17 @@ method_ref		: call_conv
 			}
 			  typars_clause_opt
 			{
-				if ($7 != null) {
+				if ($8 != null) {
 					var method = codegen.CurrentMethodReference;
 					var genMethod = new GenericInstanceMethod (method);
 
-					foreach (var typeArg in (List<TypeReference>) $7) {
-						method.GenericParameters.Add (new GenericParameter (method));
+					foreach (var typeArg in (List<TypeReference>) $8)
 						genMethod.GenericArguments.Add (typeArg);
-					}
 
 					codegen.CurrentMethodReference = genMethod;
 				}
+
+				generic_typeref_in_method = true;
 			}
 			  OPEN_PARENS sig_args CLOSE_PARENS
 			{
@@ -2814,16 +2900,31 @@ method_ref		: call_conv
 
 				var method = codegen.CurrentMethodReference;
 
-				foreach (var arg in (List<ParameterDefinition>) $10)
+				foreach (var arg in (List<ParameterDefinition>) $11)
 					method.Parameters.Add (arg);
 
-				// We can resolve the return type now...
-				if ($3 is TypeReference)
-					method.ReturnType = (TypeReference) $3;
-				else if ($3 is string) // Will actually just cause an error in all cases.
-					method.ReturnType = GetGenericParameter (method, (string) $3);
-				else
-					method.ReturnType = GetGenericParameter (method, (int) $3);
+				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
+					var genParam = dummy_method.GenericParameters [i];
+
+					if (genParam == null) {
+						var gp = new GenericParameter (method.GetElementMethod ());
+
+						dummy_method.GenericParameters [i] = gp;
+						method.GetElementMethod ().GenericParameters.Add (gp);
+
+						continue;
+					}
+
+					var pos = genParam.Position;
+
+					if (pos >= ((GenericInstanceMethod) method).GenericArguments.Count)
+						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+							"Generic argument '{0}' not found.", pos);
+
+					method.GetElementMethod ().GenericParameters.Add (genParam);
+				}
+
+				dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
 
 				if (method.DeclaringType == codegen.CurrentModule.GetModuleType () &&
 					method.Resolve () == null)
@@ -3907,6 +4008,7 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 			| comp_control
 			;
 
+// TODO: Finish exported types.
 exptype_all		: exptype_head OPEN_BRACE exptype_decls CLOSE_BRACE
 			;
 
@@ -4090,9 +4192,6 @@ manifestres_decl	: D_FILE comp_name K_AT int32
 				$$ = ((QualifiedName) $3).FullName;
 			}
 			| customattr_decl
-			{
-				$$ = $1;
-			}
 			| comp_control
 			;
 

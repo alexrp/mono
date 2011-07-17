@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using Mono.Cecil;
+using Mono.Collections.Generic;
 
 namespace Mono.ILAsm {
 	public static class Extensions {
@@ -77,6 +78,13 @@ namespace Mono.ILAsm {
 				q.Enqueue (item);
 			
 			return q;
+		}
+		
+		public static void NullResize<T> (this Collection<T> col, int newSize)
+			where T : class
+		{
+			while (col.Count != newSize)
+				col.Add (null);
 		}
 	}
 }
