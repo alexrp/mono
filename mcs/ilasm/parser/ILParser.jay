@@ -1008,8 +1008,7 @@ class_refs		: class_ref
 			}
 			| class_refs COMMA class_ref
 			{
-				var class_list = (List<TypeReference>) $1;
-				class_list.Add ((TypeReference) $3);
+				((List<TypeReference>) $1).Add ((TypeReference) $3);
 			}
 			;
 
@@ -1323,10 +1322,10 @@ typars			: type
 			;
 
 type_spec		: class_ref
-			| OPEN_BRACKET slashed_name CLOSE_BRACKET // TODO: What do we do with this?
-			| OPEN_BRACKET D_MODULE slashed_name CLOSE_BRACKET
+			| OPEN_BRACKET comp_name CLOSE_BRACKET // TODO: What do we do with this?
+			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET
 			{
-				var module = (string) $3;
+				var module = ((QualifiedName) $3).FullName;
 
 				if (module == codegen.CurrentModule.Name)
 					$$ = codegen.CurrentModule.GetModuleType ();
