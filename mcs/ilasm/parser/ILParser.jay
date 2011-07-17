@@ -2860,14 +2860,12 @@ method_ref		: call_conv
 				// See the note in method_head.
 				generic_typeref_in_method = true;
 			}
-			  type
+			  type declaring_type method_name
 			{
 				generic_typeref_in_method = false;
-			}
-			  declaring_type method_name
-			{
-				var method = new MethodReference ((string) $6,
-					(TypeReference) $3, (TypeReference) $5) {
+
+				var method = new MethodReference ((string) $5,
+					(TypeReference) $3, (TypeReference) $4) {
 					CallingConvention = (MethodCallingConvention) $1,
 				};
 
@@ -2884,11 +2882,11 @@ method_ref		: call_conv
 			}
 			  typars_clause_opt
 			{
-				if ($8 != null) {
+				if ($7 != null) {
 					var method = codegen.CurrentMethodReference;
 					var genMethod = new GenericInstanceMethod (method);
 
-					foreach (var typeArg in (List<TypeReference>) $8)
+					foreach (var typeArg in (List<TypeReference>) $7)
 						genMethod.GenericArguments.Add (typeArg);
 
 					codegen.CurrentMethodReference = genMethod;
@@ -2902,7 +2900,7 @@ method_ref		: call_conv
 
 				var method = codegen.CurrentMethodReference;
 
-				foreach (var arg in (List<ParameterDefinition>) $11)
+				foreach (var arg in (List<ParameterDefinition>) $10)
 					method.Parameters.Add (arg);
 
 				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
