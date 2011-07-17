@@ -1021,7 +1021,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 
 				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
 			}
-			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name
+			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name // TODO: How does this work?
 			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
 			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET slashed_name
 			{
@@ -2839,6 +2839,9 @@ field_ref		:
 					(TypeReference) $2, declType);
 			}
 			| mdtoken
+			{
+				$$ = codegen.GetFieldByMetadataToken ((int) $1);
+			}
 			;
 
 declaring_type		:
@@ -2936,6 +2939,9 @@ method_ref		: call_conv
 				$$ = method;
 			}
 			| mdtoken
+			{
+				$$ = codegen.GetMethodByMetadataToken ((int) $1);
+			}
 			;
 
 method_name		: D_CTOR
@@ -4218,7 +4224,7 @@ slashed_name		: comp_name
 
 mdtoken			: K_MDTOKEN OPEN_PARENS int32 CLOSE_PARENS
 			{
-				$$ = $2;
+				$$ = $3;
 			}
 			;
 

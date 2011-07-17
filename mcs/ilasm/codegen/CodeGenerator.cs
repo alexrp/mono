@@ -139,7 +139,7 @@ namespace Mono.ILAsm {
 			TypeDefinition typeDef = null;
 
 			foreach (var type in CurrentModule.Types)
-				if (type.MetadataToken.ToInt32() == mdToken)
+				if (type.MetadataToken.RID == mdToken)
 					typeDef = type;
 
 			if (typeDef == null)
@@ -147,6 +147,38 @@ namespace Mono.ILAsm {
 					"Invalid metadata token '{0}'.", mdToken);
 
 			return typeDef;
+		}
+		
+		public MethodDefinition GetMethodByMetadataToken (int mdToken)
+		{
+			MethodDefinition methodDef = null;
+			
+			foreach (var type in CurrentModule.Types)
+				foreach (var method in type.Methods)
+					if (method.MetadataToken.RID == mdToken)
+						methodDef = method;
+			
+			if (methodDef == null)
+				report.WriteError (Error.InvalidMetadataToken,
+					"Invalid metadata token '{0}'.", mdToken);
+			
+			return methodDef;
+		}
+		
+		public FieldDefinition GetFieldByMetadataToken (int mdToken)
+		{
+			FieldDefinition fieldDef = null;
+			
+			foreach (var type in CurrentModule.Types)
+				foreach (var field in type.Fields)
+					if (field.MetadataToken.RID == mdToken)
+						fieldDef = field;
+			
+			if (fieldDef == null)
+				report.WriteError (Error.InvalidMetadataToken,
+					"Invalid metadata token '{0}'.", mdToken);
+			
+			return fieldDef;
 		}
 		
 		public Dictionary<FieldDefinition, string> GetFieldDataMapping (TypeDefinition type)
@@ -173,12 +205,9 @@ namespace Mono.ILAsm {
 			var asmName = new AssemblyNameReference (name, null);
 			AssemblyDefinition asm;
 			
-			try
-			{
+			try {
 				asm = CurrentModule.AssemblyResolver.Resolve (asmName);
-			}
-			catch (AssemblyResolutionException)
-			{
+			} catch (AssemblyResolutionException) {
 				report.WriteWarning (Warning.AutoResolutionFailed,
 					"Could not resolve assembly: {0}", name);
 				
