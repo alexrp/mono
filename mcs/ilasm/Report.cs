@@ -114,8 +114,7 @@ namespace Mono.ILAsm {
 			var locationStr = string.Empty;
 			
 			if (location != null)
-				locationStr = FilePath + ":" + location.Line + "," +
-					location.Column + ": ";
+				locationStr = FilePath + ":" + location.Line + ": ";
 			
 			Console.ForegroundColor = ConsoleColor.Yellow;
 			WarningOutput.WriteLine (string.Format ("{0}Warning ILW{1}: {2}", locationStr,
