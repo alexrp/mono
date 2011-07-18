@@ -150,6 +150,24 @@ namespace Mono.ILAsm {
 			return genParams [idx];
 		}
 
+		ICustomAttributeProvider ResolveCustomAttributeOwner (object owner)
+		{
+			ICustomAttributeProvider provider;
+
+			if (owner is TypeReference)
+				provider = ((TypeReference) owner).Resolve ();
+			else if (owner is FieldReference)
+				provider = ((FieldReference) owner).Resolve ();
+			else
+				provider = ((MethodReference) owner).Resolve ();
+
+			if (provider == null)
+				report.WriteError (Error.UndefinedTypeReference,
+					"Could not resolve custom attribute owner: {0}", owner);
+
+			return provider;
+		}
+
 %}
 
 %token UNKNOWN
@@ -506,8 +524,10 @@ decl			: class_all
 			*/
 			| customattr_decl
 			{
-				codegen.CurrentModule.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentModule.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			| D_SUBSYSTEM int32
 			{
@@ -890,8 +910,10 @@ class_decl		: method_all
 			| extsource_spec
 			| customattr_decl
 			{
-				codegen.CurrentType.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentType.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			| param_type_decl
 			| D_SIZE int32
@@ -2343,8 +2365,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| language_decl
 			| customattr_decl
 			{
-				codegen.CurrentMethod.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentMethod.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			| data_decl
 			| comp_control
@@ -3096,8 +3120,10 @@ event_decl		: D_ADDON method_ref
 			}
 			| customattr_decl
 			{
-				codegen.CurrentEvent.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentEvent.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			| extsource_spec
 			| language_decl
@@ -3192,8 +3218,10 @@ prop_decl		: D_SET method_ref
 			}
 			| customattr_decl
 			{
-				codegen.CurrentProperty.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentProperty.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			| extsource_spec
 			| language_decl
@@ -3202,6 +3230,12 @@ prop_decl		: D_SET method_ref
 
 customattr_decl		: customattr
 			| customattr_owner
+			{
+				((ICustomAttributeProvider) $1).CustomAttributes.Add (codegen.CurrentCustomAttribute);
+				codegen.CurrentCustomAttribute = null;
+
+				$$ = null;
+			}
 			;
 
 customattr		: D_CUSTOM method_ref
@@ -3218,16 +3252,40 @@ customattr		: D_CUSTOM method_ref
 			{
 				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2, (byte[]) $4);
 			}
-			| D_CUSTOM method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
+			| D_CUSTOM method_ref ASSIGN OPEN_BRACE
 			{
 				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
 			}
+			  customattr_blob CLOSE_BRACE
 			;
 
 customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
+			{
+				codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $5);
+
+				$$ = ResolveCustomAttributeOwner ($3);
+			}
 			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN comp_qstring
+			{
+				var bytes = Encoding.Unicode.GetBytes ((string) $7);
+
+				codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $5, bytes);
+
+				$$ = ResolveCustomAttributeOwner ($3);
+			}
 			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN bytes_list
-			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN OPEN_BRACE customattr_blob CLOSE_BRACE
+			{
+				codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $5, (byte[]) $7);
+
+				$$ = ResolveCustomAttributeOwner ($3);
+			}
+			| D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref ASSIGN OPEN_BRACE
+			{
+				codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $5);
+
+				$$ = ResolveCustomAttributeOwner ($3);
+			}
+			  customattr_blob CLOSE_BRACE
 			;
 
 customattr_blob		: customattr_blob_args customattr_blob_nvp
@@ -4061,8 +4119,10 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 			}
 			| customattr_decl
 			{
-				codegen.CurrentModule.Assembly.CustomAttributes.Add ((CustomAttribute) $1);
-				codegen.CurrentCustomAttribute = null;
+				if ($1 != null) {
+					codegen.CurrentModule.Assembly.CustomAttributes.Add ((CustomAttribute) $1);
+					codegen.CurrentCustomAttribute = null;
+				}
 			}
 			/*
 			| sec_decl
