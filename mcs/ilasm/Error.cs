@@ -202,5 +202,9 @@ namespace Mono.ILAsm {
 		/// Happens when a module-level method could not be resolved.
 		/// </summary>
 		UnresolvedModuleMethod = 39,
+		/// <summary>
+		/// Happens when a module-level field could not be resolved.
+		/// </summary>
+		UnresolvedModuleField = 40,
 	}
 }

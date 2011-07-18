@@ -2834,8 +2834,15 @@ field_ref		:
 
 				dummy_type = new TypeReference (null, null, null, null);
 
-				$$ = new FieldReference (((QualifiedName) $5).FullName,
+				var field = new FieldReference (((QualifiedName) $5).FullName,
 					(TypeReference) $2, declType);
+
+				if (declType == codegen.CurrentModule.GetModuleType () &&
+					field.Resolve () == null)
+					report.WriteError (Error.UnresolvedModuleField,
+						"Could not resolve module field: {0}", field);
+
+				$$ = field;
 			}
 			| mdtoken
 			{
