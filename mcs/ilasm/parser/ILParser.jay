@@ -519,9 +519,12 @@ decl			: class_all
 			| exptype_all
 			| manifestres_all
 			| module_head
-			/*
 			| sec_decl
-			*/
+			{
+				// TODO: We can't set security attributes on modules with Cecil.
+				//codegen.CurrentModule.SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
+				//codegen.CurrentSecurityDeclaration = null;
+			}
 			| customattr_decl
 			{
 				if ($1 != null) {
@@ -904,9 +907,11 @@ class_decl		: method_all
 			| prop_all
 			| field_decl
 			| data_decl
-			/*
 			| sec_decl
-			*/
+			{
+				codegen.CurrentType.SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
+				codegen.CurrentSecurityDeclaration = null;
+			}
 			| extsource_spec
 			| customattr_decl
 			{
@@ -2358,9 +2363,11 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 
 				last_instr = instr;
 			}
-			/*
 			| sec_decl
-			*/
+			{
+				codegen.CurrentMethod.SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
+				codegen.CurrentSecurityDeclaration = null;
+			}
 			| extsource_spec
 			| language_decl
 			| customattr_decl
@@ -3288,7 +3295,16 @@ customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
 			  customattr_blob CLOSE_BRACE
 			;
 
-customattr_blob		: customattr_blob_args customattr_blob_nvp
+customattr_blob		: customattr_blob_args
+			  customattr_blob_nvp
+			{
+				foreach (var pair in (List<Tuple<TokenType, CustomAttributeNamedArgument>>) $1) {
+					if (pair.X == TokenType.Field)
+						codegen.CurrentCustomAttribute.Fields.Add (pair.Y);
+					else
+						codegen.CurrentCustomAttribute.Properties.Add (pair.Y);
+				}
+			}
 			;
 
 customattr_blob_args	:
@@ -3300,15 +3316,16 @@ customattr_blob_args	:
 			;
 
 customattr_blob_nvp	:
+			{
+				$$ = new List<Tuple<TokenType, CustomAttributeNamedArgument>> ();
+			}
 			| customattr_blob_nvp prop_or_field customattr_blob_type comp_name ASSIGN customattr_blob_init
 			{
 				var namedArg = new CustomAttributeNamedArgument (((QualifiedName) $4).FullName,
 					(CustomAttributeArgument) $6);
+				var tuple = new Tuple<TokenType, CustomAttributeNamedArgument> ((TokenType) $2, namedArg);
 
-				if ((TokenType) $2 == TokenType.Field)
-					codegen.CurrentCustomAttribute.Fields.Add (namedArg);
-				else
-					codegen.CurrentCustomAttribute.Properties.Add (namedArg);
+				((List<Tuple<TokenType, CustomAttributeNamedArgument>>) $1).Add (tuple);
 			}
 			| customattr_blob_nvp comp_control
 			;
@@ -3780,203 +3797,194 @@ obj_seq			:
 			}
 			;
 
-/*
+sec_bytearray		: ASSIGN bytes_list
+			{
+				$$ = $2;
+			}
+			| K_BYTEARRAY bytes_list
+			{
+				$$ = $2;
+			}
+			;
+
 sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PARENS
 			{
-				$$ = TypeSpecToPermPair ($2, $3, (ArrayList) $5);
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
+
+				var attr = new SecurityAttribute ((TypeReference) $3);
+
+				foreach (var obj in (List<Tuple<string, object>>) $5) {
+					TypeReference type;
+
+					if (obj.Y is bool)
+						type = codegen.Corlib.Boolean;
+					else if (obj.Y is int)
+						type = codegen.Corlib.Int32;
+					else
+						type = codegen.Corlib.String;
+
+					attr.Properties.Add (new CustomAttributeNamedArgument (obj.X,
+						new CustomAttributeArgument (type, obj.Y)));
+				}
+
+				codegen.CurrentSecurityDeclaration.SecurityAttributes.Add (attr);
+			}
+			| D_PERMISSION sec_action type_spec ASSIGN OPEN_PARENS customattr_blob CLOSE_PARENS
+			{
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
+
+				// TODO: We can't pass security attribute constructor args with Cecil.
 			}
 			| D_PERMISSION sec_action type_spec
 			{
-				$$ = TypeSpecToPermPair ($2, $3, null);
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
+
+				codegen.CurrentSecurityDeclaration.SecurityAttributes.Add (new SecurityAttribute ((TypeReference) $3));
 			}
-			| D_PERMISSIONSET sec_action ASSIGN bytes_list
+			| D_PERMISSIONSET sec_action sec_bytearray
 			{
-				System.Text.UnicodeEncoding ue = new System.Text.UnicodeEncoding ();
-				PermissionSetAttribute psa = new PermissionSetAttribute ((System.Security.Permissions.SecurityAction) (short) $2);
-				psa.XML = ue.GetString ((byte []) $4);
-				$$ = new PermPair ((Mono.Cecil.SecurityAction) $2, psa.CreatePermissionSet ());
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
+
+				// TODO: We need a way to set the blob.
 			}
 			| D_PERMISSIONSET sec_action comp_qstring
 			{
-				PermissionSetAttribute psa = new PermissionSetAttribute ((System.Security.Permissions.SecurityAction) (short) $2);
-				psa.XML = (string) $3;
-				$$ = new PermPair ((Mono.Cecil.SecurityAction) $2, psa.CreatePermissionSet ());
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
+
+				// TODO: We need a way to set the XML.
 			}
 			| D_PERMISSIONSET sec_action ASSIGN OPEN_BRACE permissions CLOSE_BRACE
 			{
-				$$ = new MIPermissionSet ((Mono.Cecil.SecurityAction) $2, (ArrayList) $5);
-			}
-			;
+				if (codegen.CurrentSecurityDeclaration == null)
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
 
-permissions		: permission
-			{
-				ArrayList list = new ArrayList ();
-				list.Add ($1);
-				$$ = list;
-			}
-			| permissions COMMA permission
-			{
-				ArrayList list = (ArrayList) $1;
-				list.Add ($3);
-				$$ = list;
-			}
-			;
-
-permission		: class_ref ASSIGN OPEN_BRACE permission_members CLOSE_BRACE
-			{
-				$$ = new MIPermission ((BaseTypeRef) $1, (ArrayList) $4);
-			}
-			;
-
-permission_members	: permission_member
-			{
-				ArrayList list = new ArrayList ();
-				list.Add ($1);
-				$$ = list;
-			}
-			| permission_members permission_member
-			{
-				ArrayList list = (ArrayList) $1;
-				list.Add ($2);
-				$$ = list;
-			}
-			;
-
-permission_member	: prop_or_field primitive_type perm_mbr_nameval_pair
-			{
-				NameValuePair pair = (NameValuePair) $3;
-				$$ = new PermissionMember ((MemberTypes) $1, (BaseTypeRef) $2, pair.Name, pair.Value);
-			}
-			| prop_or_field K_ENUM class_ref perm_mbr_nameval_pair
-			{
-				NameValuePair pair = (NameValuePair) $4;
-				$$ = new PermissionMember ((MemberTypes) $1, (BaseTypeRef) $3, pair.Name, pair.Value);
-			}
-			;
-
-perm_mbr_nameval_pair	: SQSTRING ASSIGN field_init_primitive
-			{
-				$$ = new NameValuePair ((string) $1, (PEAPI.Constant) $3);
-			}
-			| SQSTRING ASSIGN K_BYTEARRAY bytes_list
-			{
-				$$ = new NameValuePair ((string) $1, new ByteArrConst ((byte[]) $4));
-			}
-			| SQSTRING ASSIGN K_STRING OPEN_PARENS SQSTRING CLOSE_PARENS
-			{
-				$$ = new NameValuePair ((string) $1, new StringConst ((string) $5));
-			}
-			;
-
-nameval_pairs		: nameval_pair 
-			{
-				ArrayList pairs = new ArrayList ();
-				pairs.Add ($1);
-
-				$$ = pairs;
-			}
-			| nameval_pairs COMMA nameval_pair
-			{
-				ArrayList pairs = (ArrayList) $1;
-				pairs.Add ($3);
-
-				$$ = pairs;
-			}
-			;
-
-nameval_pair		: comp_qstring ASSIGN cavalue
-			{
-				$$ = new NameValuePair ((string) $1, $3);
-			}
-			;
-
-cavalue 		: truefalse
-			| int32
-			| int32 OPEN_PARENS int32 CLOSE_PARENS
-			{
-				$$ = $3;
-			}
-			| comp_qstring 
-			| class_ref OPEN_PARENS K_INT8 COLON int32 CLOSE_PARENS
-			{
-				$$ = ClassRefToObject ($1, (byte) (int) $5);
-			}
-			| class_ref OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS
-			{
-				$$ = ClassRefToObject ($1, (short) (int) $5);
-			}
-			| class_ref OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS
-			{
-				$$ = ClassRefToObject ($1, (int) $5);
-			}
-			| class_ref OPEN_PARENS int32 CLOSE_PARENS
-			{
-				$$ = ClassRefToObject ($1, (int) $3);
+				foreach (var attr in (List<SecurityAttribute>) $5)
+					codegen.CurrentSecurityDeclaration.SecurityAttributes.Add (attr);
 			}
 			;
 
 sec_action		: K_REQUEST
 			{
-				$$ = Mono.Cecil.SecurityAction.Request;
+				$$ = SecurityAction.Request;
 			}
 			| K_DEMAND
 			{
-				$$ = Mono.Cecil.SecurityAction.Demand;
+				$$ = SecurityAction.Demand;
 			}
 			| K_ASSERT
 			{
-				$$ = Mono.Cecil.SecurityAction.Assert;
+				$$ = SecurityAction.Assert;
 			}
 			| K_DENY
 			{
-				$$ = Mono.Cecil.SecurityAction.Deny;
+				$$ = SecurityAction.Deny;
 			}
 			| K_PERMITONLY
 			{
-				$$ = Mono.Cecil.SecurityAction.PermitOnly;
+				$$ = SecurityAction.PermitOnly;
 			}
 			| K_LINKCHECK
 			{
-				$$ = Mono.Cecil.SecurityAction.LinkDemand;
+				$$ = SecurityAction.LinkDemand;
 			}
 			| K_INHERITCHECK
 			{
-				$$ = Mono.Cecil.SecurityAction.InheritDemand;
+				$$ = SecurityAction.InheritDemand;
 			}
 			| K_REQMIN
 			{
-				$$ = Mono.Cecil.SecurityAction.RequestMinimum;
+				$$ = SecurityAction.RequestMinimum;
 			}
 			| K_REQOPT
 			{
-				$$ = Mono.Cecil.SecurityAction.RequestOptional;
+				$$ = SecurityAction.RequestOptional;
 			}
 			| K_REQREFUSE
 			{
-				$$ = Mono.Cecil.SecurityAction.RequestRefuse;
+				$$ = SecurityAction.RequestRefuse;
 			}
 			| K_PREJITGRANT
 			{
-				$$ = Mono.Cecil.SecurityAction.PreJitGrant;
+				$$ = SecurityAction.PreJitGrant;
 			}
 			| K_PREJITDENY
 			{
-				$$ = Mono.Cecil.SecurityAction.PreJitDeny;
+				$$ = SecurityAction.PreJitDeny;
 			}
 			| K_NONCASDEMAND
 			{
-				$$ = Mono.Cecil.SecurityAction.NonCasDemand;
+				$$ = SecurityAction.NonCasDemand;
 			}
 			| K_NONCASLINKDEMAND
 			{
-				$$ = Mono.Cecil.SecurityAction.NonCasLinkDemand;
+				$$ = SecurityAction.NonCasLinkDemand;
 			}
 			| K_NONCASINHERITANCE
 			{
-				$$ = Mono.Cecil.SecurityAction.NonCasInheritance;
+				$$ = SecurityAction.NonCasInheritance;
 			}
 			;
-*/
+
+permissions		: permission
+			{
+				$$ = new List<SecurityAttribute> ();
+			}
+			| permissions COMMA permission
+			{
+				((List<SecurityAttribute>) $1).Add ((SecurityAttribute) $3);
+			}
+			;
+
+permission		: class_ref ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE
+			{
+				var attr = new SecurityAttribute ((TypeReference) $1);
+
+				foreach (var arg in (List<Tuple<TokenType, CustomAttributeNamedArgument>>) $4) {
+					if (arg.X == TokenType.Field)
+						attr.Fields.Add (arg.Y);
+					else
+						attr.Properties.Add (arg.Y);
+				}
+
+				$$ = attr;
+			}
+			| K_CLASS SQSTRING ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE // TODO: We need an S.R.E notation parser.
+			;
+
+nameval_pairs		: nameval_pair
+			{
+				$$ = new List<Tuple<string, object>> ();
+			}
+			| nameval_pairs COMMA nameval_pair
+			{
+				((List<Tuple<string, object>>) $1).Add ((Tuple<string, object>) $3);
+			}
+			;
+
+nameval_pair		: comp_qstring ASSIGN cavalue
+			{
+				$$ = new Tuple<string, object> ((string) $1, $3);
+			}
+			;
+
+cavalue 		: truefalse
+			| int32
+			| K_INT32 OPEN_PARENS int32 CLOSE_PARENS
+			{
+				$$ = $3;
+			}
+			| comp_qstring
+			// TODO: No idea how these work. They're not standard.
+			| class_ref OPEN_PARENS K_INT8 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS int32 CLOSE_PARENS
+			;
 
 prop_or_field		: K_PROPERTY
 			{
@@ -4124,9 +4132,11 @@ assembly_decl		: D_PUBLICKEY ASSIGN bytes_list
 					codegen.CurrentCustomAttribute = null;
 				}
 			}
-			/*
 			| sec_decl
-			*/
+			{
+				codegen.CurrentModule.Assembly.SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
+				codegen.CurrentSecurityDeclaration = null;
+			}
 			| comp_control
 			;
 

@@ -41,6 +41,8 @@ namespace Mono.ILAsm {
 		
 		public MethodReference CurrentMethodReference { get; set; }
 		
+		public SecurityDeclaration CurrentSecurityDeclaration { get; set; }
+		
 		public bool HasAssemblyDirective { get; set; }
 		
 		public bool HasModuleDirective { get; set; }
