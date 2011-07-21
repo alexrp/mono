@@ -29,5 +29,59 @@ using NUnit.Framework;
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
 	public class PropertyTests : AssemblerTester {
+		[Test]
+		public void TestSimpleProperty ()
+		{
+			ILAsm ()
+				.Input ("property/property-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test001_cls").Properties.ContainsOne (
+					y => y.Name == "test001",
+					y => y.PropertyType.Name == "UInt32"));
+		}
+		
+		[Test]
+		public void TestParametrizedProperty ()
+		{
+			ILAsm ()
+				.Input ("property/property-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test002_cls").Properties.ContainsOne (
+					y => y.Parameters.ContainsOne (
+						z => z.Name == "val",
+						z => z.ParameterType.Name == "UInt32")));
+		}
+		
+		[Test]
+		public void TestPropertyWithAccessors ()
+		{
+			ILAsm ()
+				.Input ("property/property-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test003_cls").Properties.ContainsOne (
+					y => y.GetMethod.Name == "get_test003",
+					y => y.SetMethod.Name == "set_test003"));
+		}
+		
+		[Test]
+		public void TestPropertyWithOtherMethods ()
+		{
+			ILAsm ()
+				.Input ("property/property-004.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test004_cls").Properties.ContainsOne (
+					y => y.OtherMethods.ContainsMany (
+						z => z.Name == "other_test004_0",
+						z => z.Name == "other_test004_1",
+						z => z.Name == "other_test004_2")));
+		}
 	}
 }

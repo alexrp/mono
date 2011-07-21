@@ -3145,8 +3145,12 @@ prop_head		: D_PROPERTY prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_
 				codegen.CurrentProperty = new PropertyDefinition ((string) $4,
 					(PropertyAttributes) $2, (TypeReference) $3);
 
-				foreach (var param in (List<TypeReference>) $6)
-					codegen.CurrentProperty.Parameters.Add (new ParameterDefinition (param));
+				// FIXME: When no getter/setter is defined (i.e. right at
+				// this point), Cecil just returns a dummy collection that's
+				// useful for just about nothing, and our parameters end up
+				// going nowhere.
+				foreach (var param in (List<ParameterDefinition>) $6)
+					codegen.CurrentProperty.Parameters.Add (param);
 
 				if ($8 != null)
 					codegen.CurrentProperty.Constant = $8 is Null ? null : $8;

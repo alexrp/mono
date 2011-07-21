@@ -153,6 +153,10 @@
     <None Include="tests\class-layout\class-layout-005.il" />
     <None Include="tests\class-layout\class-layout-006.il" />
     <None Include="tests\misc-decl\misc-decl-007.il" />
+    <None Include="tests\property\property-001.il" />
+    <None Include="tests\property\property-002.il" />
+    <None Include="tests\property\property-003.il" />
+    <None Include="tests\property\property-004.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -177,5 +181,6 @@
     <Folder Include="tests\mresource\" />
     <Folder Include="tests\mscorlib\" />
     <Folder Include="tests\class-layout\" />
+    <Folder Include="tests\property\" />
   </ItemGroup>
 </Project>
