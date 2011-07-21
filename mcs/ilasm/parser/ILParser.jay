@@ -617,8 +617,7 @@ typedef_decl		: D_TYPEDEF type K_AS comp_name
 			| D_TYPEDEF customattr_owner K_AS comp_name
 			;
 
-comp_control		:
-			| D_XDEFINE comp_name
+comp_control		: D_XDEFINE comp_name
 			| D_XDEFINE comp_name QSTRING
 			| D_XUNDEF comp_name
 			| D_XIFDEF comp_name
@@ -4574,7 +4573,7 @@ comp_name		: id
 			| comp_name DOT comp_name
 			{
 				var n1 = (QualifiedName) $1;
-				var n2 = (QualifiedName) $2;
+				var n2 = (QualifiedName) $3;
 
 				var qn = new QualifiedName {
 					Name = n2.Name,

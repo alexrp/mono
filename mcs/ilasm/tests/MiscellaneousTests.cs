@@ -87,5 +87,14 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Error);
 		}
+		
+		[Test]
+		public void TestPreprocessor ()
+		{
+			ILAsm ()
+				.Input ("misc-decl/misc-decl-007.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
 	}
 }

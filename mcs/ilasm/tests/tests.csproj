@@ -152,6 +152,7 @@
     <None Include="tests\class-layout\class-layout-004.il" />
     <None Include="tests\class-layout\class-layout-005.il" />
     <None Include="tests\class-layout\class-layout-006.il" />
+    <None Include="tests\misc-decl\misc-decl-007.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
