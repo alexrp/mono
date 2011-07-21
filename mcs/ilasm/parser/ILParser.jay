@@ -1640,7 +1640,7 @@ field_decl		: D_FIELD repeat_opt field_attr marshal_spec type id at_opt init_opt
 					if (is_parameter_marshal_notation) {
 						// TODO: This warning should be emitted more closely to the relevant code.
 						report.WriteWarning (Warning.ParameterMarshalNotationOnField,
-							"Invalid use of array marshal notation for parameters on a field.");
+							"Invalid use of parameter array marshal notation on a field.");
 
 						is_parameter_marshal_notation = false;
 					}
