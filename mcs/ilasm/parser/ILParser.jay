@@ -637,14 +637,14 @@ namespace_all		: namespace_head OPEN_BRACE decls CLOSE_BRACE
 			}
 			;
 
-namespace_head		: D_NAMESPACE comp_name
+namespace_head		: D_NAMESPACE comp_name_str
 			{
 				namespace_stack.Push (codegen.CurrentNamespace);
 
 				if (codegen.CurrentNamespace != string.Empty)
 					codegen.CurrentNamespace += ".";
 
-				codegen.CurrentNamespace += ((QualifiedName) $2).FullName;
+				codegen.CurrentNamespace += (string) $2;
 			}
 			;
 
@@ -832,7 +832,7 @@ formal_typars_clause	:
 
 formal_typars		: formal_typar_attr constraints_clause formal_typar
 			{
-				var gp = new GenericParameter (((QualifiedName) $3).FullName,
+				var gp = new GenericParameter ((string) $3,
 					codegen.CurrentGenericParameterProvider) {
 					Attributes = (GenericParameterAttributes) $1,
 				};
@@ -848,7 +848,7 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 			{
 				var colln = (List<GenericParameter>) $1;
 
-				var gp = new GenericParameter (((QualifiedName) $5).FullName,
+				var gp = new GenericParameter ((string) $5,
 					codegen.CurrentGenericParameterProvider) {
 					Attributes = (GenericParameterAttributes) $3,
 				};
@@ -871,7 +871,7 @@ formal_typar_attr	:
 			| formal_typar_attr K_CLASS	{ $$ = (GenericParameterAttributes) $1 | GenericParameterAttributes.ReferenceTypeConstraint; }
 			;
 
-formal_typar		: comp_name
+formal_typar		: comp_name_str
 			;
 
 constraints_clause	:
@@ -1350,9 +1350,9 @@ typars			: type
 
 type_spec		: class_ref
 			| OPEN_BRACKET comp_name CLOSE_BRACKET // TODO: What do we do with this?
-			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET
+			| OPEN_BRACKET D_MODULE comp_name_str CLOSE_BRACKET
 			{
-				var module = ((QualifiedName) $3).FullName;
+				var module = (string) $3;
 
 				if (module == codegen.CurrentModule.Name)
 					$$ = codegen.CurrentModule.GetModuleType ();
@@ -2833,7 +2833,7 @@ field_ref		:
 			{
 				generic_typeref_in_field = false;
 			}
-			  declaring_type comp_name
+			  declaring_type comp_name_str
 			{
 				var declType = (TypeReference) $4;
 
@@ -2865,7 +2865,7 @@ field_ref		:
 
 				dummy_type = new TypeReference (null, null, null, null);
 
-				var field = new FieldReference (((QualifiedName) $5).FullName,
+				var field = new FieldReference ((string) $5,
 					(TypeReference) $2, declType);
 
 				if (declType == codegen.CurrentModule.GetModuleType () &&
@@ -2981,10 +2981,7 @@ method_ref		: call_conv
 
 method_name		: D_CTOR
 			| D_CCTOR
-			| comp_name
-			{
-				$$ = ((QualifiedName) $1).FullName;
-			}
+			| comp_name_str
 			;
 
 generic_method_ref	: K_METHOD call_conv type type_spec DOUBLE_COLON method_name generic_arity OPEN_PARENS sig_args CLOSE_PARENS
@@ -3031,9 +3028,9 @@ event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 			}
 			;
 
-event_head		: D_EVENT event_attr type_spec comp_name
+event_head		: D_EVENT event_attr type_spec comp_name_str
 			{
-				codegen.CurrentEvent = new EventDefinition (((QualifiedName) $4).FullName,
+				codegen.CurrentEvent = new EventDefinition ((string) $4,
 					(EventAttributes) $2, (TypeReference) $3);
 			}
 			| D_EVENT event_attr id // TODO: What do we do here? Infer some type?
@@ -3143,9 +3140,9 @@ prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 			}
 			;
 
-prop_head		: D_PROPERTY prop_attr type comp_name OPEN_PARENS sig_args CLOSE_PARENS init_opt
+prop_head		: D_PROPERTY prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_PARENS init_opt
 			{
-				codegen.CurrentProperty = new PropertyDefinition (((QualifiedName) $4).FullName,
+				codegen.CurrentProperty = new PropertyDefinition ((string) $4,
 					(PropertyAttributes) $2, (TypeReference) $3);
 
 				foreach (var param in (List<TypeReference>) $6)
@@ -3318,9 +3315,9 @@ customattr_blob_nvp	:
 			{
 				$$ = new List<Tuple<TokenType, CustomAttributeNamedArgument>> ();
 			}
-			| customattr_blob_nvp prop_or_field customattr_blob_type comp_name ASSIGN customattr_blob_init
+			| customattr_blob_nvp prop_or_field customattr_blob_type comp_name_str ASSIGN customattr_blob_init
 			{
-				var namedArg = new CustomAttributeNamedArgument (((QualifiedName) $4).FullName,
+				var namedArg = new CustomAttributeNamedArgument ((string) $4,
 					(CustomAttributeArgument) $6);
 				var tuple = new Tuple<TokenType, CustomAttributeNamedArgument> ((TokenType) $2, namedArg);
 
@@ -3867,66 +3864,21 @@ sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PA
 			}
 			;
 
-sec_action		: K_REQUEST
-			{
-				$$ = SecurityAction.Request;
-			}
-			| K_DEMAND
-			{
-				$$ = SecurityAction.Demand;
-			}
-			| K_ASSERT
-			{
-				$$ = SecurityAction.Assert;
-			}
-			| K_DENY
-			{
-				$$ = SecurityAction.Deny;
-			}
-			| K_PERMITONLY
-			{
-				$$ = SecurityAction.PermitOnly;
-			}
-			| K_LINKCHECK
-			{
-				$$ = SecurityAction.LinkDemand;
-			}
-			| K_INHERITCHECK
-			{
-				$$ = SecurityAction.InheritDemand;
-			}
-			| K_REQMIN
-			{
-				$$ = SecurityAction.RequestMinimum;
-			}
-			| K_REQOPT
-			{
-				$$ = SecurityAction.RequestOptional;
-			}
-			| K_REQREFUSE
-			{
-				$$ = SecurityAction.RequestRefuse;
-			}
-			| K_PREJITGRANT
-			{
-				$$ = SecurityAction.PreJitGrant;
-			}
-			| K_PREJITDENY
-			{
-				$$ = SecurityAction.PreJitDeny;
-			}
-			| K_NONCASDEMAND
-			{
-				$$ = SecurityAction.NonCasDemand;
-			}
-			| K_NONCASLINKDEMAND
-			{
-				$$ = SecurityAction.NonCasLinkDemand;
-			}
-			| K_NONCASINHERITANCE
-			{
-				$$ = SecurityAction.NonCasInheritance;
-			}
+sec_action		: K_REQUEST		{ $$ = SecurityAction.Request; }
+			| K_DEMAND		{ $$ = SecurityAction.Demand; }
+			| K_ASSERT		{ $$ = SecurityAction.Assert; }
+			| K_DENY		{ $$ = SecurityAction.Deny; }
+			| K_PERMITONLY		{ $$ = SecurityAction.PermitOnly; }
+			| K_LINKCHECK		{ $$ = SecurityAction.LinkDemand; }
+			| K_INHERITCHECK	{ $$ = SecurityAction.InheritDemand; }
+			| K_REQMIN		{ $$ = SecurityAction.RequestMinimum; }
+			| K_REQOPT		{ $$ = SecurityAction.RequestOptional; }
+			| K_REQREFUSE		{ $$ = SecurityAction.RequestRefuse; }
+			| K_PREJITGRANT		{ $$ = SecurityAction.PreJitGrant; }
+			| K_PREJITDENY		{ $$ = SecurityAction.PreJitDeny; }
+			| K_NONCASDEMAND	{ $$ = SecurityAction.NonCasDemand; }
+			| K_NONCASLINKDEMAND	{ $$ = SecurityAction.NonCasLinkDemand; }
+			| K_NONCASINHERITANCE	{ $$ = SecurityAction.NonCasInheritance; }
 			;
 
 permissions		: permission
@@ -3996,9 +3948,9 @@ prop_or_field		: K_PROPERTY
 			;
 
 module_head		: D_MODULE
-			| D_MODULE comp_name
+			| D_MODULE comp_name_str
 			{
-				var name = ((QualifiedName) $2).FullName;
+				var name = (string) $2;
 
 				if (!codegen.HasModuleDirective) {
 					// Microsoft's ILAsm only takes into account the
@@ -4010,9 +3962,9 @@ module_head		: D_MODULE
 					report.WriteWarning (Warning.ModuleDirectiveIgnored,
 						".module directive with different name ignored.");
 			}
-			| D_MODULE K_EXTERN comp_name
+			| D_MODULE K_EXTERN comp_name_str
 			{
-				var name = ((QualifiedName) $3).FullName;
+				var name = (string) $3;
 
 				if (codegen.GetModuleReference (name) != null)
 					report.WriteWarning (Warning.ModuleReferenceIgnored,
@@ -4050,9 +4002,9 @@ file_entry		:
 assembly_all		: assembly_head OPEN_BRACE assembly_decls CLOSE_BRACE
 			;
 
-assembly_head		: D_ASSEMBLY asm_attr comp_name
+assembly_head		: D_ASSEMBLY asm_attr comp_name_str
 			{
-				var name = ((QualifiedName) $3).FullName;
+				var name = (string) $3;
 				var asmName = codegen.CurrentModule.Assembly.Name;
 
 				if (codegen.HasAssemblyDirective && name != asmName.Name)
@@ -4172,20 +4124,19 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 			}
 			;
 
-assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name
+assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name_str
 			{
-				codegen.CurrentAssemblyReference = new AssemblyNameReference (((QualifiedName) $4).FullName,
+				codegen.CurrentAssemblyReference = new AssemblyNameReference ((string) $4,
 					new Version ()) {
 					Attributes = (AssemblyAttributes) $3,
 				};
 			}
-			| D_ASSEMBLY K_EXTERN asm_attr comp_name K_AS comp_name
+			| D_ASSEMBLY K_EXTERN asm_attr comp_name_str K_AS comp_name_str
 			{
-				var name = (QualifiedName) $6;
 
-				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference (((QualifiedName) $4).FullName,
+				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference ((string) $4,
 					new Version ()) {
-					Alias = name.FullName,
+					Alias = (string) $6,
 					Attributes = (AssemblyAttributes) $3,
 				};
 			}
@@ -4275,9 +4226,7 @@ exptype_decl		: D_FILE comp_name // TODO: Handle this case.
 			}
 			| D_ASSEMBLY K_EXTERN comp_name
 			{
-				var name = ((QualifiedName) $3).FullName;
-
-				$$ = codegen.GetAssemblyReference (name);
+				$$ = codegen.GetAssemblyReference ((string) $3);
 			}
 			| mdtoken_type
 			| D_CLASS int32
@@ -4358,15 +4307,15 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 			}
 			;
 
-manifestres_head	: D_MRESOURCE manres_attr comp_name
+manifestres_head	: D_MRESOURCE manres_attr comp_name_str
 			{
 				$$ = new Tuple<ManifestResourceAttributes, string> ((ManifestResourceAttributes) $2,
-					((QualifiedName) $3).FullName);
+					(string) $3);
 			}
-			| D_MRESOURCE manres_attr comp_name K_AS comp_name
+			| D_MRESOURCE manres_attr comp_name_str K_AS comp_name_str
 			{
 				$$ = new Tuple<ManifestResourceAttributes, string, string> ((ManifestResourceAttributes) $2,
-					((QualifiedName) $3).FullName, ((QualifiedName) $5).FullName);
+					(string) $3, (string) $5);
 			}
 			;
 
@@ -4403,14 +4352,14 @@ manifestres_decls	:
 			}
 			;
 
-manifestres_decl	: D_FILE comp_name K_AT int32
+manifestres_decl	: D_FILE comp_name_str K_AT int32
 			{
-				$$ = new Tuple<string, int> (((QualifiedName) $2).FullName,
+				$$ = new Tuple<string, int> ((string) $2,
 					(int) $4);
 			}
-			| D_ASSEMBLY K_EXTERN comp_name
+			| D_ASSEMBLY K_EXTERN comp_name_str
 			{
-				$$ = ((QualifiedName) $3).FullName;
+				$$ = (string) $3;
 			}
 			| customattr_decl
 			| comp_control
