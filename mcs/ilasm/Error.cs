@@ -206,5 +206,9 @@ namespace Mono.ILAsm {
 		/// Happens when a module-level field could not be resolved.
 		/// </summary>
 		UnresolvedModuleField = 40,
+		/// <summary>
+		/// Happens if an event is missing add/remove accessors.
+		/// </summary>
+		MissingEventAccessors = 41,
 	}
 }

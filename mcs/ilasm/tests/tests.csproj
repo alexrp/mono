@@ -157,6 +157,10 @@
     <None Include="tests\property\property-002.il" />
     <None Include="tests\property\property-003.il" />
     <None Include="tests\property\property-004.il" />
+    <None Include="tests\event\event-001.il" />
+    <None Include="tests\event\event-002.il" />
+    <None Include="tests\event\event-003.il" />
+    <None Include="tests\event\event-004.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -182,5 +186,6 @@
     <Folder Include="tests\mscorlib\" />
     <Folder Include="tests\class-layout\" />
     <Folder Include="tests\property\" />
+    <Folder Include="tests\event\" />
   </ItemGroup>
 </Project>

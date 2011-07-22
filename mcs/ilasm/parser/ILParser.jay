@@ -3023,6 +3023,12 @@ owner_type		: type_spec
 
 event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 			{
+				if (codegen.CurrentEvent.AddMethod == null ||
+					codegen.CurrentEvent.RemoveMethod == null)
+					report.WriteError (Error.MissingEventAccessors,
+						"Event '{0}' is missing add/remove accessors.",
+						codegen.CurrentEvent);
+
 				codegen.CurrentType.Events.Add (codegen.CurrentEvent);
 				codegen.CurrentEvent = null;
 			}

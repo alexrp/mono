@@ -29,5 +29,55 @@ using NUnit.Framework;
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
 	public class EventTests : AssemblerTester {
+		[Test]
+		public void TestMissingEventAccessors ()
+		{
+			ILAsm ()
+				.Input ("event/event-001.il")
+				.ExpectError (Error.MissingEventAccessors)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestSimpleEvent ()
+		{
+			ILAsm ()
+				.Input ("event/event-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test002_cls").Events.ContainsOne (
+					y => y.Name == "test002",
+					y => y.AddMethod.Name == "add_test002",
+					y => y.RemoveMethod.Name == "remove_test002"));
+		}
+		
+		[Test]
+		public void TestEventWithFireMethod ()
+		{
+			ILAsm ()
+				.Input ("event/event-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test003_cls").Events.ContainsOne (
+					y => y.InvokeMethod.Name == "fire_test003"));
+		}
+		
+		[Test]
+		public void TestEventWithOtherMethods ()
+		{
+			ILAsm ()
+				.Input ("event/event-004.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetType ("test004_cls").Events.ContainsOne (
+					y => y.OtherMethods.ContainsMany (
+						z => z.Name == "other_test004_0",
+						z => z.Name == "other_test004_1",
+						z => z.Name == "other_test004_2")));
+		}
 	}
 }
