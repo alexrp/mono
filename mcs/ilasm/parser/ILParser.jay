@@ -3051,10 +3051,6 @@ event_decls		:
 event_decl		: D_ADDON method_ref
 			{
 				var methodRef = (MethodReference) $2;
-
-				if (methodRef.DeclaringType == null)
-					methodRef.DeclaringType = codegen.CurrentType;
-
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -3070,10 +3066,6 @@ event_decl		: D_ADDON method_ref
 			| D_REMOVEON method_ref
 			{
 				var methodRef = (MethodReference) $2;
-
-				if (methodRef.DeclaringType == null)
-					methodRef.DeclaringType = codegen.CurrentType;
-
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -3089,10 +3081,6 @@ event_decl		: D_ADDON method_ref
 			| D_FIRE method_ref
 			{
 				var methodRef = (MethodReference) $2;
-
-				if (methodRef.DeclaringType == null)
-					methodRef.DeclaringType = codegen.CurrentType;
-
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -3107,7 +3095,6 @@ event_decl		: D_ADDON method_ref
 			}
 			| D_OTHER method_ref
 			{
-				// Other methods don't get a default type spec.
 				var methodRef = (MethodReference) $2;
 				var method = methodRef.Resolve ();
 
@@ -3172,10 +3159,6 @@ prop_decls		:
 prop_decl		: D_SET method_ref
 			{
 				var methodRef = (MethodReference) $2;
-
-				if (methodRef.DeclaringType == null)
-					methodRef.DeclaringType = codegen.CurrentType;
-
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -3191,10 +3174,6 @@ prop_decl		: D_SET method_ref
 			| D_GET method_ref
 			{
 				var methodRef = (MethodReference) $2;
-
-				if (methodRef.DeclaringType == null)
-					methodRef.DeclaringType = codegen.CurrentType;
-
 				var method = methodRef.Resolve ();
 
 				if (method == null)
@@ -3209,7 +3188,6 @@ prop_decl		: D_SET method_ref
 			}
 			| D_OTHER method_ref
 			{
-				// Other methods don't get a default type spec.
 				var methodRef = (MethodReference) $2;
 				var method = methodRef.Resolve ();
 
