@@ -27,6 +27,7 @@ namespace Mono.ILAsm {
 		readonly Dictionary<string, Label> labels = new Dictionary<string, Label> ();
 		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
 		readonly Dictionary<Instruction, object> label_jumps = new Dictionary<Instruction, object> ();
+		readonly List<Label> current_labels = new List<Label> ();
 		MethodReference dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
 		TypeReference dummy_type = new TypeReference (null, null, null, null);
 		bool is_enum_class;
@@ -1980,10 +1981,11 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 				}
 
 				codegen.CurrentMethod = null;
-				codegen.CurrentGenericParameterProvider = codegen.CurrentType != null ?
-					codegen.CurrentType : null;
-				il = null;
 				codegen.CurrentScope = null;
+				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+				il = null;
+
+				current_labels.Clear ();
 				labels.Clear ();
 				label_jumps.Clear ();
 			}
@@ -2342,8 +2344,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 					report.WriteError (Error.DuplicateLabel,
 						"Duplicate label: {0}", name);
 
-				codegen.CurrentLabel = new Label (name);
-				labels.Add (name, codegen.CurrentLabel);
+				var label = new Label (name);
+
+				current_labels.Add (label);
+				labels.Add (name, label);
 			}
 			| seh_block
 			| instr
@@ -2352,10 +2356,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 
 				is_inside_scope = false;
 
-				if (codegen.CurrentLabel != null) {
-					codegen.CurrentLabel.Instruction = instr;
-					codegen.CurrentLabel = null;
-				}
+				foreach (var label in current_labels)
+					label.Instruction = instr;
+
+				current_labels.Clear ();
 
 				last_instr = instr;
 			}

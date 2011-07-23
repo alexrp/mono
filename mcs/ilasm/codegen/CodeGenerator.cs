@@ -35,8 +35,6 @@ namespace Mono.ILAsm {
 		
 		public PInvokeInfo CurrentPInvokeInfo { get; set; }
 		
-		public Label CurrentLabel { get; set; }
-		
 		public Scope CurrentScope { get; set; }
 		
 		public MethodReference CurrentMethodReference { get; set; }
