@@ -2350,10 +2350,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var instr = (Instruction) $1;
 
-				if (is_inside_scope) {
-					codegen.CurrentScope.Start = instr;
-					is_inside_scope = false;
-				}
+				is_inside_scope = false;
 
 				if (codegen.CurrentLabel != null) {
 					codegen.CurrentLabel.Instruction = instr;
@@ -2383,6 +2380,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 scope_block		: OPEN_BRACE
 			{
 				var scope = new Scope ();
+
+				var instr = il.Create (OpCodes.Nop);
+				il.Append (instr);
+				scope.Start = instr;
 
 				is_inside_scope = true;
 				scope_stack.Push (codegen.CurrentScope);
