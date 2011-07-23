@@ -28,6 +28,81 @@ using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	[TestFixture]
-	public sealed class MethodTests {
+	public sealed class MethodTests : AssemblerTester {
+		[Test]
+		public void TestSimpleMethod ()
+		{
+			ILAsm ()
+				.Input ("method/method-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Name == "test001",
+					y => y.ReturnType.Name == "Void"));
+		}
+		
+		[Test]
+		public void TestEmptyMethod ()
+		{
+			ILAsm ()
+				.Input ("method/method-002.il")
+				.ExpectWarning (Warning.DefaultReturnEmitted)
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
+		public void TestParametrizedMethod ()
+		{
+			ILAsm ()
+				.Input ("method/method-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Parameters.ContainsMany (
+						z => z.Name == "val1" && z.ParameterType.Name == "UInt32",
+						z => z.Name == "val2" && z.ParameterType.Name == "Single")));
+		}
+		
+		[Test]
+		public void TestGenericMethod ()
+		{
+			ILAsm ()
+				.Input ("method-generic/method-generic-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.GenericParameters.ContainsMany (
+						z => z.Name == "T1",
+						z => z.Name == "T2")));
+		}
+		
+		[Test]
+		public void TestGenericMethodWithGenericReturnType ()
+		{
+			ILAsm ()
+				.Input ("method-generic/method-generic-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.ReturnType.Name == "T"));
+		}
+		
+		[Test]
+		public void TestGenericMethodWithGenericParameterType ()
+		{
+			ILAsm ()
+				.Input ("method-generic/method-generic-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Parameters.ContainsOne (
+						z => z.ParameterType.Name == "T")));
+		}
 	}
 }

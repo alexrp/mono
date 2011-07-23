@@ -161,6 +161,12 @@
     <None Include="tests\event\event-002.il" />
     <None Include="tests\event\event-003.il" />
     <None Include="tests\event\event-004.il" />
+    <None Include="tests\method\method-001.il" />
+    <None Include="tests\method\method-002.il" />
+    <None Include="tests\method\method-003.il" />
+    <None Include="tests\method-generic\method-generic-001.il" />
+    <None Include="tests\method-generic\method-generic-002.il" />
+    <None Include="tests\method-generic\method-generic-003.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -187,5 +193,7 @@
     <Folder Include="tests\class-layout\" />
     <Folder Include="tests\property\" />
     <Folder Include="tests\event\" />
+    <Folder Include="tests\method\" />
+    <Folder Include="tests\method-generic\" />
   </ItemGroup>
 </Project>
