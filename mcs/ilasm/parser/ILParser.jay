@@ -124,7 +124,6 @@ namespace Mono.ILAsm {
 				report.WriteError (Error.GenericParameterAccessOutsideType,
 					"Cannot access a generic parameter outside a type definition.");
 
-			Console.WriteLine (type == type.GetElementType ());
 			type = type.GetElementType ();
 
 			GenericParameter param = null;
