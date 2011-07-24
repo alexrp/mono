@@ -1065,22 +1065,34 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 			}
 			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name // TODO: How does this work?
 			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
-			| OPEN_BRACKET D_MODULE comp_name CLOSE_BRACKET slashed_name
+			| OPEN_BRACKET D_MODULE comp_name_str CLOSE_BRACKET slashed_name
 			{
-				var module = (QualifiedName) $3;
+				var module = (string) $3;
 				var type = (QualifiedName) $5;
 
-				if (module.FullName == codegen.CurrentModule.Name)
-					$$ = codegen.GetTypeByName (type);
-				else {
-					var scope = codegen.GetScope (module.FullName, true);
+				if (module == codegen.CurrentModule.Name) {
+					var typeRef = new TypeReference (type.FullNamespace,
+						type.Name, codegen.CurrentModule, codegen.CurrentModule);
+
+					codegen.ModuleTypeReferences.Add (typeRef);
+
+					$$ = typeRef;
+				} else {
+					var scope = codegen.GetScope (module, true);
+
 					$$ = new TypeReference (type.FullNamespace,
 						type.Name, codegen.CurrentModule, scope);
 				}
 			}
 			| slashed_name
 			{
-				$$ = codegen.GetTypeByName ((QualifiedName) $1);
+				var qn = (QualifiedName) $1;
+				var typeRef = new TypeReference (qn.FullNamespace, qn.Name,
+					codegen.CurrentModule, codegen.CurrentModule);
+
+				codegen.ModuleTypeReferences.Add (typeRef);
+
+				$$ = typeRef;
 			}
 			| mdtoken_type
 			| D_THIS
@@ -4233,7 +4245,7 @@ exptype_decl		: D_FILE comp_name // TODO: Handle this case.
 			{
 				$$ = codegen.GetTypeByName ((QualifiedName) $3);
 			}
-			| D_ASSEMBLY K_EXTERN comp_name
+			| D_ASSEMBLY K_EXTERN comp_name_str
 			{
 				$$ = codegen.GetAssemblyReference ((string) $3);
 			}

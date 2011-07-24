@@ -49,6 +49,8 @@ namespace Mono.ILAsm {
 		
 		public bool IsCorlib { get; set; }
 		
+		public List<TypeReference> ModuleTypeReferences { get; private set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public Dictionary<string, object> DataConstants { get; private set; }
@@ -61,12 +63,13 @@ namespace Mono.ILAsm {
 			AliasedAssemblyReferences = new Dictionary<string, AliasedAssemblyNameReference> ();
 			DataConstants = new Dictionary<string, object> ();
 			FieldDataMappings = new Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> ();
+			ModuleTypeReferences = new List<TypeReference> ();
 			CurrentNamespace = string.Empty;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
 		}
 		
-		private void EmitDataConstants ()
+		void EmitDataConstants ()
 		{
 			// This implementation is far from standard-compliant. We can't
 			// currently emit actual data constants, so we emulate the
@@ -113,8 +116,17 @@ namespace Mono.ILAsm {
 			}
 		}
 		
+		void ResolveModuleTypeReferences ()
+		{
+			foreach (var type in ModuleTypeReferences)
+				if (type.Resolve () == null)
+					report.WriteError (Error.UndefinedTypeReference,
+						"Reference to undefined type '{0}'.", type);
+		}
+		
 		public void Write (string outputFile)
 		{
+			ResolveModuleTypeReferences ();
 			EmitDataConstants ();
 			
 			CurrentModule.Write (outputFile, new WriterParameters {
@@ -129,7 +141,7 @@ namespace Mono.ILAsm {
 			
 			if (type == null)
 				report.WriteError (Error.UndefinedTypeReference,
-					"Reference to undefined type '{0}'", name.FullName);
+					"Reference to undefined type '{0}'.", name.FullName);
 			
 			return type;
 		}
