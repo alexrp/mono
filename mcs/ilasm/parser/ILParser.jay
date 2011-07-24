@@ -28,8 +28,8 @@ namespace Mono.ILAsm {
 		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
 		readonly Dictionary<Instruction, object> label_jumps = new Dictionary<Instruction, object> ();
 		readonly List<Label> current_labels = new List<Label> ();
-		MethodReference dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
-		TypeReference dummy_type = new TypeReference (null, null, null, null);
+		MethodReference dummy_method;
+		TypeReference dummy_type;
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -53,8 +53,11 @@ namespace Mono.ILAsm {
 			this.report = report;
 			this.codegen = codegen;
 			this.tokenizer = tokenizer;
-			
+
 			scope_stack.Push (null);
+
+			ResetDummyMethod ();
+			ResetDummyType ();
 		}
 
 		Instruction FindInstruction (int idx)
@@ -102,8 +105,7 @@ namespace Mono.ILAsm {
 				report.WriteError (Error.GenericParameterAccessOutsideMethod,
 					"Cannot access a generic parameter outside a method definition.");
 
-			if (method is GenericInstanceMethod)
-				method = ((GenericInstanceMethod) method).ElementMethod;
+			method = method.GetElementMethod ();
 
 			var genParams = method.GenericParameters;
 
@@ -139,8 +141,7 @@ namespace Mono.ILAsm {
 				report.WriteError (Error.GenericParameterAccessOutsideType,
 					"Cannot access a generic parameter outside a type definition.");
 
-			if (type is GenericInstanceType)
-				type = ((GenericInstanceType) type).ElementType;
+			type = type.GetElementType ();
 
 			var genParams = type.GenericParameters;
 
@@ -167,6 +168,18 @@ namespace Mono.ILAsm {
 					"Could not resolve custom attribute owner: {0}", owner);
 
 			return provider;
+		}
+
+		void ResetDummyType ()
+		{
+			dummy_type = new TypeReference (null, null, codegen.CurrentModule, null);
+		}
+
+		void ResetDummyMethod ()
+		{
+			dummy_method = new MethodReference (null,
+				new TypeReference (null, null, null, null),
+				new TypeReference (null, null, codegen.CurrentModule, null));
 		}
 
 %}
@@ -831,7 +844,19 @@ formal_typars_clause	:
 			}
 			;
 
-formal_typars		: formal_typar_attr constraints_clause formal_typar
+formal_typars		: formal_typar_gpar
+			{
+				$$ = new List<GenericParameter> () {
+					(GenericParameter) $1,
+				};
+			}
+			| formal_typars COMMA formal_typar_gpar
+			{
+				((List<GenericParameter>) $1).Add ((GenericParameter) $3);
+			}
+			;
+
+formal_typar_gpar	: formal_typar_attr constraints_clause formal_typar
 			{
 				var gp = new GenericParameter ((string) $3,
 					codegen.CurrentGenericParameterProvider) {
@@ -841,25 +866,8 @@ formal_typars		: formal_typar_attr constraints_clause formal_typar
 				foreach (var constraint in (List<TypeReference>) $2)
 					gp.Constraints.Add (constraint);
 
-				$$ = new List<GenericParameter> () {
-					gp,
-				};
+				$$ = gp;
 			}
-			| formal_typars COMMA formal_typar_attr constraints_clause formal_typar
-			{
-				var colln = (List<GenericParameter>) $1;
-
-				var gp = new GenericParameter ((string) $5,
-					codegen.CurrentGenericParameterProvider) {
-					Attributes = (GenericParameterAttributes) $3,
-				};
-
-				foreach (var constraint in (List<TypeReference>) $4)
-					gp.Constraints.Add (constraint);
-
-				colln.Add (gp);
-			}
-			;
 
 formal_typar_attr	:
 			{
@@ -2100,7 +2108,7 @@ method_head		: D_METHOD
 					codegen.CurrentMethod.GenericParameters [i] = genParam;
 				}
 
-				dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
+				ResetDummyMethod ();
 
 				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $15;
 
@@ -2868,7 +2876,7 @@ field_ref		:
 					declType.GetElementType ().GenericParameters.Add (genParam);
 				}
 
-				dummy_type = new TypeReference (null, null, null, null);
+				ResetDummyType ();
 
 				var field = new FieldReference ((string) $5,
 					(TypeReference) $2, declType);
@@ -2967,7 +2975,7 @@ method_ref		: call_conv
 					method.GetElementMethod ().GenericParameters.Add (genParam);
 				}
 
-				dummy_method = new MethodReference (null, new TypeReference (null, null, null, null));
+				ResetDummyMethod ();
 
 				if (method.DeclaringType == codegen.CurrentModule.GetModuleType () &&
 					method.Resolve () == null)
