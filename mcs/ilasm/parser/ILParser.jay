@@ -86,6 +86,8 @@ namespace Mono.ILAsm {
 				report.WriteError (Error.GenericParameterAccessOutsideMethod,
 					"Cannot access a generic parameter outside a method definition.");
 
+			method = method.GetElementMethod ();
+
 			GenericParameter param = null;
 
 			foreach (var genParam in method.GenericParameters)
@@ -121,6 +123,9 @@ namespace Mono.ILAsm {
 			if (type == null)
 				report.WriteError (Error.GenericParameterAccessOutsideType,
 					"Cannot access a generic parameter outside a type definition.");
+
+			Console.WriteLine (type == type.GetElementType ());
+			type = type.GetElementType ();
 
 			GenericParameter param = null;
 
@@ -712,11 +717,13 @@ class_head		: D_CLASS class_attr comp_name
 
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 			}
-			  formal_typars_clause extends_clause impl_clause
+			  formal_typars_clause
 			{
 				foreach (var arg in (List<GenericParameter>) $5)
 					codegen.CurrentType.GenericParameters.Add (arg);
-
+			}
+			  extends_clause impl_clause
+			{
 				TypeReference baseType;
 
 				// if we're assembling mscorlib and defining System.Object,
@@ -724,7 +731,7 @@ class_head		: D_CLASS class_attr comp_name
 				var isSysObj = codegen.IsCorlib && codegen.Corlib.Object == null &&
 					codegen.CurrentType.FullName == "System.Object";
 
-				if ($6 == null) {
+				if ($7 == null) {
 					if (is_value_class)
 						baseType = codegen.Corlib.ValueType;
 					else if (is_enum_class)
@@ -745,7 +752,7 @@ class_head		: D_CLASS class_attr comp_name
 						report.WriteError (Error.BaseClassInInterface,
 							"Base type specified on an interface.");
 
-					baseType = (TypeReference) $6;
+					baseType = (TypeReference) $7;
 				}
 
 				if (isSysObj && baseType != null) {
@@ -756,7 +763,7 @@ class_head		: D_CLASS class_attr comp_name
 				} else
 					codegen.CurrentType.BaseType = baseType;
 
-				foreach (var interf in (List<TypeReference>) $7)
+				foreach (var interf in (List<TypeReference>) $8)
 					codegen.CurrentType.Interfaces.Add (interf);
 
 				codegen.CurrentModule.Types.Add (codegen.CurrentType);
