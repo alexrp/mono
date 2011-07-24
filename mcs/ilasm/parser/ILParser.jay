@@ -1952,7 +1952,8 @@ dataitem		: K_CHAR STAR OPEN_PARENS comp_qstring CLOSE_PARENS
 method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 			{
 				// If the method has no code, we emit a ret.
-				if (il.Body.Instructions.Count == 0) {
+				if (il.Body.Instructions.Count == 0 &&
+					!codegen.CurrentMethod.IsAbstract) {
 					report.WriteWarning (Warning.DefaultReturnEmitted,
 						"Method has no body; ret emitted.");
 
