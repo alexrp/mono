@@ -2928,11 +2928,13 @@ declaring_type		:
 method_ref		: call_conv
 			{
 				// See the note in method_head.
+				generic_typeref_in_field = true;
 				generic_typeref_in_method = true;
 			}
 			  type declaring_type method_name
 			{
 				generic_typeref_in_method = false;
+				generic_typeref_in_field = false;
 
 				var method = new MethodReference ((string) $5,
 					(TypeReference) $3, (TypeReference) $4) {
@@ -2952,8 +2954,50 @@ method_ref		: call_conv
 			}
 			  typars_clause_opt
 			{
+				generic_typeref_in_method = true;
+				generic_typeref_in_field = true;
+			}
+			  OPEN_PARENS sig_args CLOSE_PARENS
+			{
+				generic_typeref_in_method = false;
+				generic_typeref_in_field = false;
+
+				var method = codegen.CurrentMethodReference;
+
+				foreach (var arg in (List<ParameterDefinition>) $10)
+					method.Parameters.Add (arg);
+
+				var declType = method.DeclaringType;
+
+				if (dummy_type.GenericParameters.Count > 0 &&
+					!(declType is GenericInstanceType))
+					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+						"Declaring type is not generic.");
+
+				for (var i = 0; i < dummy_type.GenericParameters.Count; i++) {
+					var genParam = dummy_type.GenericParameters [i];
+
+					if (genParam == null) {
+						var gp = new GenericParameter (declType.GetElementType ());
+
+						dummy_type.GenericParameters [i] = gp;
+						declType.GenericParameters.Add (gp);
+
+						continue;
+					}
+
+					var pos = genParam.Position;
+
+					if (pos >= ((GenericInstanceType) declType).GenericArguments.Count)
+						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
+							"Generic argument '{0}' not found.", pos);
+
+					declType.GetElementType ().GenericParameters.Add (genParam);
+				}
+
+				ResetDummyType ();
+
 				if ($7 != null) {
-					var method = codegen.CurrentMethodReference;
 					var genMethod = new GenericInstanceMethod (method);
 
 					foreach (var typeArg in (List<TypeReference>) $7)
@@ -2961,17 +3005,6 @@ method_ref		: call_conv
 
 					codegen.CurrentMethodReference = genMethod;
 				}
-
-				generic_typeref_in_method = true;
-			}
-			  OPEN_PARENS sig_args CLOSE_PARENS
-			{
-				generic_typeref_in_method = false;
-
-				var method = codegen.CurrentMethodReference;
-
-				foreach (var arg in (List<ParameterDefinition>) $10)
-					method.Parameters.Add (arg);
 
 				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
 					var genParam = dummy_method.GenericParameters [i];
