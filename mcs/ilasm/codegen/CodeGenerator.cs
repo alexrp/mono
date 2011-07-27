@@ -31,6 +31,8 @@ namespace Mono.ILAsm {
 		
 		public IGenericParameterProvider CurrentGenericParameterProvider { get; set; }
 		
+		public ICustomAttributeProvider CurrentCustomAttributeProvider { get; set; }
+		
 		public CustomAttribute CurrentCustomAttribute { get; set; }
 		
 		public PInvokeInfo CurrentPInvokeInfo { get; set; }

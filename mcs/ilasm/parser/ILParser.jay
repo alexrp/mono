@@ -675,6 +675,7 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 
 				codegen.CurrentType = null;
 				codegen.CurrentGenericParameterProvider = null;
+				codegen.CurrentCustomAttributeProvider = null;
 
 				if (typedef_stack.Count > 0) {
 					codegen.CurrentType = typedef_stack.Pop ();
@@ -930,7 +931,10 @@ class_decl		: method_all
 			| customattr_decl
 			{
 				if ($1 != null) {
-					codegen.CurrentType.CustomAttributes.Add ((CustomAttribute) $1);
+					var provider = codegen.CurrentCustomAttributeProvider != null ?
+						codegen.CurrentCustomAttributeProvider : codegen.CurrentType;
+
+					provider.CustomAttributes.Add ((CustomAttribute) $1);
 					codegen.CurrentCustomAttribute = null;
 				}
 			}
@@ -1027,7 +1031,7 @@ param_type_decl		: D_PARAM K_TYPE id
 					report.WriteError (Error.InvalidGenericParameter,
 						"Generic parameter '{0}' not found.", name);
 
-				codegen.CurrentGenericParameterProvider = param;
+				codegen.CurrentCustomAttributeProvider = param;
 			}
 			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
 			{
@@ -1038,7 +1042,7 @@ param_type_decl		: D_PARAM K_TYPE id
 					report.WriteError (Error.InvalidGenericParameter,
 						"Generic parameter number '{0}' not found.", id);
 
-				codegen.CurrentGenericParameterProvider = genParams [id - 1];
+				codegen.CurrentCustomAttributeProvider = genParams [id - 1];
 			}
 			;
 
@@ -1227,9 +1231,9 @@ type			: K_CLASS class_ref
 				else {
 					GenericParameter cachedGp = null;
 
-					foreach (var genParam in dummy_type.GenericParameters)
-						if (genParam.Position == pos)
-							if ((cachedGp = genParam) != null)
+					for (var i = 0; i < dummy_type.GenericParameters.Count; i++)
+						if (i == pos)
+							if ((cachedGp = dummy_type.GenericParameters [i]) != null)
 								break;
 
 					if (cachedGp == null) {
@@ -1257,9 +1261,9 @@ type			: K_CLASS class_ref
 				else {
 					GenericParameter cachedGp = null;
 
-					foreach (var genParam in dummy_method.GenericParameters)
-						if (genParam.Position == pos)
-							if ((cachedGp = genParam) != null)
+					for (var i = 0; i < dummy_method.GenericParameters.Count; i++)
+						if (i == pos)
+							if ((cachedGp = dummy_method.GenericParameters [i]) != null)
 								break;
 
 					if (cachedGp == null) {
@@ -2009,6 +2013,7 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 
 				codegen.CurrentMethod = null;
 				codegen.CurrentScope = null;
+				codegen.CurrentCustomAttributeProvider = null;
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 				il = null;
 
@@ -2355,12 +2360,15 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var idx = (int) $3;
 
-				if (idx < 0 || idx >= codegen.CurrentMethod.Parameters.Count) {
-					var param = codegen.CurrentMethod.Parameters [idx];
-					param.Constant = $5 is Null ? null : $5;
-				} else
+				if (idx <= 0 || idx > codegen.CurrentMethod.Parameters.Count)
 					report.WriteWarning (Warning.OutOfRangeParameterIndex,
 						"Parameter at index '{0}' not found.", idx);
+
+				var param = codegen.CurrentMethod.Parameters [idx - 1];
+				codegen.CurrentCustomAttributeProvider = param;
+
+				if ($5 != null)
+					param.Constant = $5 is Null ? null : $5;
 			}
 			| param_type_decl
 			| id COLON
@@ -2400,7 +2408,10 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| customattr_decl
 			{
 				if ($1 != null) {
-					codegen.CurrentMethod.CustomAttributes.Add ((CustomAttribute) $1);
+					var provider = codegen.CurrentCustomAttributeProvider != null ?
+						codegen.CurrentCustomAttributeProvider : codegen.CurrentType;
+
+					provider.CustomAttributes.Add ((CustomAttribute) $1);
 					codegen.CurrentCustomAttribute = null;
 				}
 			}
@@ -2861,13 +2872,11 @@ field_ref		:
 			{
 				generic_typeref_in_field = true;
 			}
-			  type
+			  type declaring_type comp_name_str
 			{
 				generic_typeref_in_field = false;
-			}
-			  declaring_type comp_name_str
-			{
-				var declType = (TypeReference) $4;
+
+				var declType = (TypeReference) $3;
 
 				if (dummy_type.GenericParameters.Count > 0 &&
 					!(declType is GenericInstanceType))
@@ -2897,7 +2906,7 @@ field_ref		:
 
 				ResetDummyType ();
 
-				var field = new FieldReference ((string) $5,
+				var field = new FieldReference ((string) $4,
 					(TypeReference) $2, declType);
 
 				if (declType == codegen.CurrentModule.GetModuleType () &&
@@ -3003,7 +3012,7 @@ method_ref		: call_conv
 					foreach (var typeArg in (List<TypeReference>) $7)
 						genMethod.GenericArguments.Add (typeArg);
 
-					codegen.CurrentMethodReference = genMethod;
+					method = genMethod;
 				}
 
 				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
@@ -3064,8 +3073,8 @@ generic_method_ref	: K_METHOD call_conv type type_spec DOUBLE_COLON method_name 
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				foreach (var arg in (List<TypeReference>) $9)
-					method.Parameters.Add (new ParameterDefinition (arg));
+				foreach (var param in (List<ParameterDefinition>) $9)
+					method.Parameters.Add (param);
 
 				if ($7 != null)
 					for (var i = 0; i < (int) $7; i++)
@@ -3198,20 +3207,21 @@ prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 			}
 			;
 
-prop_head		: D_PROPERTY prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_PARENS init_opt
+prop_head		: D_PROPERTY call_conv prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_PARENS init_opt
 			{
-				codegen.CurrentProperty = new PropertyDefinition ((string) $4,
-					(PropertyAttributes) $2, (TypeReference) $3);
+				// TODO: We can't set calling convention with Cecil.
+				codegen.CurrentProperty = new PropertyDefinition ((string) $5,
+					(PropertyAttributes) $3, (TypeReference) $4);
 
 				// FIXME: When no getter/setter is defined (i.e. right at
 				// this point), Cecil just returns a dummy collection that's
 				// useful for just about nothing, and our parameters end up
 				// going nowhere.
-				foreach (var param in (List<ParameterDefinition>) $6)
+				foreach (var param in (List<ParameterDefinition>) $7)
 					codegen.CurrentProperty.Parameters.Add (param);
 
-				if ($8 != null)
-					codegen.CurrentProperty.Constant = $8 is Null ? null : $8;
+				if ($9 != null)
+					codegen.CurrentProperty.Constant = $9 is Null ? null : $9;
 			}
 			;
 
