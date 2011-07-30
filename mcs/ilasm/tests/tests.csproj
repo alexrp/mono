@@ -168,6 +168,11 @@
     <None Include="tests\method-generic\method-generic-002.il" />
     <None Include="tests\method-generic\method-generic-003.il" />
     <None Include="tests\method-body\method-body-001.il" />
+    <None Include="tests\method-body\method-body-002.il" />
+    <None Include="tests\method-body\method-body-003.il" />
+    <None Include="tests\method-body\method-body-004.il" />
+    <None Include="tests\method-body\method-body-005.il" />
+    <None Include="tests\method-body\method-body-006.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />

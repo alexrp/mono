@@ -2331,6 +2331,8 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 					report.WriteError (Error.MultipleEntryPoints,
 						"Multiple .entrypoint directives.");
 
+				// FIXME: Cecil doesn't preserve the entry point if the
+				// module is not compiled as an executable.
 				codegen.CurrentModule.EntryPoint = codegen.CurrentMethod;
 			}
 			| D_ZEROINIT

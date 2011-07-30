@@ -126,5 +126,68 @@ namespace Mono.ILAsm.Tests {
 					y => y.Body.MaxStackSize == 1024));
 		}
 		*/
+		
+		/*
+		 * FIXME: Cecil deletes variable names.
+		[Test]
+		public void TestMethodLocals ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-002.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.Variables.ContainsMany (
+						z => z.Name == "var1" && z.VariableType.Name == "UInt32",
+						z => z.Name == "var2" && z.VariableType.Name == "Double")));
+		}
+		*/
+		
+		[Test]
+		public void TestMethodLocalsWithInit ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-003.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.InitLocals));
+		}
+		
+		[Test]
+		public void TestMethodWithZeroInit ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-004.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.InitLocals));
+		}
+		
+		[Test]
+		public void TestEntryPointMethod ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-005.il")
+				.Exe ()
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.EntryPoint.Name == "test005");
+		}
+		
+		[Test]
+		public void TestDuplicateEntryPointMethod ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-006.il")
+				.ExpectError (Error.MultipleEntryPoints)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
 	}
 }
