@@ -167,6 +167,7 @@
     <None Include="tests\method-generic\method-generic-001.il" />
     <None Include="tests\method-generic\method-generic-002.il" />
     <None Include="tests\method-generic\method-generic-003.il" />
+    <None Include="tests\method-body\method-body-001.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -195,5 +196,6 @@
     <Folder Include="tests\event\" />
     <Folder Include="tests\method\" />
     <Folder Include="tests\method-generic\" />
+    <Folder Include="tests\method-body\" />
   </ItemGroup>
 </Project>

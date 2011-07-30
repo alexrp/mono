@@ -109,5 +109,22 @@ namespace Mono.ILAsm.Tests {
 						z => z.ParameterType.Name == "T")));
 		}
 		*/
+		
+		/*
+		 * FIXME: This test fails because Cecil forces a calculated stack
+		 * size rather than using the one we specify. This must be fixed
+		 * upstream.
+		[Test]
+		public void TestMaxStack ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-001.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.MaxStackSize == 1024));
+		}
+		*/
 	}
 }
