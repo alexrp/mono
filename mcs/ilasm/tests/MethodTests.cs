@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil.Cil;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
@@ -189,5 +190,22 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Error);
 		}
+		
+		/*
+		 * FIXME: See TestMethodLocals note.
+		[Test]
+		public void TestLocalVariableReference ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-007.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.Instructions.Contains (
+						z => z.Operand is VariableDefinition,
+						z => ((VariableDefinition) z.Operand).Name == "var")));
+		}
+		*/
 	}
 }

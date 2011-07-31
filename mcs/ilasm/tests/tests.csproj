@@ -173,6 +173,7 @@
     <None Include="tests\method-body\method-body-004.il" />
     <None Include="tests\method-body\method-body-005.il" />
     <None Include="tests\method-body\method-body-006.il" />
+    <None Include="tests\method-body\method-body-007.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
