@@ -133,7 +133,6 @@ namespace Mono.ILAsm {
 			
 			CurrentModule.Write (outputFile, new WriterParameters {
 				SymbolWriterProvider = DebuggingSymbols ? new MdbWriterProvider () : null,
-				WriteSymbols = DebuggingSymbols,
 			});
 		}
 		

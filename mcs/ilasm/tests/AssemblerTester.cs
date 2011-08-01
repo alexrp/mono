@@ -29,6 +29,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Mono.Cecil;
+using Mono.Cecil.Mdb;
 using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
@@ -45,6 +46,7 @@ namespace Mono.ILAsm.Tests {
 			{
 				driver = new Driver ();
 				driver.Target = Target.Dll;
+				driver.DebuggingInfo = true;
 				driver.Output = TextWriter.Null;
 				
 				driver.Report.Quiet = true;
@@ -79,6 +81,18 @@ namespace Mono.ILAsm.Tests {
 			public Assembler Exe ()
 			{
 				driver.Target = Target.Exe;
+				return this;
+			}
+			
+			public Assembler Debug ()
+			{
+				driver.DebuggingInfo = true;
+				return this;
+			}
+			
+			public Assembler Release ()
+			{
+				driver.DebuggingInfo = false;
 				return this;
 			}
 			
@@ -162,6 +176,8 @@ namespace Mono.ILAsm.Tests {
 				var result = driver.Run (arguments.ToArray ());
 				
 				// Reset stuff to defaults.
+				driver.Target = Target.Dll;
+				driver.DebuggingInfo = true;
 				driver.Output = Console.Out;
 				
 				driver.Report.Quiet = false;
@@ -173,20 +189,23 @@ namespace Mono.ILAsm.Tests {
 				Assert.AreEqual (expected_warning, resulting_warning);
 				Assert.AreEqual (expected_error, resulting_error);
 				
-				return new AssemblerOutput (driver.OutputFileName, result);
+				return new AssemblerOutput (driver.OutputFileName, driver.DebuggingInfo, result);
 			}
 		}
 		
 		protected sealed class AssemblerOutput {
-			public AssemblerOutput (string fileName, ExitCode? result)
+			public AssemblerOutput (string fileName, bool debug, ExitCode? result)
 			{
 				Result = result;
 				file_name = fileName;
+				this.debug = debug;
 			}
 			
 			public ExitCode? Result { get; private set; }
 			
 			private readonly string file_name;
+			
+			private readonly bool debug;
 			
 			public AssemblerOutput Expect (ExitCode? result)
 			{
@@ -196,16 +215,19 @@ namespace Mono.ILAsm.Tests {
 			
 			public AssembledModule GetModule ()
 			{
-				return new AssembledModule (file_name);
+				return new AssembledModule (file_name, debug);
 			}
 		}
 		
 		public delegate bool ModulePredicate (ModuleDefinition module);
 		
 		protected sealed class AssembledModule {
-			public AssembledModule (string fileName)
+			public AssembledModule (string fileName, bool debug)
 			{
-				Module = ModuleDefinition.ReadModule (fileName);
+				Module = ModuleDefinition.ReadModule (fileName, new ReaderParameters
+				{
+					SymbolReaderProvider = debug ? new MdbReaderProvider () : null,
+				});
 			}
 			
 			public ModuleDefinition Module { get; private set; }

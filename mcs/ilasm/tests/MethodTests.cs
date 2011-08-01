@@ -129,7 +129,8 @@ namespace Mono.ILAsm.Tests {
 		*/
 		
 		/*
-		 * FIXME: Cecil deletes variable names.
+		 * FIXME: Something is wrong with symbol writing/reading somewhere;
+		 * we don't correctly get local variable names.
 		[Test]
 		public void TestMethodLocals ()
 		{

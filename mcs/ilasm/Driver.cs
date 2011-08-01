@@ -24,7 +24,6 @@ namespace Mono.ILAsm {
 		bool show_tokens;
 		bool show_parser;
 		bool scan_only;
-		bool debugging_info;
 		bool key_container;
 		string key_name;
 		ILTokenizer scanner;
@@ -32,6 +31,8 @@ namespace Mono.ILAsm {
 		public string OutputFileName { get; set; }
 		
 		public Target Target { get; set; }
+		
+		public bool DebuggingInfo { get; set; }
 		
 		public TextWriter Output { get; set; }
 		
@@ -57,7 +58,7 @@ namespace Mono.ILAsm {
 				OutputFileName = CreateOutputFileName (il_file_list, Target);
 			
 			var codegen = new CodeGenerator (Report, OutputFileName, Target) {
-				DebuggingSymbols = debugging_info,
+				DebuggingSymbols = DebuggingInfo,
 			};
 			
 			StrongName sn = null;
@@ -187,7 +188,7 @@ namespace Mono.ILAsm {
 				case "debu":
 				case "debug":
 					// TODO: Support impl and opt.
-					debugging_info = true;
+					DebuggingInfo = true;
 					break;
 				case "nol":
 				case "nolo":
