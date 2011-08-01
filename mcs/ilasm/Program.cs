@@ -1,5 +1,5 @@
 // 
-// Main.cs
+// Program.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
