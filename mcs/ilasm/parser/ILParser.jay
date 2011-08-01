@@ -736,7 +736,7 @@ class_head		: D_CLASS class_attr comp_name
 						baseType = codegen.Corlib.ValueType;
 					else if (is_enum_class)
 						baseType = codegen.Corlib.Enum;
-					else if (isSysObj)
+					else if (isSysObj || codegen.NoAutoInherit)
 						baseType = null;
 					else {
 						var obj = codegen.Corlib.Object;

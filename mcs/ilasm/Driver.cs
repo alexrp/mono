@@ -25,6 +25,7 @@ namespace Mono.ILAsm {
 		bool show_parser;
 		bool scan_only;
 		bool key_container;
+		bool no_auto_inherit;
 		string key_name;
 		ILTokenizer scanner;
 		
@@ -59,6 +60,7 @@ namespace Mono.ILAsm {
 			
 			var codegen = new CodeGenerator (Report, OutputFileName, Target) {
 				DebuggingSymbols = DebuggingInfo,
+				NoAutoInherit = no_auto_inherit,
 			};
 			
 			StrongName sn = null;
@@ -187,7 +189,9 @@ namespace Mono.ILAsm {
 				case "deb":
 				case "debu":
 				case "debug":
-					// TODO: Support impl and opt.
+				case "pdb":
+					// TODO: Support impl and opt (add DebuggableAttribute
+					// with the 1 | 2 for opt, 1 | 2 | 256 for opt).
 					DebuggingInfo = true;
 					break;
 				case "nol":
@@ -195,30 +199,38 @@ namespace Mono.ILAsm {
 				case "nolog":
 				case "nologo":
 					break; // We don't print a logo...
-				// Stubs to stay command line compatible with MS.
 				case "noautoinherit":
-				case "nocorstub":
+					no_auto_inherit = true;
+					break;
+				// Stubs to stay command line compatible with MS.
+				case "nocorstub": // TODO: How can we do these with Cecil?
 				case "stripreloc":
-				case "clock":
-				case "error":
-				case "subsystem":
+					break;
 				case "flags":
 				case "alignment":
 				case "base":
-				case "resource":
-				case "pdb":
-				case "optimize":
-				case "fold":
-				case "include":
 				case "stack":
-				case "enc":
 				case "mdv":
 				case "msv":
+					// TODO: These cannot be implemented until
+					// we can implement the corresponding language
+					// elements.
+					break;
+				case "resource": // TODO: How do we include in *.res format?
+				case "clock": // TODO: Do timings for each assembly step.
+				case "subsystem":
+				case "optimize": // TODO: Bring in Mono.Cecil.Rocks.
+				case "fold":
+				case "include": // TODO: Actually implement the preprocessor.
 				case "itanium":
 				case "x64":
 				case "pe64":
 					Report.WriteWarning (Warning.InternalWarning,
 						"Unimplemented command line option: {0}", cmd);
+					break;
+				case "enc":
+					Report.WriteWarning (Warning.InternalWarning,
+						"Unsupported command line option: {0}", cmd);
 					break;
 				case "key":
 					if (commandArg.Length > 0)

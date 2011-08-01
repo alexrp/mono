@@ -51,6 +51,8 @@ namespace Mono.ILAsm {
 		
 		public bool IsCorlib { get; set; }
 		
+		public bool NoAutoInherit { get; set; }
+		
 		public List<TypeReference> ModuleTypeReferences { get; private set; }
 		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
