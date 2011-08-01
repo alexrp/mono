@@ -208,5 +208,54 @@ namespace Mono.ILAsm.Tests {
 						z => ((VariableDefinition) z.Operand).Name == "var")));
 		}
 		*/
+		
+		[Test]
+		public void TestNoOperandInstructions ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-008.il")
+				.Run ()
+				.Expect (ExitCode.Success);
+		}
+		
+		[Test]
+		public void TestInvalidLocalName ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-009.il")
+				.ExpectError (Error.InvalidLocal)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestInvalidParameterName ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-010.il")
+				.ExpectError (Error.InvalidParameter)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestInvalidLocalIndex ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-011.il")
+				.ExpectError (Error.InvalidParameter)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
+		
+		[Test]
+		public void TestInvalidParameterIndex ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-012.il")
+				.ExpectError (Error.InvalidLocal)
+				.Run ()
+				.Expect (ExitCode.Error);
+		}
 	}
 }

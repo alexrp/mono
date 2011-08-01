@@ -2645,7 +2645,7 @@ instr			: INSTR_NONE
 						param = parameter;
 
 				if (param == null)
-					report.WriteError (Error.InvalidLocal,
+					report.WriteError (Error.InvalidParameter,
 						"Parameter '{0}' not found.", name);
 
 				var instr = il.Create ((OpCode) $1, param);
