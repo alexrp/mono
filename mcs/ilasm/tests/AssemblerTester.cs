@@ -34,6 +34,13 @@ using NUnit.Framework;
 
 namespace Mono.ILAsm.Tests {
 	public abstract class AssemblerTester {
+		public static string BasePath { get; set; }
+
+		static AssemblerTester ()
+		{
+			BasePath = "../../";
+		}
+		
 		protected sealed class Assembler {
 			readonly Driver driver;
 			readonly List<string> arguments = new List<string> ();
@@ -66,8 +73,10 @@ namespace Mono.ILAsm.Tests {
 			
 			public Assembler Input (params string[] fileNames)
 			{
+				var path = BasePath + "tests/";
+				
 				foreach (var file in fileNames)
-					arguments.Add ("../../tests/" + file);
+					arguments.Add (path + file);
 				
 				return this;
 			}
