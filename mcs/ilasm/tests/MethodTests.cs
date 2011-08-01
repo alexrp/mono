@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using NUnit.Framework;
 
@@ -257,5 +258,36 @@ namespace Mono.ILAsm.Tests {
 				.Run ()
 				.Expect (ExitCode.Error);
 		}
+		
+		[Test]
+		public void TestParameterOperand ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-013.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.Instructions.Contains (
+						z => z.Operand is ParameterDefinition,
+						z => ((ParameterDefinition) z.Operand).Name == "arg")));
+		}
+		
+		/*
+		 * FIXME: See note in TestMethodLocals.
+		[Test]
+		public void TestLocalOperands ()
+		{
+			ILAsm ()
+				.Input ("method-body/method-body-014.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.GetModuleType ().Methods.ContainsOne (
+					y => y.Body.Instructions.Contains (
+						z => z.Operand is ParameterDefinition && ((ParameterDefinition) z.Operand).Name == "var2",
+						z => z.Operand is ParameterDefinition && ((ParameterDefinition) z.Operand).Name == "var1")));
+		}
+		*/
 	}
 }
