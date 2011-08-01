@@ -199,16 +199,50 @@ namespace Mono.ILAsm {
 				case "nolog":
 				case "nologo":
 					break; // We don't print a logo...
+				case "noa":
+				case "noau":
+				case "noaut":
+				case "noauto":
+				case "noautoi":
+				case "noautoin":
+				case "noautoinh":
+				case "noautoinhe":
+				case "noautoinher":
+				case "noautoinheri":
 				case "noautoinherit":
 					no_auto_inherit = true;
 					break;
 				// Stubs to stay command line compatible with MS.
-				case "nocorstub": // TODO: How can we do these with Cecil?
+				case "noc": // TODO: How can we do these with Cecil?
+				case "noco":
+				case "nocor":
+				case "nocors":
+				case "nocorst":
+				case "nocorstu":
+				case "nocorstub":
+				case "str":
+				case "stri":
+				case "strip":
+				case "stripr":
+				case "stripre":
+				case "striprel":
+				case "striprelo":
 				case "stripreloc":
 					break;
+				case "fla":
+				case "flag":
 				case "flags":
+				case "ali":
+				case "alig":
+				case "align":
+				case "alignm":
+				case "alignme":
+				case "alignmen":
 				case "alignment":
+				case "bas":
 				case "base":
+				case "sta":
+				case "stac":
 				case "stack":
 				case "mdv":
 				case "msv":
@@ -216,14 +250,38 @@ namespace Mono.ILAsm {
 					// we can implement the corresponding language
 					// elements.
 					break;
-				case "resource": // TODO: How do we include in *.res format?
+				case "res": // TODO: How do we include in *.res format?
+				case "reso":
+				case "resou":
+				case "resour":
+				case "resourc":
+				case "resource":
+				case "clo":
+				case "cloc":
 				case "clock": // TODO: Do timings for each assembly step.
+				case "sub":
+				case "subs":
+				case "subsy":
+				case "subsys":
+				case "subsyst":
+				case "subsyste":
 				case "subsystem":
-				case "optimize": // TODO: Bring in Mono.Cecil.Rocks.
+				case "opt": // TODO: Bring in Mono.Cecil.Rocks.
+				case "opti":
+				case "optim":
+				case "optimi":
+				case "optimiz":
+				case "optimize":
+				case "fol":
 				case "fold":
+				case "inc":
+				case "incl":
+				case "inclu":
+				case "includ":
 				case "include": // TODO: Actually implement the preprocessor.
 				case "itanium":
 				case "x64":
+				case "pe6":
 				case "pe64":
 					Report.WriteWarning (Warning.InternalWarning,
 						"Unimplemented command line option: {0}", cmd);
