@@ -423,8 +423,8 @@ namespace Mono.ILAsm {
 			
 			Output.WriteLine ("Mono IL Assembler{0}" +
 				"ilasm [options] <source files>{0}" +
-				"   --about             About the Mono ILAsm compiler.{0}" +
-				"   --version           Print the version number of the Mono ILAsm compiler.{0}" +
+				"   --about             About the Mono IL assembler.{0}" +
+				"   --version           Print the version number of the Mono IL assembler.{0}" +
 				"   /output:file_name   Specifies output file.{0}" +
 				"   /exe                Compile to executable.{0}" +
 				"   /dll                Compile to library.{0}" +
@@ -453,7 +453,7 @@ namespace Mono.ILAsm {
 		void Version ()
 		{
 			var version = Assembly.GetExecutingAssembly ().GetName ().Version.ToString ();
-			Output.WriteLine ("Mono IL Assembler version {0}", version);
+			Output.WriteLine ("Mono ILAsm version {0}", version);
 		}
 	}
 }
