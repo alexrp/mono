@@ -2577,6 +2577,10 @@ handler_block		: scope_block
 
 instr			: INSTR_NONE
 			{
+				if ($1 == null)
+					report.WriteError (Error.InvalidOpCode,
+						"Invalid (illegal/reserved) opcode encountered.");
+
 				var instr = il.Create ((OpCode) $1);
 				il.Append (instr);
 

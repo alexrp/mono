@@ -287,7 +287,6 @@ namespace Mono.ILAsm {
 			keywords ["tbstr"] = new ILToken (Token.K_TBSTR, "tbstr");
 			keywords ["lpvoid"] = new ILToken (Token.K_LPVOID, "lpvoid");
 			keywords ["any"] = new ILToken (Token.K_ANY, "any");
-			keywords ["float"] = new ILToken (Token.K_FLOAT, "float");
 			keywords ["lpstruct"] = new ILToken (Token.K_LPSTRUCT, "lpstruct");
 			keywords ["null"] = new ILToken (Token.K_NULL, "null");
 			keywords ["vector"] = new ILToken (Token.K_VECTOR, "vector");

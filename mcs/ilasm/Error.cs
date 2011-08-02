@@ -210,5 +210,9 @@ namespace Mono.ILAsm {
 		/// Happens if an event is missing add/remove accessors.
 		/// </summary>
 		MissingEventAccessors = 41,
+		/// <summary>
+		/// Happens if any invalid opcode is encountered.
+		/// </summary>
+		InvalidOpCode = 42,
 	}
 }
