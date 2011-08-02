@@ -1,5 +1,5 @@
 // 
-// DisassemblerBase.cs
+// CodeWriter.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -25,43 +25,80 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using System.Text;
 
 namespace Mono.ILDasm {
-	internal abstract class DisassemblerBase {
-		public CodeWriter Writer { get; private set; }
+	internal sealed class CodeWriter {
+		int indent_level;
 		
-		protected DisassemblerBase (TextWriter output)
+		public string IndentString { get; set; }
+		
+		public TextWriter Output { get; set; }
+		
+		public CodeWriter (TextWriter output)
 		{
-			Writer = new CodeWriter (output);
+			IndentString = "\t";
+			Output = output;
 		}
 		
-		public static string Escape (string identifier)
+		string GetIndent ()
 		{
-			// Since keywords in ILAsm don't have any odd symbols, we
-			// can just escape them with apostrophes.
-			if (KeywordTable.Keywords.ContainsKey (identifier))
-				return "'" + identifier + "'";
+			var sb = new StringBuilder ();
 			
-			if (!IsIdentifierStartChar (identifier [0]))
-				return "'" + identifier.Replace ("'", "\\'").Replace ("\\", "\\\\") + "'";
+			for (var i = 0; i < indent_level; i++)
+				sb.Append (IndentString);
 			
-			foreach (var chr in identifier)
-				if (!IsIdentifierChar (chr))
-					return "'" + identifier.Replace ("'", "\\'").Replace ("\\", "\\\\") + "'";
-			
-			return identifier;
+			return sb.ToString ();
 		}
 		
-		// TODO: These methods may not quite be in line with MS.NET...
-		
-		public static bool IsIdentifierStartChar (char chr)
+		public void Indent ()
 		{
-			return char.IsLetter (chr) || "_$@?`".IndexOf (chr) != -1;
+			indent_level++;
 		}
 		
-		public static bool IsIdentifierChar (char chr)
+		public void Dedent ()
 		{
-			return char.IsLetterOrDigit (chr) || "_$@?`.".IndexOf (chr) != -1;
+			indent_level--;
+		}
+		
+		public void Write (string text)
+		{
+			Output.Write (text);
+		}
+		
+		public void Write (string format, params object[] args)
+		{
+			Output.Write (format, args);
+		}
+		
+		public void WriteLine (string text)
+		{
+			Output.WriteLine (text);
+		}
+		
+		public void WriteLine (string format, params object[] args)
+		{
+			Output.WriteLine (format, args);
+		}
+		
+		public void WriteIndented (string text)
+		{
+			Output.Write (GetIndent () + text);
+		}
+		
+		public void WriteIndented (string format, params object[] args)
+		{
+			Output.Write (GetIndent () + format, args);
+		}
+		
+		public void WriteIndentedLine (string text)
+		{
+			Output.Write (GetIndent () + text);
+		}
+		
+		public void WriteIndentedLine (string format, params object[] args)
+		{
+			Output.Write (GetIndent () + format, args);
 		}
 	}
 }

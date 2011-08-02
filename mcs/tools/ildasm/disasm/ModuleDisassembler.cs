@@ -24,8 +24,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.IO;
 
 namespace Mono.ILDasm {
 	internal sealed class ModuleDisassembler : DisassemblerBase {
+		public ModuleDisassembler (TextWriter output)
+			: base (output)
+		{
+		}
 	}
 }
