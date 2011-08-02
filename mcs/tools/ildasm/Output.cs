@@ -2,9 +2,10 @@
 // Output.cs
 //  
 // Author:
+//       Jb Evain (jbevain@gmail.com)
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Alex Rønne Petersen
+// Copyright (c) 2011 Jb Evain, Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

@@ -19,13 +19,14 @@ using Mono.Security;
 namespace Mono.ILDasm {
 	public sealed class Driver {
 		string target_file;
-		Output output_type;
+		Output output_type = Output.Console; // TODO: Add a GUI?
 		string output_file;
 		bool ca_verbal;
 		bool no_ca;
 		bool raw_bytes;
 		bool public_only;
 		bool quote_all;
+		bool raw_eh;
 		bool show_md_tokens;
 		Visibility? visibility;
 		bool no_il;
@@ -127,7 +128,8 @@ namespace Mono.ILDasm {
 				case "raw":
 				case "rawe":
 				case "raweh":
-					throw new NotImplementedException ();
+					raw_eh = true;
+					break;
 				case "sou":
 				case "sour":
 				case "sourc":
