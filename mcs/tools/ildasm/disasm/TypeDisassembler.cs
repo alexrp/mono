@@ -25,10 +25,11 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using Mono.Cecil;
 
 namespace Mono.ILDasm {
 	internal sealed class TypeDisassembler : DisassemblerBase {
-		public TypeDisassembler (TextWriter output)
+		public TypeDisassembler (TextWriter output, TypeDefinition type)
 			: base (output)
 		{
 		}

@@ -3,8 +3,9 @@
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
+//       Jb Evain (jbevain@gmail.com)
 // 
-// Copyright (c) 2011 Alex Rønne Petersen
+// Copyright (c) 2011 Alex Rønne Petersen, Jb Evain
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

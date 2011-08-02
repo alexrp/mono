@@ -1,5 +1,6 @@
 ../../build/common/Consts.cs
 AssemblyInfo.cs
+CodeWriter.cs
 Driver.cs
 ExitCode.cs
 Logger.cs

@@ -25,11 +25,32 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using Mono.Cecil;
 
 namespace Mono.ILDasm {
 	internal sealed class ModuleDisassembler : DisassemblerBase {
-		public ModuleDisassembler (TextWriter output)
+		public bool VerbalCustomAttributes { get; set; }
+		
+		public bool NoCustomAttributes { get; set; }
+		
+		public bool RawBytes { get; set; }
+		
+		public bool QuoteAll { get; set; }
+		
+		public bool RawExceptionHandlers { get; set; }
+		
+		public bool ShowMetadataTokens { get; set; }
+		
+		public Visibility? Visibility { get; set; }
+		
+		public bool NoCil { get; set; }
+		
+		public ModuleDisassembler (TextWriter output, ModuleDefinition module)
 			: base (output)
+		{
+		}
+		
+		public void Disassemble ()
 		{
 		}
 	}

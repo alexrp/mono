@@ -10,27 +10,25 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using Mono.Security;
+using Mono.Cecil;
+using Mono.Cecil.Mdb;
 
 namespace Mono.ILDasm {
 	public sealed class Driver {
 		string target_file;
 		Output output_type = Output.Console; // TODO: Add a GUI?
 		string output_file;
+		Encoding output_encoding = Encoding.ASCII;
 		bool ca_verbal;
 		bool no_ca;
 		bool raw_bytes;
-		bool public_only;
 		bool quote_all;
 		bool raw_eh;
 		bool show_md_tokens;
 		Visibility? visibility;
 		bool no_il;
-		Encoding output_encoding = Encoding.ASCII;
 		
 		public ExitCode? Run (string[] args)
 		{
@@ -38,6 +36,40 @@ namespace Mono.ILDasm {
 				return null;
 			
 			try {
+				var hasSymbols = File.Exists (target_file + ".mdb");
+				
+				var module = ModuleDefinition.ReadModule (target_file, new ReaderParameters {
+					SymbolReaderProvider = hasSymbols ?
+						new MdbReaderProvider () : null,
+				});
+				
+				TextWriter output = null;
+				
+				switch (output_type)
+				{
+				case Output.Console:
+					output = Console.Out;
+					break;
+				case Output.File:
+					output = new StreamWriter (output_file,
+						false, output_encoding);
+					break;
+				case Output.RichText:
+				case Output.Html:
+				case Output.Gui:
+					throw new Exception ("Output type not supported.");
+				}
+				
+				new ModuleDisassembler (output, module) {
+					VerbalCustomAttributes = ca_verbal,
+					NoCustomAttributes = no_ca,
+					RawBytes = raw_bytes,
+					QuoteAll = quote_all,
+					RawExceptionHandlers = raw_eh,
+					ShowMetadataTokens = show_md_tokens,
+					Visibility = visibility,
+					NoCil = no_il,
+				}.Disassemble ();
 			} catch (Exception ex) {
 				Logger.Error (ex.ToString ());
 				return ExitCode.Error;
@@ -110,7 +142,7 @@ namespace Mono.ILDasm {
 				case "pubon":
 				case "pubonl":
 				case "pubonly":
-					public_only = true;
+					visibility = Visibility.Public;
 					break;
 				case "quo":
 				case "quot":
