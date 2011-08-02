@@ -425,12 +425,24 @@ namespace Mono.ILAsm {
 				"ilasm [options] <source files>{0}" +
 				"   --about             About the Mono IL assembler.{0}" +
 				"   --version           Print the version number of the Mono IL assembler.{0}" +
+				"   /verbose            Be verbose.{0}" +
+				"   /quiet              Don't print plain messages.{0}" +
+				"   /nologo             Don't print a logo.{0}" +
 				"   /output:file_name   Specifies output file.{0}" +
 				"   /exe                Compile to executable.{0}" +
 				"   /dll                Compile to library.{0}" +
-				"   /debug              Include debug information.{0}" +
+				"   /debug[=impl|opt]   Include debug information.{0}" +
 				"   /key:key_file       Strong name using the specified key file.{0}" +
 				"   /key:@key_container Strong name using the specified key container.{0}" +
+				"   /noautoinherit      Don't automatically inherit from System.Object.{0}" +
+				"   /flags=int          Set module flags.{0}" +
+				"   /alignment=int      Set file alignment.{0}" +
+				"   /base=int           Set module image base.{0}" +
+				"   /stack=int          Set the stack reserve.{0}" +
+				"   /mdv=versionString  Set metadata version string.{0}" +
+				"   /msv=major.minor    Set metadata stream version (integers).{0}" +
+				"   /nocorstub          Don't generate CORExeMain stub.{0}" +
+				"   /stripreloc         No base relocations needed.{0}" +
 				"Options can be of the form -option or /option.{0}",
 				n);
 			
