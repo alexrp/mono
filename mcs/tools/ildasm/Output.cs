@@ -26,7 +26,7 @@
 using System;
 
 namespace Mono.ILDasm {
-	public enum Output : byte {
+	internal enum Output : byte {
 		Gui,
 		Console,
 		File,

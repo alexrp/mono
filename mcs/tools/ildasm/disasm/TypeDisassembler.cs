@@ -1,5 +1,5 @@
 // 
-// Visibility.cs
+// TypeDisassembler.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -26,13 +26,6 @@
 using System;
 
 namespace Mono.ILDasm {
-	internal enum Visibility : byte {
-		Public,
-		Private,
-		Family,
-		Assembly,
-		FamANDAssem,
-		FamORAssem,
-		PrivateScope,
+	internal sealed class TypeDisassembler : DisassemblerBase {
 	}
 }

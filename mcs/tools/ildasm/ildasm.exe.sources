@@ -6,4 +6,7 @@ Logger.cs
 Output.cs
 Program.cs
 Visibility.cs
-
+disasm/DisassemblerBase.cs
+disasm/MethodDisassembler.cs
+disasm/ModuleDisassembler.cs
+disasm/TypeDisassembler.cs

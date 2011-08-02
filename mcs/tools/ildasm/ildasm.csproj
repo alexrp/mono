@@ -61,9 +61,16 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Output.cs" />
     <Compile Include="Visibility.cs" />
+    <Compile Include="disasm\ModuleDisassembler.cs" />
+    <Compile Include="disasm\TypeDisassembler.cs" />
+    <Compile Include="disasm\MethodDisassembler.cs" />
+    <Compile Include="disasm\DisassemblerBase.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <ItemGroup>
+    <Folder Include="disasm\" />
+  </ItemGroup>
 </Project>
