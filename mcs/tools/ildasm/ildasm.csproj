@@ -56,6 +56,11 @@
     </Compile>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Driver.cs" />
+    <Compile Include="ExitCode.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Output.cs" />
+    <Compile Include="Visibility.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

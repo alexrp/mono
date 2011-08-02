@@ -1,3 +1,9 @@
 ../../build/common/Consts.cs
 AssemblyInfo.cs
+Driver.cs
+ExitCode.cs
+Logger.cs
+Output.cs
 Program.cs
+Visibility.cs
+
