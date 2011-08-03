@@ -331,12 +331,6 @@ namespace Mono.ILAsm {
 				case "-verbose":
 					Report.Verbose = true;
 					break;
-				default:
-					if (str [0] == '-')
-						break;
-
-					il_file_list.Add (str);
-					break;
 				}
 			}
 			
