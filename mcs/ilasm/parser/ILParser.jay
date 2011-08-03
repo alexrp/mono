@@ -4196,7 +4196,7 @@ assemblyref_all		: assemblyref_head OPEN_BRACE assemblyref_decls CLOSE_BRACE
 assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name_str
 			{
 				codegen.CurrentAssemblyReference = new AssemblyNameReference ((string) $4,
-					new Version ()) {
+					new Version (0, 0, 0, 0)) {
 					Attributes = (AssemblyAttributes) $3,
 				};
 			}
@@ -4204,7 +4204,7 @@ assemblyref_head	: D_ASSEMBLY K_EXTERN asm_attr comp_name_str
 			{
 
 				codegen.CurrentAssemblyReference = new AliasedAssemblyNameReference ((string) $4,
-					new Version ()) {
+					new Version (0, 0, 0, 0)) {
 					Alias = (string) $6,
 					Attributes = (AssemblyAttributes) $3,
 				};

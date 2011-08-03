@@ -71,6 +71,7 @@ namespace Mono.ILAsm {
 			CurrentNamespace = string.Empty;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
+			CurrentModule.Assembly.Name.Version = new Version (0, 0, 0, 0);
 		}
 		
 		void EmitDataConstants ()
