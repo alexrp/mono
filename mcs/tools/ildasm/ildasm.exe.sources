@@ -3,6 +3,7 @@ AssemblyInfo.cs
 CodeWriter.cs
 Driver.cs
 ExitCode.cs
+Extensions.cs
 Logger.cs
 Output.cs
 Program.cs

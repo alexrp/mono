@@ -72,6 +72,11 @@ namespace Mono.ILDasm {
 			Output.Write (format, args);
 		}
 		
+		public void WriteLine ()
+		{
+			Output.WriteLine ();
+		}
+		
 		public void WriteLine (string text)
 		{
 			Output.WriteLine (text);
@@ -94,12 +99,24 @@ namespace Mono.ILDasm {
 		
 		public void WriteIndentedLine (string text)
 		{
-			Output.Write (GetIndent () + text);
+			Output.WriteLine (GetIndent () + text);
 		}
 		
 		public void WriteIndentedLine (string format, params object[] args)
 		{
-			Output.Write (GetIndent () + format, args);
+			Output.WriteLine (GetIndent () + format, args);
+		}
+		
+		public void OpenBracket ()
+		{
+			WriteIndentedLine ("{");
+			Indent ();
+		}
+		
+		public void CloseBracket ()
+		{
+			Dedent ();
+			WriteIndentedLine ("}");
 		}
 	}
 }

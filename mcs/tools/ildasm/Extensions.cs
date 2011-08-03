@@ -1,10 +1,10 @@
 // 
-// Program.cs
+// Extensions.cs
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
 // 
-// Copyright (c) 2011 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2011 Alex Rønne Petersen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Globalization;
-using System.Threading;
 
 namespace Mono.ILDasm {
-	internal static class Program {
-		static int Main (string[] args)
+	internal static class Extensions {
+		public static string ToInt32Hex (this Enum val)
 		{
-			// Do everything in invariant.
-			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-			
-			var driver = new Driver ();
-			var result = driver.Run (args);
-			
-			if (result == null)
-				return 0; // We just silently return success.
-			
-			return (int) result;
+			return "0x" + ((IConvertible) val).ToUInt32 (null).ToString ("X8");
+		}
+		
+		public static string ToInt64Hex (this Enum val)
+		{
+			return "0x" + ((IConvertible) val).ToUInt64 (null).ToString ("X16");
 		}
 	}
 }

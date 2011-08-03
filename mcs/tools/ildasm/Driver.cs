@@ -35,6 +35,11 @@ namespace Mono.ILDasm {
 			if (!ParseArgs (args))
 				return null;
 			
+			if (target_file == null) {
+				Usage ();
+				return ExitCode.Error;
+			}
+			
 			try {
 				var hasSymbols = File.Exists (target_file + ".mdb");
 				
@@ -60,11 +65,11 @@ namespace Mono.ILDasm {
 					throw new Exception ("Output type not supported.");
 				}
 				
+				ModuleDisassembler.EscapeAlways = quote_all;
 				new ModuleDisassembler (output, module) {
 					VerbalCustomAttributes = ca_verbal,
 					NoCustomAttributes = no_ca,
 					RawBytes = raw_bytes,
-					QuoteAll = quote_all,
 					RawExceptionHandlers = raw_eh,
 					ShowMetadataTokens = show_md_tokens,
 					Visibility = visibility,
@@ -292,12 +297,6 @@ namespace Mono.ILDasm {
 
 					Version ();
 					return false;
-				default:
-					if (str [0] == '-' || str [0] == '/')
-						break;
-
-					target_file = str;
-					break;
 				}
 			}
 			
@@ -325,7 +324,7 @@ namespace Mono.ILDasm {
 				"ildasm [options] <target file>{0}" +
 				"   --about             About the Mono IL disassembler.{0}" +
 				"   --version           Print the version number of the Mono IL disassembler.{0}" +
-				"Options can be of the form -option or /option.{0}",
+				"Options can be of the form -option or /option.",
 				n);
 		}
 

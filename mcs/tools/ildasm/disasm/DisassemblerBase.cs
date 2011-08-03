@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.IO;
+using System.Text;
 
 namespace Mono.ILDasm {
 	internal abstract class DisassemblerBase {
@@ -35,21 +36,51 @@ namespace Mono.ILDasm {
 			Writer = new CodeWriter (output);
 		}
 		
+		public static bool EscapeAlways { get; set; }
+		
 		public static string Escape (string identifier)
 		{
+			if (EscapeAlways)
+				return "'" + EscapeString (identifier) + "'";
+			
 			// Since keywords in ILAsm don't have any odd symbols, we
 			// can just escape them with apostrophes.
 			if (KeywordTable.Keywords.ContainsKey (identifier))
 				return "'" + identifier + "'";
 			
 			if (!IsIdentifierStartChar (identifier [0]))
-				return "'" + identifier.Replace ("'", "\\'").Replace ("\\", "\\\\") + "'";
+				return "'" + EscapeString (identifier) + "'";
 			
 			foreach (var chr in identifier)
 				if (!IsIdentifierChar (chr))
-					return "'" + identifier.Replace ("'", "\\'").Replace ("\\", "\\\\") + "'";
+					return "'" + EscapeString (identifier) + "'";
 			
 			return identifier;
+		}
+		
+		public static string EscapeString (string str)
+		{
+			return str.Replace ("'", "\\'").Replace ("\\", "\\\\");
+		}
+		
+		public static string ToByteList (byte[] bytes)
+		{
+			var sb = new StringBuilder ("( ");
+			
+			for (var i = 0; i < bytes.Length; i++)
+			{
+				sb.Append (bytes [i].ToString ("X2"));
+				
+				if (i != bytes.Length - 1) {
+					if ((i + 1) % 20 == 0)
+						sb.AppendLine ().Append ("  ");
+					else
+						sb.Append (" ");
+				} else
+					sb.Append (" ");
+			}
+			
+			return sb.Append (")").ToString ();
 		}
 		
 		// TODO: These methods may not quite be in line with MS.NET...
