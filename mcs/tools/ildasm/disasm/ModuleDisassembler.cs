@@ -88,8 +88,9 @@ namespace Mono.ILDasm {
 			}
 			
 			var ver = asm.Version;
-			Writer.WriteIndentedLine (".ver {0}:{1}:{2}:{3}", ver.Major,
-				ver.Minor, ver.Build, ver.Revision);
+			if (ver != new Version (0, 0, 0, 0))
+				Writer.WriteIndentedLine (".ver {0}:{1}:{2}:{3}", ver.Major,
+					ver.Minor, ver.Build, ver.Revision);
 			
 			// Use .locale for MS.NET compatibility.
 			if (asm.Culture != string.Empty)
@@ -131,8 +132,9 @@ namespace Mono.ILDasm {
 				}
 				
 				var ver = asm.Version;
-				Writer.WriteIndentedLine (".ver {0}:{1}:{2}:{3}", ver.Major,
-					ver.Minor, ver.Build, ver.Revision);
+				if (ver != new Version (0, 0, 0, 0))
+					Writer.WriteIndentedLine (".ver {0}:{1}:{2}:{3}", ver.Major,
+						ver.Minor, ver.Build, ver.Revision);
 				
 				// Use .locale for MS.NET compatibility.
 				if (asm.Culture != string.Empty)
