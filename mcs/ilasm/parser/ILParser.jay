@@ -552,11 +552,11 @@ decl			: class_all
 			}
 			| D_SUBSYSTEM int32
 			{
-				codegen.CurrentModule.Kind = (ModuleKind) $2;
+				codegen.CurrentModule.Kind = (ModuleKind) (int) $2;
 			}
 			| D_CORFLAGS int32
 			{
-				codegen.CurrentModule.Attributes = (ModuleAttributes) $2;
+				codegen.CurrentModule.Attributes = (ModuleAttributes) (int) $2;
 			}
 			// TODO: Find a way to set these with Cecil.
 			| D_FILE K_ALIGNMENT int32
