@@ -13,7 +13,8 @@ per_profile_dirs = \
 	resgen		\
 	gacutil		\
 	wsdl		\
-	xbuild
+	xbuild		\
+	ildasm
 
 net_4_0_dirs := \
 	$(per_profile_dirs) \

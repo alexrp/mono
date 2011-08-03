@@ -124,6 +124,7 @@ MDOC_COMPAT = \
 scripts_defaults = 		\
 	al$(SCRIPT_SUFFIX)			\
 	ilasm$(SCRIPT_SUFFIX)			\
+	ildasm$(SCRIPT_SUFFIX)			\
 	gacutil$(SCRIPT_SUFFIX)			\
 	mkbundle$(SCRIPT_SUFFIX)		\
 	monop$(SCRIPT_SUFFIX)			\
