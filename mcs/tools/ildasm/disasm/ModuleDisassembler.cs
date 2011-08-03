@@ -66,6 +66,9 @@ namespace Mono.ILDasm {
 			
 			var asm = module.Assembly.Name;
 			
+			if (ShowMetadataTokens)
+				Writer.WriteLine ("// MDT: {0}", asm.MetadataToken);
+			
 			Writer.Write (".assembly ");
 			
 			if (asm.IsRetargetable)
@@ -108,6 +111,9 @@ namespace Mono.ILDasm {
 				return;
 			
 			foreach (var asm in module.AssemblyReferences) {
+				if (ShowMetadataTokens)
+					Writer.WriteLine ("// MDT: {0}", asm.MetadataToken);
+				
 				Writer.Write (".assembly extern ");
 				
 				if (asm.IsRetargetable)
@@ -157,8 +163,12 @@ namespace Mono.ILDasm {
 			if (!module.HasModuleReferences)
 				return;
 			
-			foreach (var mod in module.ModuleReferences)
+			foreach (var mod in module.ModuleReferences) {
+				if (ShowMetadataTokens)
+					Writer.WriteLine ("// MDT: {0}", mod.MetadataToken);
+				
 				Writer.WriteLine (".module extern {0}", Escape (mod.Name));
+			}
 			
 			Writer.WriteLine ();
 		}
@@ -167,6 +177,10 @@ namespace Mono.ILDasm {
 		{
 			Writer.WriteLine (".subsystem {0}", module.Kind.ToInt32Hex ());
 			Writer.WriteLine (".corflags {0}", module.Attributes.ToInt32Hex ());
+			
+			if (ShowMetadataTokens)
+				Writer.WriteLine ("// MDT: {0}", module.MetadataToken);
+			
 			Writer.WriteLine (".module {0}", Escape (module.Name));
 			
 			Writer.WriteLine ();
