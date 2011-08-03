@@ -53,21 +53,17 @@ namespace Mono.ILDasm {
 		
 		public void Disassemble ()
 		{
-			WriteAssemblyManifest ();
-			Writer.WriteLine ();
-			
 			WriteAssemblyReferences ();
-			Writer.WriteLine ();
-			
 			WriteModuleReferences ();
-			Writer.WriteLine ();
-			
+			WriteAssemblyManifest ();
 			WriteModuleManifest ();
-			Writer.WriteLine ();
 		}
 		
 		void WriteAssemblyManifest ()
 		{
+			if (module.Assembly == null)
+				return;
+			
 			var asm = module.Assembly.Name;
 			
 			Writer.Write (".assembly ");
@@ -102,10 +98,15 @@ namespace Mono.ILDasm {
 					asm.HashAlgorithm.ToInt32Hex ());
 			
 			Writer.CloseBracket ();
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteAssemblyReferences ()
 		{
+			if (!module.HasAssemblyReferences)
+				return;
+			
 			foreach (var asm in module.AssemblyReferences) {
 				Writer.Write (".assembly extern ");
 				
@@ -147,16 +148,28 @@ namespace Mono.ILDasm {
 				
 				Writer.CloseBracket ();
 			}
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteModuleReferences ()
 		{
+			if (!module.HasModuleReferences)
+				return;
+			
 			foreach (var mod in module.ModuleReferences)
 				Writer.WriteLine (".module extern {0}", Escape (mod.Name));
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteModuleManifest ()
 		{
+			Writer.WriteLine (".subsystem {0}", module.Kind.ToInt32Hex ());
+			Writer.WriteLine (".corflags {0}", module.Attributes.ToInt32Hex ());
+			Writer.WriteLine (".module {0}", Escape (module.Name));
+			
+			Writer.WriteLine ();
 		}
 	}
 }
