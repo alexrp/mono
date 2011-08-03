@@ -53,6 +53,12 @@ namespace Mono.ILDasm {
 		
 		public void Disassemble ()
 		{
+			Writer.WriteLine ("// Module: {0} ({1})", module.Name, module.Mvid);
+			Writer.WriteLine ("// Kind: {0}{1}", module.Kind, module.IsMain ? " (Main)" : string.Empty);
+			Writer.WriteLine ("// Flags: {0}", module.Attributes);
+			Writer.WriteLine ("// Runtime: {0} ({1})", module.Runtime, module.Architecture);
+			Writer.WriteLine ();
+			
 			WriteAssemblyReferences ();
 			WriteModuleReferences ();
 			WriteAssemblyManifest ();
