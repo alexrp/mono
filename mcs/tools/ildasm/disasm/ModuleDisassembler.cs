@@ -63,6 +63,7 @@ namespace Mono.ILDasm {
 			WriteModuleReferences ();
 			WriteAssemblyManifest ();
 			WriteModuleManifest ();
+			WriteManifestResources ();
 		}
 		
 		void WriteAssemblyManifest ()
@@ -188,6 +189,44 @@ namespace Mono.ILDasm {
 				Writer.WriteLine ("// MDT: {0}", module.MetadataToken);
 			
 			Writer.WriteLine (".module {0}", Escape (module.Name));
+			
+			Writer.WriteLine ();
+		}
+		
+		void WriteManifestResources ()
+		{
+			if (!module.HasResources)
+				return;
+			
+			foreach (var rsc in module.Resources) {
+				Writer.Write (".mresource ");
+				
+				// A manifest resource can actually have no visibility
+				// specified (i.e. 0) so in that case, we write nothing.
+				if (rsc.IsPublic)
+					Writer.Write ("public ");
+				else if (rsc.IsPrivate)
+					Writer.Write ("private ");
+				
+				Writer.WriteLine (Escape (rsc.Name));
+				
+				Writer.OpenBracket ();
+				
+				if (rsc is AssemblyLinkedResource) {
+					var asmRsc = (AssemblyLinkedResource) rsc;
+					Writer.WriteLine (".assembly extern {0}", Escape (asmRsc.Assembly.Name));
+				} else if (rsc is EmbeddedResource) {
+					//var embRsc = (EmbeddedResource) rsc;
+					// TODO: Write to a separate file and include.
+					// TODO: Aliasing of the file name.
+				} else {
+					var lnkRsc = (LinkedResource) rsc;
+					// TODO: Write the real file offset.
+					Writer.Write (".file {0} at 0", Escape (lnkRsc.File));
+				}
+				
+				Writer.CloseBracket ();
+			}
 			
 			Writer.WriteLine ();
 		}
