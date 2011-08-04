@@ -4358,7 +4358,7 @@ manifestres_all		: manifestres_head OPEN_BRACE manifestres_decls CLOSE_BRACE
 					{
 						bytes = File.ReadAllBytes (fileName);
 					}
-					catch (IOException ex)
+					catch (Exception ex)
 					{
 						report.WriteError (Error.ResourceFileError,
 							"Could not read embedded resource file '{0}': {1}",
