@@ -1432,9 +1432,9 @@ bound			:
 					report.WriteWarning (Warning.NegativeArraySize,
 						"Negative array size '{0}' set to 0.", size);
 
-					$$ = new ArrayDimension (0, 0);
+					$$ = new ArrayDimension (null, 0);
 				} else
-					$$ = new ArrayDimension (0, size);
+					$$ = new ArrayDimension (null, size);
 			}
 			| int32 ELLIPSIS int32
 			{
