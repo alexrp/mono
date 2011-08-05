@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using Mono.Cecil;
 
 namespace Mono.ILDasm {
 	internal static class Extensions {
@@ -35,6 +36,16 @@ namespace Mono.ILDasm {
 		public static string ToInt64Hex (this Enum val)
 		{
 			return "0x" + ((IConvertible) val).ToUInt64 (null).ToString ("X16");
+		}
+		
+		public static string GetFullNestableName (this TypeReference type)
+		{
+			var s = string.Empty;
+			
+			if (!string.IsNullOrEmpty (type.Namespace))
+				s += type.Namespace + ".";
+			
+			return s + type.Name;
 		}
 	}
 }

@@ -116,7 +116,7 @@ namespace Mono.ILDasm {
 			if (type.IsRuntimeSpecialName)
 				Writer.Write ("rtspecialname ");
 			
-			Writer.WriteLine (Escape (type.FullName));
+			Writer.WriteLine (Escape (type.GetFullNestableName ()));
 			Writer.OpenBracket ();
 			
 			WriteLayoutInfo ();
@@ -143,7 +143,7 @@ namespace Mono.ILDasm {
 		{
 			foreach (var nested in type.NestedTypes)
 				if (nested.FullName != "<Module>")
-					new TypeDisassembler (module, type).Disassemble ();
+					new TypeDisassembler (module, nested).Disassemble ();
 		}
 	}
 }
