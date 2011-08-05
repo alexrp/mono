@@ -36,6 +36,11 @@ namespace Mono.ILDasm {
 			Writer = new CodeWriter (output);
 		}
 		
+		protected DisassemblerBase (CodeWriter writer)
+		{
+			Writer = writer;
+		}
+		
 		public static bool EscapeAlways { get; set; }
 		
 		public static string Escape (string identifier)

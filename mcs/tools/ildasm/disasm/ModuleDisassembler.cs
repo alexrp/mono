@@ -53,17 +53,16 @@ namespace Mono.ILDasm {
 		
 		public void Disassemble ()
 		{
-			Writer.WriteLine ("// Module: {0} ({1})", module.Name, module.Mvid);
-			Writer.WriteLine ("// Kind: {0}{1}", module.Kind, module.IsMain ? " (Main)" : string.Empty);
-			Writer.WriteLine ("// Flags: {0}", module.Attributes);
-			Writer.WriteLine ("// Runtime: {0} ({1})", module.Runtime, module.Architecture);
-			Writer.WriteLine ();
-			
 			WriteAssemblyReferences ();
 			WriteModuleReferences ();
 			WriteAssemblyManifest ();
 			WriteModuleManifest ();
 			WriteManifestResources ();
+			
+			// TODO: Disassemble module methods/fields.
+			foreach (var type in module.Types)
+				if (type.FullName != "<Module>" && type.DeclaringType == null)
+					new TypeDisassembler (this, type).Disassemble ();
 		}
 		
 		void WriteAssemblyManifest ()
@@ -182,13 +181,17 @@ namespace Mono.ILDasm {
 		
 		void WriteModuleManifest ()
 		{
-			Writer.WriteLine (".subsystem {0}", module.Kind.ToInt32Hex ());
-			Writer.WriteLine (".corflags {0}", module.Attributes.ToInt32Hex ());
+			Writer.WriteLine ("// Module: {0} ({1})", module.Name, module.Mvid);
+			Writer.WriteLine ("// Kind: {0}{1}", module.Kind, module.IsMain ? " (Main)" : string.Empty);
+			Writer.WriteLine ("// Flags: {0}", module.Attributes);
+			Writer.WriteLine ("// Runtime: {0} ({1})", module.Runtime, module.Architecture);
 			
 			if (ShowMetadataTokens)
 				Writer.WriteLine ("// MDT: {0}", module.MetadataToken);
 			
 			Writer.WriteLine (".module {0}", Escape (module.Name));
+			Writer.WriteLine (".subsystem {0}", module.Kind.ToInt32Hex ());
+			Writer.WriteLine (".corflags {0}", module.Attributes.ToInt32Hex ());
 			
 			Writer.WriteLine ();
 		}
@@ -199,7 +202,11 @@ namespace Mono.ILDasm {
 				return;
 			
 			foreach (var rsc in module.Resources) {
-				Writer.Write (".mresource ");
+				Writer.WriteLine ("Resource: {0}", rsc.Name);
+				Writer.WriteLine ("Type: {0}", rsc.ResourceType);
+				Writer.WriteLine ("Flags: {0}", rsc.Attributes);
+				
+				Writer.WriteLine (".mresource ");
 				
 				// A manifest resource can actually have no visibility
 				// specified (i.e. 0) so in that case, we write nothing.
