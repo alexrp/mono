@@ -715,6 +715,9 @@ class_head		: D_CLASS class_attr comp_name
 					DeclaringType = nester,
 				};
 
+				if (nester != null)
+					nester.NestedTypes.Add (codegen.CurrentType);
+
 				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
 			}
 			  formal_typars_clause
