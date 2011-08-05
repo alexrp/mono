@@ -38,7 +38,7 @@ namespace Mono.ILDasm {
 			return "0x" + ((IConvertible) val).ToUInt64 (null).ToString ("X16");
 		}
 		
-		public static string GetFullNestableName (this TypeReference type)
+		public static string GetSanitizedName (this TypeReference type)
 		{
 			var s = string.Empty;
 			

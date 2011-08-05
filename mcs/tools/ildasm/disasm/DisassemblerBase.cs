@@ -26,6 +26,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Mono.Cecil;
 
 namespace Mono.ILDasm {
 	internal abstract class DisassemblerBase {
@@ -98,6 +99,152 @@ namespace Mono.ILDasm {
 		public static bool IsIdentifierChar (char chr)
 		{
 			return char.IsLetterOrDigit (chr) || "_$@?`.".IndexOf (chr) != -1;
+		}
+		
+		public static string Stringize (MethodCallingConvention conv)
+		{
+			switch (conv)
+			{
+			case MethodCallingConvention.Default:
+				return "default";
+			case MethodCallingConvention.VarArg:
+				return "vararg";
+			case MethodCallingConvention.C:
+				return "unmanaged cdecl";
+			case MethodCallingConvention.StdCall:
+				return "unmanaged stdcall";
+			case MethodCallingConvention.ThisCall:
+				return "unmanaged thiscall";
+			case MethodCallingConvention.FastCall:
+				return "unmanaged fastcall";
+			default:
+				return "callconv (" + conv.ToInt32Hex () + ")";
+			}
+		}
+		
+		public static string Stringize (TypeReference type)
+		{
+			if (type is ArrayType)
+				return Stringize ((ArrayType) type);
+			else if (type is ByReferenceType)
+				return Stringize ((ByReferenceType) type);
+			else if (type is FunctionPointerType)
+				return Stringize ((FunctionPointerType) type);
+			else if (type is OptionalModifierType)
+				return Stringize ((OptionalModifierType) type);
+			else if (type is RequiredModifierType)
+				return Stringize ((RequiredModifierType) type);
+			else if (type is PinnedType)
+				return Stringize ((PinnedType) type);
+			else if (type is PointerType)
+				return Stringize ((PointerType) type);
+			else if (type is SentinelType)
+				return Stringize ((SentinelType) type);
+			else if (type is GenericParameter)
+				return Stringize ((GenericParameter) type);
+			else {
+				var sb = new StringBuilder ();
+				
+				if (type.Scope is ModuleReference)
+					sb.AppendFormat ("[.module {0}] ", type.Scope.Name);
+				else
+					sb.AppendFormat ("[{0}] ", type.Scope.Name);
+				
+				sb.Append (type.FullName);
+				
+				return sb.ToString ();
+			}
+		}
+		
+		public static string Stringize (ArrayType type)
+		{
+			var sb = new StringBuilder (Stringize (type.ElementType));
+			
+			if (type.IsVector)
+				return sb.Append ("[]").ToString ();
+			
+			sb.Append ("[");
+			
+			for (var i = 0; i < type.Rank; i++) {
+				var dim = type.Dimensions [i];
+				
+				if (dim.LowerBound == null && dim.UpperBound == null)
+					sb.Append ("...");
+				else if (dim.LowerBound == null)
+					sb.Append (dim.UpperBound);
+				else if (dim.UpperBound == null)
+					sb.AppendFormat ("{0} ...", dim.LowerBound);
+				else
+					sb.AppendFormat ("{0} ... {1}", dim.LowerBound, dim.UpperBound);
+				
+				if (i != type.Rank - 1)
+					sb.Append (", ");
+			}
+			
+			return sb.Append ("]").ToString ();
+		}
+		
+		public static string Stringize (ByReferenceType type)
+		{
+			return Stringize (type.ElementType) + "&";
+		}
+		
+		public static string Stringize (FunctionPointerType type)
+		{
+			var sb = new StringBuilder ("method ");
+			
+			if (type.HasThis)
+				sb.Append ("instance ");
+			
+			if (type.ExplicitThis)
+				sb.Append ("explicit ");
+			
+			sb.AppendFormat ("{0} ", Stringize (type.CallingConvention));
+			
+			sb.Append (Stringize (type.ReturnType));
+			sb.Append (" * ");
+			sb.Append ("(");
+			
+			for (var i = 0; i < type.Parameters.Count; i++) {
+				sb.Append (Stringize (type.Parameters [i].ParameterType));
+				
+				if (i != type.Parameters.Count - 1)
+					sb.Append (", ");
+			}
+			
+			return sb.Append (")").ToString ();
+		}
+		
+		public static string Stringize (OptionalModifierType type)
+		{
+			return Stringize (type.ElementType) +
+				"modopt (" + Stringize (type.ModifierType) + ")";
+		}
+		
+		public static string Stringize (RequiredModifierType type)
+		{
+			return Stringize (type.ElementType) +
+				"modreq (" + Stringize (type.ModifierType) + ")";
+		}
+		
+		public static string Stringize (PinnedType type)
+		{
+			return Stringize (type.ElementType) + " pinned";
+		}
+		
+		public static string Stringize (PointerType type)
+		{
+			return Stringize (type.ElementType) + "*";
+		}
+		
+		public static string Stringize (SentinelType type)
+		{
+			return "...";
+		}
+		
+		public static string Stringize (GenericParameter type)
+		{
+			return "TODO: GenericParameter";
 		}
 	}
 }

@@ -116,7 +116,7 @@ namespace Mono.ILDasm {
 			if (type.IsRuntimeSpecialName)
 				Writer.Write ("rtspecialname ");
 			
-			Writer.WriteLine (Escape (type.GetFullNestableName ()));
+			Writer.WriteLine (Escape (type.GetSanitizedName ()));
 			Writer.OpenBracket ();
 			
 			WriteLayoutInfo ();
