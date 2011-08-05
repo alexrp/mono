@@ -28,7 +28,7 @@
 {
 }
 
-.method static void test012 (uint32 arg)
+.method static void test013 (uint32 arg)
 {
 	ldarg arg
 }

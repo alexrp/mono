@@ -28,7 +28,7 @@
 {
 }
 
-.method static void test012 ()
+.method static void test014 ()
 {
 	.locals init (uint32 var1, float32 var2)
 
