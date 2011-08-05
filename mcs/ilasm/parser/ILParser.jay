@@ -3143,7 +3143,7 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve add method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidEventMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3158,7 +3158,7 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve remove method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidEventMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3173,7 +3173,7 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve fire method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidEventMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3188,7 +3188,7 @@ event_decl		: D_ADDON method_ref
 					report.WriteError (Error.InvalidEventMethod,
 						"Could not resolve other method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidEventMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3252,7 +3252,7 @@ prop_decl		: D_SET method_ref
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve set method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3267,7 +3267,7 @@ prop_decl		: D_SET method_ref
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve get method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Method '{0}' is not within the current module.", method);
 
@@ -3282,7 +3282,7 @@ prop_decl		: D_SET method_ref
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Could not resolve other method '{0}'.", methodRef);
 
-				if (method.Module.FullyQualifiedName != codegen.CurrentModule.FullyQualifiedName)
+				if (method.Module != codegen.CurrentModule)
 					report.WriteError (Error.InvalidPropertyMethod,
 						"Method '{0}' is not within the current module.", method);
 
