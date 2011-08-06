@@ -193,6 +193,9 @@ namespace Mono.ILDasm {
 			Writer.WriteLine (".subsystem {0}", module.Kind.ToInt32Hex ());
 			Writer.WriteLine (".corflags {0}", module.Attributes.ToInt32Hex ());
 			
+			if (module.Name == "mscorlib.dll")
+				Writer.WriteLine (".mscorlib");
+			
 			Writer.WriteLine ();
 		}
 		
