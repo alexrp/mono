@@ -117,6 +117,28 @@ namespace Mono.ILDasm {
 				Writer.Write ("rtspecialname ");
 			
 			Writer.WriteLine (Escape (type.GetSanitizedName ()));
+			
+			if (type.BaseType != null) {
+				Writer.Indent ();
+				
+				Writer.WriteIndentedLine ("extends {0}", Stringize (type.BaseType));
+				
+				if (type.HasInterfaces) {
+					Writer.WriteIndented ("implements ");
+					
+					for (var i = 0; i < type.Interfaces.Count; i++) {
+						Writer.Write (Stringize (type.Interfaces [i]));
+						
+						if (i != type.Interfaces.Count - 1)
+							Writer.Write (", ");
+					}
+					
+					Writer.WriteLine ();
+				}
+				
+				Writer.Dedent ();
+			}
+			
 			Writer.OpenBracket ();
 			
 			WriteLayoutInfo ();
