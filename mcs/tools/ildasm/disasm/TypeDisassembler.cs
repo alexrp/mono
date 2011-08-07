@@ -269,7 +269,42 @@ namespace Mono.ILDasm {
 				
 				// NOTE: We can't write the 'at' clause because we
 				// don't support .data declarations in the first place.
-				// TODO: Write constant.
+				
+				if (field.HasConstant) {
+					Writer.Write (" = ");
+					var val = field.Constant;
+					
+					if (val is string)
+						Writer.Write ("\"{0}\"", val);
+					else if (val is bool)
+						Writer.Write ("bool ({0})", (bool) val ? "true" : "false");
+					else if (val is char)
+						Writer.Write ("char ({0})", (int) (char) val);
+					else if (val is float)
+						Writer.Write ("float32 ({0})", val);
+					else if (val is double)
+						Writer.Write ("float64 ({0})", val);
+					else if (val is byte)
+						Writer.Write ("uint8 ({0})", val);
+					else if (val is sbyte)
+						Writer.Write ("int8 ({0})", val);
+					else if (val is short)
+						Writer.Write ("int16 ({0})", val);
+					else if (val is ushort)
+						Writer.Write ("uint16 ({0})", val);
+					else if (val is int)
+						Writer.Write ("int32 ({0})", val);
+					else if (val is uint)
+						Writer.Write ("uint32 ({0})", val);
+					else if (val is long)
+						Writer.Write ("int64 ({0})", val);
+					else if (val is ulong)
+						Writer.Write ("uint64 ({0})", val);
+					else if (val is byte[])
+						Writer.Write ("bytearray ", ToByteList ((byte[]) val));
+					else
+						Writer.Write ("nullref");
+				}
 			}
 		}
 		
