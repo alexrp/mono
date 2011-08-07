@@ -305,6 +305,8 @@ namespace Mono.ILDasm {
 					else
 						Writer.Write ("nullref");
 				}
+				
+				Writer.WriteLine ();
 			}
 		}
 		
