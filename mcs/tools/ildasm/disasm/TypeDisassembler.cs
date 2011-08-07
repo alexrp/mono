@@ -116,7 +116,52 @@ namespace Mono.ILDasm {
 			if (type.IsRuntimeSpecialName)
 				Writer.Write ("rtspecialname ");
 			
-			Writer.WriteLine (Escape (type.GetSanitizedName ()));
+			Writer.Write (Escape (type.GetSanitizedName ()));
+			
+			if (type.HasGenericParameters) {
+				Writer.Write ("<");
+				
+				for (var i = 0; i < type.GenericParameters.Count; i++) {
+					var gp = type.GenericParameters [i];
+					
+					if (gp.IsCovariant)
+						Writer.Write ("+ ");
+					
+					if (gp.IsContravariant)
+						Writer.Write ("- ");
+					
+					if (gp.HasDefaultConstructorConstraint)
+						Writer.Write (".ctor ");
+					
+					if (gp.HasNotNullableValueTypeConstraint)
+						Writer.Write ("valuetype ");
+					
+					if (gp.HasReferenceTypeConstraint)
+						Writer.Write ("class ");
+					
+					if (gp.HasConstraints) {
+						Writer.Write ("(");
+						
+						for (var j = 0; j < gp.Constraints.Count; j++) {
+							Writer.Write (Stringize (gp.Constraints [j]));
+							
+							if (j != gp.Constraints.Count - 1)
+								Writer.Write (", ");
+						}
+						
+						Writer.Write (")");
+					}
+					
+					Writer.Write (Escape (gp.Name));
+					
+					if (i != type.GenericParameters.Count - 1)
+						Writer.Write (", ");
+				}
+				
+				Writer.Write (">");
+			}
+			
+			Writer.WriteLine ();
 			
 			if (type.BaseType != null) {
 				Writer.Indent ();
@@ -143,6 +188,10 @@ namespace Mono.ILDasm {
 			
 			WriteLayoutInfo ();
 			WriteNestedTypes ();
+			WriteFields ();
+			WriteMethods ();
+			WriteProperties ();
+			WriteEvents ();
 			
 			Writer.CloseBracket ();
 			Writer.WriteLine ();
@@ -166,6 +215,22 @@ namespace Mono.ILDasm {
 			foreach (var nested in type.NestedTypes)
 				if (nested.FullName != "<Module>")
 					new TypeDisassembler (module, nested).Disassemble ();
+		}
+		
+		void WriteFields ()
+		{
+		}
+		
+		void WriteMethods ()
+		{
+		}
+		
+		void WriteProperties ()
+		{
+		}
+		
+		void WriteEvents ()
+		{
 		}
 	}
 }
