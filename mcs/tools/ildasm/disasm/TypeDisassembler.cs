@@ -219,18 +219,76 @@ namespace Mono.ILDasm {
 		
 		void WriteFields ()
 		{
+			if (!type.HasFields)
+				return;
+			
+			foreach (var field in type.Fields) {
+				Writer.WriteIndented (".field ");
+				
+				if (field.IsPublic)
+					Writer.Write ("public ");
+				
+				if (field.IsPrivate)
+					Writer.Write ("private ");
+				
+				if (field.IsFamily)
+					Writer.Write ("family ");
+				
+				if (field.IsAssembly)
+					Writer.Write ("assembly ");
+				
+				if (field.IsFamilyAndAssembly)
+					Writer.Write ("famandassem ");
+				
+				if (field.IsFamilyOrAssembly)
+					Writer.Write ("famorassem ");
+				
+				if (field.IsStatic)
+					Writer.Write ("static ");
+				
+				if (field.IsInitOnly)
+					Writer.Write ("initonly ");
+				
+				if (field.IsRuntimeSpecialName)
+					Writer.Write ("rtspecialname ");
+				
+				if (field.IsSpecialName)
+					Writer.Write ("specialname ");
+				
+				if (field.IsLiteral)
+					Writer.Write ("literal ");
+				
+				if (field.IsNotSerialized)
+					Writer.Write ("notserialized ");
+				
+				if (field.Offset != -1)
+					Writer.Write ("[{0}] ", field.Offset);
+				
+				Writer.Write ("{0} ", Stringize (field.FieldType));
+				Writer.Write (Escape (field.Name));
+				
+				// NOTE: We can't write the 'at' clause because we
+				// don't support .data declarations in the first place.
+				// TODO: Write constant.
+			}
 		}
 		
 		void WriteMethods ()
 		{
+			if (!type.HasMethods)
+				return;
 		}
 		
 		void WriteProperties ()
 		{
+			if (!type.HasProperties)
+				return;
 		}
 		
 		void WriteEvents ()
 		{
+			if (!type.HasEvents)
+				return;
 		}
 	}
 }

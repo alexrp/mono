@@ -146,9 +146,9 @@ namespace Mono.ILDasm {
 				var sb = new StringBuilder ();
 				
 				if (type.Scope is ModuleReference)
-					sb.AppendFormat ("[.module {0}] ", type.Scope.Name);
+					sb.AppendFormat ("[.module {0}]", type.Scope.Name);
 				else
-					sb.AppendFormat ("[{0}] ", type.Scope.Name);
+					sb.AppendFormat ("[{0}]", type.Scope.Name);
 				
 				sb.Append (type.FullName);
 				
