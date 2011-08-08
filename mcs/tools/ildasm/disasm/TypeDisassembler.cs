@@ -213,8 +213,7 @@ namespace Mono.ILDasm {
 		void WriteNestedTypes ()
 		{
 			foreach (var nested in type.NestedTypes)
-				if (nested.FullName != "<Module>")
-					new TypeDisassembler (module, nested).Disassemble ();
+				new TypeDisassembler (module, nested).Disassemble ();
 		}
 		
 		void WriteFields ()
@@ -308,24 +307,65 @@ namespace Mono.ILDasm {
 				
 				Writer.WriteLine ();
 			}
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteMethods ()
 		{
 			if (!type.HasMethods)
 				return;
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteProperties ()
 		{
 			if (!type.HasProperties)
 				return;
+			
+			Writer.WriteLine ();
 		}
 		
 		void WriteEvents ()
 		{
 			if (!type.HasEvents)
 				return;
+			
+			foreach (var evnt in type.Events) {
+				Writer.WriteIndented (".event ");
+				
+				if (evnt.IsRuntimeSpecialName)
+					Writer.Write ("rtspecialname ");
+				
+				if (evnt.IsSpecialName)
+					Writer.Write ("specialname ");
+				
+				Writer.Write ("{0} ", Stringize (evnt.EventType));
+				Writer.WriteLine (Escape (evnt.Name));
+				
+				Writer.OpenBracket ();
+				
+				if (evnt.AddMethod != null)
+					Writer.WriteIndentedLine (".addon {0}",
+						Stringize (evnt.AddMethod));
+				
+				if (evnt.RemoveMethod != null)
+					Writer.WriteIndentedLine (".removeon {0}",
+						Stringize (evnt.RemoveMethod));
+				
+				if (evnt.InvokeMethod != null)
+					Writer.WriteIndentedLine (".fire {0}",
+						Stringize (evnt.InvokeMethod));
+				
+				foreach (var other in evnt.OtherMethods)
+					Writer.WriteIndentedLine (".other {0}",
+						Stringize (other));
+				
+				Writer.CloseBracket ();
+			}
+			
+			Writer.WriteLine ();
 		}
 	}
 }

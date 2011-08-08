@@ -44,6 +44,8 @@ namespace Mono.ILDasm {
 		
 		public static bool EscapeAlways { get; set; }
 		
+		public static string ModuleName { get; set; }
+		
 		public static string Escape (string identifier)
 		{
 			if (EscapeAlways)
@@ -145,9 +147,10 @@ namespace Mono.ILDasm {
 			} else {
 				var sb = new StringBuilder ();
 				
-				if (type.Scope is ModuleReference)
-					sb.AppendFormat ("[.module {0}]", type.Scope.Name);
-				else
+				if (type.Scope is ModuleReference) {
+					if (type.Scope.Name != ModuleName)
+						sb.AppendFormat ("[.module {0}]", type.Scope.Name);
+				} else
 					sb.AppendFormat ("[{0}]", type.Scope.Name);
 				
 				sb.Append (type.FullName);
@@ -262,6 +265,54 @@ namespace Mono.ILDasm {
 			}
 			
 			sb.Append (">");
+			
+			return sb.ToString ();
+		}
+		
+		public static string Stringize (MethodReference method)
+		{
+			StringBuilder sb = new StringBuilder ();
+			
+			if (method.HasThis)
+				sb.Append ("instance ");
+			
+			if (method.ExplicitThis)
+				sb.Append ("explicit ");
+			
+			sb.AppendFormat ("{0} ", Stringize (method.CallingConvention));
+			sb.AppendFormat ("{0} ", Stringize (method.ReturnType));
+			
+			if (method.DeclaringType != null)
+				sb.AppendFormat ("{0}::", Stringize (method.DeclaringType));
+			
+			sb.AppendFormat (Escape (method.Name));
+			
+			if (method is GenericInstanceMethod) {
+				sb.Append ("<");
+				
+				var genMeth = (GenericInstanceMethod) method;
+				for (var i = 0; i < genMeth.GenericArguments.Count; i++) {
+					sb.Append (genMeth.GenericArguments [i].Name);
+					
+					if (i != genMeth.GenericArguments.Count - 1)
+						sb.Append (", ");
+				}
+				
+				sb.Append (">");
+			}
+			
+			sb.Append (" (");
+			
+			for (var i = 0; i < method.Parameters.Count; i++) {
+				var param = method.Parameters [i];
+				sb.AppendFormat ("{0} {1}", Stringize (param.ParameterType),
+					Escape (param.Name));
+				
+				if (i != method.Parameters.Count - 1)
+					sb.Append (", ");
+			}
+			
+			sb.Append (")");
 			
 			return sb.ToString ();
 		}
