@@ -89,8 +89,6 @@ namespace Mono.ILDasm {
 			return sb.Append (")").ToString ();
 		}
 		
-		// TODO: These methods may not quite be in line with MS.NET...
-		
 		public static bool IsIdentifierStartChar (char chr)
 		{
 			return char.IsLetter (chr) || "_$@?`".IndexOf (chr) != -1;
@@ -142,7 +140,9 @@ namespace Mono.ILDasm {
 				return Stringize ((SentinelType) type);
 			else if (type is GenericParameter)
 				return Stringize ((GenericParameter) type);
-			else {
+			else if (type is GenericInstanceType) {
+				return Stringize ((GenericInstanceType) type);
+			} else {
 				var sb = new StringBuilder ();
 				
 				if (type.Scope is ModuleReference)
@@ -244,7 +244,26 @@ namespace Mono.ILDasm {
 		
 		public static string Stringize (GenericParameter type)
 		{
-			return "TODO: GenericParameter";
+			return type.Name;
+		}
+		
+		public static string Stringize (GenericInstanceType type)
+		{
+			var sb = new StringBuilder ();
+			
+			sb.Append (Stringize (type.ElementType));
+			sb.Append ("<");
+			
+			for (var i = 0; i < type.GenericArguments.Count; i++) {
+				sb.Append (Stringize (type.GenericArguments [i]));
+				
+				if (i != type.GenericArguments.Count - 1)
+					sb.Append (", ");
+			}
+			
+			sb.Append (">");
+			
+			return sb.ToString ();
 		}
 	}
 }
