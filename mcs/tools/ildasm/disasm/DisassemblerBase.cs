@@ -191,7 +191,8 @@ namespace Mono.ILDasm {
 				return Stringize ((GenericInstanceType) type);
 			} else {
 				var sb = new StringBuilder ();
-				var isCorlib = type.Scope.Name == "mscorlib";
+				var corName = TypeToName (type);
+				var isCorlib = type.Scope.Name == "mscorlib" && corName != type.FullName;
 				
 				if (type.Scope is ModuleReference) {
 					if (type.Scope.Name != ModuleName)
@@ -199,7 +200,7 @@ namespace Mono.ILDasm {
 				} else if (!isCorlib)
 					sb.AppendFormat ("[{0}]", type.Scope.Name);
 				
-				sb.Append (isCorlib ? TypeToName (type) : type.FullName);
+				sb.Append (isCorlib ? corName : type.FullName);
 				
 				return sb.ToString ();
 			}
