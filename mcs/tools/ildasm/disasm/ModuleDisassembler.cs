@@ -43,8 +43,6 @@ namespace Mono.ILDasm {
 		
 		public Visibility? Visibility { get; set; }
 		
-		public bool NoCil { get; set; }
-		
 		public ModuleDisassembler (TextWriter output, ModuleDefinition module)
 			: base (output)
 		{

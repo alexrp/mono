@@ -35,6 +35,10 @@ namespace Mono.ILDasm {
 			if (!ParseArgs (args))
 				return null;
 			
+			// I have no idea how this option is useful at all.
+			if (no_il)
+				return ExitCode.Success;
+			
 			if (target_file == null) {
 				Usage ();
 				return ExitCode.Error;
@@ -75,7 +79,6 @@ namespace Mono.ILDasm {
 					RawExceptionHandlers = raw_eh,
 					ShowMetadataTokens = show_md_tokens,
 					Visibility = visibility,
-					NoCil = no_il,
 				}.Disassemble ();
 			} catch (Exception ex) {
 				Logger.Error (ex.ToString ());
@@ -188,33 +191,34 @@ namespace Mono.ILDasm {
 				case "visibili":
 				case "visibilit":
 				case "visibility":
-					switch (commandArg.ToLower ())
-					{
-					case "pub":
-						visibility = Visibility.Public;
-						break;
-					case "pri":
-						visibility = Visibility.Private;
-						break;
-					case "fam":
-						visibility = Visibility.Family;
-						break;
-					case "asm":
-						visibility = Visibility.Assembly;
-						break;
-					case "faa":
-						visibility = Visibility.FamANDAssem;
-						break;
-					case "foa":
-						visibility = Visibility.FamORAssem;
-						break;
-					case "psc":
-						visibility = Visibility.PrivateScope;
-						break;
-					default:
-						Logger.Fatal ("'{0}' is not a valid visibility",
-							commandArg);
-						break;
+					var modifiers = commandArg.ToLower ().Split ('+');
+					foreach (var mod in modifiers) {
+						switch (commandArg.ToLower ())
+						{
+						case "pub":
+							visibility |= Visibility.Public;
+							break;
+						case "pri":
+						case "psc":
+							visibility |= Visibility.Private;
+							break;
+						case "fam":
+							visibility |= Visibility.Family;
+							break;
+						case "asm":
+							visibility |= Visibility.Assembly;
+							break;
+						case "faa":
+							visibility |= Visibility.FamANDAssem;
+							break;
+						case "foa":
+							visibility |= Visibility.FamORAssem;
+							break;
+						default:
+							Logger.Fatal ("'{0}' is not a valid visibility modifier",
+								commandArg);
+							break;
+						}
 					}
 					break;
 				case "all":

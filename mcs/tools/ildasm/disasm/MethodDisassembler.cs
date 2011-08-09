@@ -29,8 +29,17 @@ using Mono.Cecil;
 
 namespace Mono.ILDasm {
 	internal sealed class MethodDisassembler : DisassemblerBase {
-		public MethodDisassembler (TextWriter output, MethodDefinition method)
-			: base (output)
+		readonly MethodDefinition method;
+		readonly ModuleDisassembler module;
+		
+		public MethodDisassembler (ModuleDisassembler module, MethodDefinition method)
+			: base (module.Writer)
+		{
+			this.module = module;
+			this.method = method;
+		}
+		
+		public void Disassemble ()
 		{
 		}
 	}

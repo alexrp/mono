@@ -30,7 +30,6 @@ using Mono.Cecil;
 namespace Mono.ILDasm {
 	internal sealed class TypeDisassembler : DisassemblerBase {
 		readonly TypeDefinition type;
-		
 		readonly ModuleDisassembler module;
 		
 		public TypeDisassembler (ModuleDisassembler module, TypeDefinition type)

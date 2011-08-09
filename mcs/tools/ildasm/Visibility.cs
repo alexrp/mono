@@ -27,12 +27,11 @@ using System;
 
 namespace Mono.ILDasm {
 	internal enum Visibility : byte {
-		Public,
-		Private,
-		Family,
-		Assembly,
-		FamANDAssem,
-		FamORAssem,
-		PrivateScope,
+		Public = 0x01,
+		Private = 0x02,
+		Family = 0x04,
+		Assembly = 0x08,
+		FamANDAssem = 0x10,
+		FamORAssem = 0x20,
 	}
 }
