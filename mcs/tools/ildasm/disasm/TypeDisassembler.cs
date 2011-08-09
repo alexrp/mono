@@ -166,7 +166,8 @@ namespace Mono.ILDasm {
 			if (type.BaseType != null) {
 				Writer.Indent ();
 				
-				Writer.WriteIndentedLine ("extends {0}", Stringize (type.BaseType));
+				if (type.BaseType != null)
+					Writer.WriteIndentedLine ("extends {0}", Stringize (type.BaseType));
 				
 				if (type.HasInterfaces) {
 					Writer.WriteIndented ("implements ");
