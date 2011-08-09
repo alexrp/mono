@@ -324,6 +324,53 @@ namespace Mono.ILDasm {
 			if (!type.HasProperties)
 				return;
 			
+			foreach (var prop in type.Properties) {
+				Writer.WriteIndented (".property ");
+				
+				if (prop.HasThis)
+					Writer.Write ("instance ");
+				
+				// TODO: Write calling convention when Cecil supports it.
+				
+				if (prop.IsRuntimeSpecialName)
+					Writer.Write ("rtspecialname ");
+				
+				if (prop.IsSpecialName)
+					Writer.Write ("specialname ");
+				
+				Writer.Write ("{0} ", Stringize (prop.PropertyType));
+				Writer.Write ("{0} ", Escape (prop.Name));
+				
+				Writer.Write ("(");
+				
+				for (var i = 0; i < prop.Parameters.Count; i++) {
+					var param = prop.Parameters [i];
+					Writer.Write ("{0} {1}", Stringize (param.ParameterType),
+						Escape (param.Name));
+					
+					if (i != prop.Parameters.Count - 1)
+						Writer.Write (", ");
+				}
+				
+				Writer.WriteLine (")");
+				
+				Writer.OpenBracket ();
+				
+				if (prop.GetMethod != null)
+					Writer.WriteIndentedLine (".get {0}",
+						Stringize (prop.GetMethod));
+				
+				if (prop.SetMethod != null)
+					Writer.WriteIndentedLine (".set {0}",
+						Stringize (prop.SetMethod));
+				
+				foreach (var other in prop.OtherMethods)
+					Writer.WriteIndentedLine (".other {0}",
+						Stringize (other));
+				
+				Writer.CloseBracket ();
+			}
+			
 			Writer.WriteLine ();
 		}
 		
