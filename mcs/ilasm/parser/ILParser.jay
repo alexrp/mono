@@ -3180,6 +3180,12 @@ prop_head		: D_PROPERTY call_conv prop_attr type comp_name_str OPEN_PARENS sig_a
 				codegen.CurrentProperty = new PropertyDefinition ((string) $5,
 					(PropertyAttributes) $3, (TypeReference) $4);
 
+				if (is_instance_call)
+					codegen.CurrentProperty.HasThis = true;
+
+				is_instance_call = false;
+				is_explicit_call = false;
+
 				// FIXME: When no getter/setter is defined (i.e. right at
 				// this point), Cecil just returns a dummy collection that's
 				// useful for just about nothing, and our parameters end up
