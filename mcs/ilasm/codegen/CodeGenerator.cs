@@ -59,6 +59,10 @@ namespace Mono.ILAsm {
 		
 		public List<MethodReference> ModuleMethodReferences { get; private set; }
 		
+		public List<Tuple<EventDefinition, AccessorType, MethodReference>> EventAccessorMethods { get; private set; }
+		
+		public List<Tuple<PropertyDefinition, AccessorType, MethodReference>> PropertyAccessorMethods { get; private set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public Dictionary<string, object> DataConstants { get; private set; }
@@ -74,7 +78,10 @@ namespace Mono.ILAsm {
 			ModuleTypeReferences = new List<TypeReference> ();
 			ModuleFieldReferences = new List<FieldReference> ();
 			ModuleMethodReferences = new List<MethodReference> ();
+			EventAccessorMethods = new List<Tuple<EventDefinition, AccessorType, MethodReference>> ();
+			PropertyAccessorMethods = new List<Tuple<PropertyDefinition, AccessorType, MethodReference>> ();
 			CurrentNamespace = string.Empty;
+			
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
 			CurrentModule.Assembly.Name.Version = new Version (0, 0, 0, 0);
@@ -151,10 +158,92 @@ namespace Mono.ILAsm {
 						"Could not resolve module method: {0}", method);
 		}
 		
+		void EmitEventAccessors ()
+		{
+			foreach (var obj in EventAccessorMethods) {
+				var evnt = obj.X;
+				var method = obj.Z;
+				
+				if (method.Module != CurrentModule)
+					report.WriteError (Error.InvalidEventMethod,
+						"{0} method '{1}' is not within the current module.",
+						obj.Y, method);
+				
+				var resolved = method.Resolve ();
+				
+				if (resolved == null)
+					report.WriteError (Error.InvalidEventMethod,
+						"Could not resolve {0} method '{1}'.",
+						obj.Y, method);
+				
+				switch (obj.Y)
+				{
+				case AccessorType.Add:
+					evnt.AddMethod = resolved;
+					break;
+				case AccessorType.Remove:
+					evnt.RemoveMethod = resolved;
+					break;
+				case AccessorType.Fire:
+					evnt.InvokeMethod = resolved;
+					break;
+				case AccessorType.Other:
+					evnt.OtherMethods.Add (resolved);
+					break;
+				}
+			}
+		}
+		
+		void EmitPropertyAccessors ()
+		{
+			foreach (var obj in PropertyAccessorMethods) {
+				var prop = obj.X;
+				var method = obj.Z;
+				
+				if (method.Module != CurrentModule)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"{0} method '{1}' is not within the current module.",
+						obj.Y, method);
+				
+				var resolved = method.Resolve ();
+				
+				if (resolved == null)
+					report.WriteError (Error.InvalidPropertyMethod,
+						"Could not resolve {0} method '{1}'.",
+						obj.Y, method);
+				
+				switch (obj.Y)
+				{
+				case AccessorType.Get:
+					prop.GetMethod = resolved;
+					break;
+				case AccessorType.Set:
+					prop.SetMethod = resolved;
+					break;
+				case AccessorType.Other:
+					prop.OtherMethods.Add (resolved);
+					break;
+				}
+			}
+		}
+		
+		void CheckEventAccessors ()
+		{
+			foreach (var type in CurrentModule.GetTypes ())
+				foreach (var evnt in type.Events)
+					if (evnt.AddMethod == null || evnt.RemoveMethod == null)
+						report.WriteError (Error.MissingEventAccessors,
+							"Event '{0}' is missing add/remove accessors.",
+							evnt);
+		}
+		
 		public void Write (string outputFile)
 		{
 			ResolveModuleTypeReferences ();
 			ResolveModuleFieldReferences ();
+			EmitEventAccessors ();
+			CheckEventAccessors ();
+			EmitPropertyAccessors ();
 			EmitDataConstants ();
 			
 			CurrentModule.Write (outputFile, new WriterParameters {

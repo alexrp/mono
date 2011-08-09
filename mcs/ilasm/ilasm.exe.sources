@@ -11,6 +11,7 @@ Report.cs
 Target.cs
 Tuple.cs
 Warning.cs
+codegen/AccessorType.cs
 codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs
 codegen/Corlib.cs

@@ -3102,12 +3102,6 @@ owner_type		: type_spec
 
 event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 			{
-				if (codegen.CurrentEvent.AddMethod == null ||
-					codegen.CurrentEvent.RemoveMethod == null)
-					report.WriteError (Error.MissingEventAccessors,
-						"Event '{0}' is missing add/remove accessors.",
-						codegen.CurrentEvent);
-
 				codegen.CurrentType.Events.Add (codegen.CurrentEvent);
 				codegen.CurrentEvent = null;
 			}
@@ -3135,63 +3129,31 @@ event_decls		:
 
 event_decl		: D_ADDON method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidEventMethod,
-						"Could not resolve add method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidEventMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentEvent.AddMethod = method;
+				codegen.EventAccessorMethods.Add (new Tuple<EventDefinition, AccessorType, MethodReference> (
+					codegen.CurrentEvent,
+					AccessorType.Add,
+					(MethodReference) $2));
 			}
 			| D_REMOVEON method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidEventMethod,
-						"Could not resolve remove method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidEventMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentEvent.RemoveMethod = method;
+				codegen.EventAccessorMethods.Add (new Tuple<EventDefinition, AccessorType, MethodReference> (
+					codegen.CurrentEvent,
+					AccessorType.Remove,
+					(MethodReference) $2));
 			}
 			| D_FIRE method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidEventMethod,
-						"Could not resolve fire method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidEventMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentEvent.InvokeMethod = method;
+				codegen.EventAccessorMethods.Add (new Tuple<EventDefinition, AccessorType, MethodReference> (
+					codegen.CurrentEvent,
+					AccessorType.Fire,
+					(MethodReference) $2));
 			}
 			| D_OTHER method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidEventMethod,
-						"Could not resolve other method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidEventMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentEvent.OtherMethods.Add (method);
+				codegen.EventAccessorMethods.Add (new Tuple<EventDefinition, AccessorType, MethodReference> (
+					codegen.CurrentEvent,
+					AccessorType.Other,
+					(MethodReference) $2));
 			}
 			| customattr_decl
 			{
@@ -3244,48 +3206,24 @@ prop_decls		:
 
 prop_decl		: D_SET method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Could not resolve set method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentProperty.SetMethod = method;
+				codegen.PropertyAccessorMethods.Add (new Tuple<PropertyDefinition, AccessorType, MethodReference> (
+					codegen.CurrentProperty,
+					AccessorType.Set,
+					(MethodReference) $2));
 			}
 			| D_GET method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Could not resolve get method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentProperty.GetMethod = method;
+				codegen.PropertyAccessorMethods.Add (new Tuple<PropertyDefinition, AccessorType, MethodReference> (
+					codegen.CurrentProperty,
+					AccessorType.Get,
+					(MethodReference) $2));
 			}
 			| D_OTHER method_ref
 			{
-				var methodRef = (MethodReference) $2;
-				var method = methodRef.Resolve ();
-
-				if (method == null)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Could not resolve other method '{0}'.", methodRef);
-
-				if (method.Module != codegen.CurrentModule)
-					report.WriteError (Error.InvalidPropertyMethod,
-						"Method '{0}' is not within the current module.", method);
-
-				codegen.CurrentProperty.OtherMethods.Add (method);
+				codegen.PropertyAccessorMethods.Add (new Tuple<PropertyDefinition, AccessorType, MethodReference> (
+					codegen.CurrentProperty,
+					AccessorType.Other,
+					(MethodReference) $2));
 			}
 			| customattr_decl
 			{
