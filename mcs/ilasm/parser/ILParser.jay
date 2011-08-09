@@ -3045,12 +3045,10 @@ method_ref		: call_conv
 
 				ResetDummyMethod ();
 
-				if (method.DeclaringType == codegen.CurrentModule.GetModuleType () &&
-					method.Resolve () == null)
-					report.WriteError (Error.UnresolvedModuleMethod,
-						"Could not resolve module method: {0}", method);
-
 				codegen.CurrentMethodReference = null;
+
+				if (method.DeclaringType == codegen.CurrentModule.GetModuleType ())
+					codegen.ModuleMethodReferences.Add (method);
 
 				$$ = method;
 			}

@@ -57,6 +57,8 @@ namespace Mono.ILAsm {
 		
 		public List<FieldReference> ModuleFieldReferences { get; private set; }
 		
+		public List<MethodReference> ModuleMethodReferences { get; private set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public Dictionary<string, object> DataConstants { get; private set; }
@@ -71,6 +73,7 @@ namespace Mono.ILAsm {
 			FieldDataMappings = new Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> ();
 			ModuleTypeReferences = new List<TypeReference> ();
 			ModuleFieldReferences = new List<FieldReference> ();
+			ModuleMethodReferences = new List<MethodReference> ();
 			CurrentNamespace = string.Empty;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
@@ -138,6 +141,14 @@ namespace Mono.ILAsm {
 				if (field.Resolve () == null)
 					report.WriteError (Error.UnresolvedModuleField,
 						"Could not resolve module field: {0}", field);
+		}
+		
+		void ResolveModuleMethodReferences ()
+		{
+			foreach (var method in ModuleMethodReferences)
+				if (method.Resolve () == null)
+					report.WriteError (Error.UnresolvedModuleMethod,
+						"Could not resolve module method: {0}", method);
 		}
 		
 		public void Write (string outputFile)
