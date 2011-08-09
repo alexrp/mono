@@ -167,7 +167,9 @@ namespace Mono.ILDasm {
 				Writer.Indent ();
 				
 				if (type.BaseType != null)
-					Writer.WriteIndentedLine ("extends {0}", Stringize (type.BaseType));
+					if (!(type.BaseType.Scope.IsCorlib () &&
+						type.BaseType.FullName == "System.Object"))
+						Writer.WriteIndentedLine ("extends {0}", Stringize (type.BaseType));
 				
 				if (type.HasInterfaces) {
 					Writer.WriteIndented ("implements ");

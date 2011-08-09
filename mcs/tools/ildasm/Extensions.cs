@@ -47,5 +47,10 @@ namespace Mono.ILDasm {
 			
 			return s + type.Name;
 		}
+		
+		public static bool IsCorlib (this IMetadataScope scope)
+		{
+			return scope is AssemblyNameReference && scope.Name == "mscorlib";
+		}
 	}
 }
