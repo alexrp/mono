@@ -288,7 +288,7 @@ namespace Mono.ILDasm {
 		
 		public static string Stringize (SentinelType type)
 		{
-			return "...";
+			return "..." + Stringize (type.ElementType);
 		}
 		
 		public static string Stringize (GenericParameter type)
