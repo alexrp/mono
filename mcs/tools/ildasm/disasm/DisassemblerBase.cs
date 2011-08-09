@@ -122,6 +122,51 @@ namespace Mono.ILDasm {
 			}
 		}
 		
+		static string TypeToName (TypeReference type)
+		{
+			switch (type.FullName)
+			{
+			case "System.Object":
+				return "object";
+			case "System.Void":
+				return "void";
+			case "System.TypedReference":
+				return "typedref";
+			case "System.IntPtr":
+				return "native int";
+			case "System.UIntPtr":
+				return "native uint";
+			case "System.Byte":
+				return "uint8";
+			case "System.SByte":
+				return "int8";
+			case "System.Int16":
+				return "int16";
+			case "System.UInt16":
+				return "uint16";
+			case "System.Int32":
+				return "int32";
+			case "System.UInt32":
+				return "uint32";
+			case "System.Int64":
+				return "int64";
+			case "System.UInt64":
+				return "uint64";
+			case "System.Single":
+				return "float32";
+			case "System.Double":
+				return "float64";
+			case "System.Char":
+				return "char";
+			case "System.Boolean":
+				return "bool";
+			case "System.String":
+				return "string";
+			default:
+				return type.FullName;
+			}
+		}
+		
 		public static string Stringize (TypeReference type)
 		{
 			if (type is ArrayType)
@@ -146,14 +191,15 @@ namespace Mono.ILDasm {
 				return Stringize ((GenericInstanceType) type);
 			} else {
 				var sb = new StringBuilder ();
+				var isCorlib = type.Scope.Name == "mscorlib";
 				
 				if (type.Scope is ModuleReference) {
 					if (type.Scope.Name != ModuleName)
 						sb.AppendFormat ("[.module {0}]", type.Scope.Name);
-				} else
+				} else if (!isCorlib)
 					sb.AppendFormat ("[{0}]", type.Scope.Name);
 				
-				sb.Append (type.FullName);
+				sb.Append (isCorlib ? TypeToName (type) : type.FullName);
 				
 				return sb.ToString ();
 			}
