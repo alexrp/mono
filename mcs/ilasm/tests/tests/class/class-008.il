@@ -32,6 +32,7 @@
 {
 }
 
-.class test008 implements test008_if
+.class test008
+	implements test008_if
 {
 }

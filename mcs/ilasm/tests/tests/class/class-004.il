@@ -28,6 +28,7 @@
 {
 }
 
-.class test004 implements [mscorlib]System.ICloneable
+.class test004
+	implements [mscorlib]System.ICloneable
 {
 }

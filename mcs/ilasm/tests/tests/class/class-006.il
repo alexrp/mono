@@ -32,6 +32,7 @@
 {
 }
 
-.class test006 extends test006_base
+.class test006
+	extends test006_base
 {
 }

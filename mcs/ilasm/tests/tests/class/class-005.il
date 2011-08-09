@@ -28,6 +28,7 @@
 {
 }
 
-.class test005 implements [mscorlib]System.ICloneable, [mscorlib]System.IDisposable
+.class test005
+	implements [mscorlib]System.ICloneable, [mscorlib]System.IDisposable
 {
 }
