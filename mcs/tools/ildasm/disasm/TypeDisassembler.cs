@@ -325,6 +325,9 @@ namespace Mono.ILDasm {
 				return;
 			
 			foreach (var prop in type.Properties) {
+				if (module.ShowMetadataTokens)
+					Writer.WriteIndentedLine ("// MDT: {0}", prop.MetadataToken);
+				
 				Writer.WriteIndented (".property ");
 				
 				if (prop.HasThis)
@@ -380,6 +383,9 @@ namespace Mono.ILDasm {
 				return;
 			
 			foreach (var evnt in type.Events) {
+				if (module.ShowMetadataTokens)
+					Writer.WriteIndentedLine ("// MDT: {0}", evnt.MetadataToken);
+				
 				Writer.WriteIndented (".event ");
 				
 				if (evnt.IsRuntimeSpecialName)
