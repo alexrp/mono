@@ -2918,10 +2918,8 @@ field_ref		:
 				var field = new FieldReference ((string) $4,
 					(TypeReference) $2, declType);
 
-				if (declType == codegen.CurrentModule.GetModuleType () &&
-					field.Resolve () == null)
-					report.WriteError (Error.UnresolvedModuleField,
-						"Could not resolve module field: {0}", field);
+				if (declType == codegen.CurrentModule.GetModuleType ())
+					codegen.ModuleFieldReferences.Add (field);
 
 				$$ = field;
 			}

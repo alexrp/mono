@@ -55,6 +55,8 @@ namespace Mono.ILAsm {
 		
 		public List<TypeReference> ModuleTypeReferences { get; private set; }
 		
+		public List<FieldReference> ModuleFieldReferences { get; private set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public Dictionary<string, object> DataConstants { get; private set; }
@@ -68,6 +70,7 @@ namespace Mono.ILAsm {
 			DataConstants = new Dictionary<string, object> ();
 			FieldDataMappings = new Dictionary<TypeDefinition, Dictionary<FieldDefinition, string>> ();
 			ModuleTypeReferences = new List<TypeReference> ();
+			ModuleFieldReferences = new List<FieldReference> ();
 			CurrentNamespace = string.Empty;
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
@@ -129,9 +132,18 @@ namespace Mono.ILAsm {
 						"Reference to undefined type '{0}'.", type);
 		}
 		
+		void ResolveModuleFieldReferences ()
+		{
+			foreach (var field in ModuleFieldReferences)
+				if (field.Resolve () == null)
+					report.WriteError (Error.UnresolvedModuleField,
+						"Could not resolve module field: {0}", field);
+		}
+		
 		public void Write (string outputFile)
 		{
 			ResolveModuleTypeReferences ();
+			ResolveModuleFieldReferences ();
 			EmitDataConstants ();
 			
 			CurrentModule.Write (outputFile, new WriterParameters {
