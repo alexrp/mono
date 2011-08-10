@@ -222,18 +222,15 @@ namespace Mono.ILAsm {
 %token CLOSE_ANGLE_BRACKET ">"
 
 %token INSTR_NONE
-%token INSTR_VAR
 %token INSTR_I
 %token INSTR_I8
 %token INSTR_R
 %token INSTR_BRTARGET
 %token INSTR_METHOD
-%token INSTR_NEWOBJ
 %token INSTR_FIELD
 %token INSTR_TYPE
 %token INSTR_STRING
 %token INSTR_SIG
-%token INSTR_RVA
 %token INSTR_TOK
 %token INSTR_SWITCH
 %token INSTR_PHI
@@ -416,7 +413,6 @@ namespace Mono.ILAsm {
 %token K_ANY
 %token K_LPSTRUCT
 %token K_NULL
-%token K_PTR
 %token K_VECTOR
 %token K_HRESULT
 %token K_CARRAY
