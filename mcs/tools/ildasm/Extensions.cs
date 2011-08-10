@@ -52,5 +52,10 @@ namespace Mono.ILDasm {
 		{
 			return scope is AssemblyNameReference && scope.Name == "mscorlib";
 		}
+		
+		public static TypeDefinition GetModuleType (this ModuleDefinition module)
+		{
+			return module.GetType ("<Module>");
+		}
 	}
 }
