@@ -219,9 +219,46 @@ namespace Mono.ILDasm {
 			
 			Writer.OpenBracket ();
 			
+			WriteEntryPoint ();
+			WriteMaxStack ();
+			WriteLocals ();
+			
 			// TODO: Write method body.
 			
 			Writer.CloseBracket ();
+			
+			Writer.WriteLine ();
+		}
+		
+		void WriteMaxStack ()
+		{
+			Writer.WriteIndentedLine (".maxstack {0}", method.Body.MaxStackSize);
+		}
+		
+		void WriteLocals ()
+		{
+			if (!method.Body.HasVariables)
+				return;
+			
+			Writer.WriteIndented (".locals{0} (", method.Body.InitLocals ?
+				" init" : string.Empty);
+			
+			for (var i = 0; i < method.Body.Variables.Count; i++) {
+				var local = method.Body.Variables [i];
+				Writer.Write ("{0} {1}", Stringize (local.VariableType),
+					Escape (local.Name));
+				
+				if (i != method.Body.Variables.Count - 1)
+					Writer.Write (", ");
+			}
+			
+			Writer.WriteLine (")");
+		}
+		
+		void WriteEntryPoint ()
+		{
+			if (method == method.Module.EntryPoint)
+				Writer.WriteIndentedLine (".entrypoint");
 		}
 	}
 }
