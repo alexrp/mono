@@ -2180,7 +2180,7 @@ meth_attr		:
 			| meth_attr K_RTSPECIALNAME		{ $$ = (MethodAttributes) $1 | MethodAttributes.RTSpecialName; }
 			| meth_attr K_STRICT			{ $$ = (MethodAttributes) $1 | MethodAttributes.CheckAccessOnOverride; }
 			| meth_attr K_COMPILERCONTROLLED
-			| meth_attr K_UNMANAGEDEXP
+			| meth_attr K_UNMANAGEDEXP		{ $$ = (MethodAttributes) $1 | MethodAttributes.UnmanagedExport; }
 			| meth_attr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS
 			{
 				$$ = (MethodAttributes) $1 | (MethodAttributes) (int) $4;
