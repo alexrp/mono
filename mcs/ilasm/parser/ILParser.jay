@@ -3176,7 +3176,6 @@ prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 
 prop_head		: D_PROPERTY call_conv prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_PARENS init_opt
 			{
-				// TODO: We can't set calling convention with Cecil.
 				codegen.CurrentProperty = new PropertyDefinition ((string) $5,
 					(PropertyAttributes) $3, (TypeReference) $4);
 

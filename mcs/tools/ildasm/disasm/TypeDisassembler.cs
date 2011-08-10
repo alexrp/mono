@@ -318,6 +318,9 @@ namespace Mono.ILDasm {
 			if (!type.HasMethods)
 				return;
 			
+			foreach (var method in type.Methods)
+				new MethodDisassembler (module, method).Disassemble ();
+			
 			Writer.WriteLine ();
 		}
 		
@@ -334,8 +337,6 @@ namespace Mono.ILDasm {
 				
 				if (prop.HasThis)
 					Writer.Write ("instance ");
-				
-				// TODO: Write calling convention when Cecil supports it.
 				
 				if (prop.IsRuntimeSpecialName)
 					Writer.Write ("rtspecialname ");
@@ -358,6 +359,8 @@ namespace Mono.ILDasm {
 				}
 				
 				Writer.WriteLine (")");
+				
+				// TODO: Write property constant.
 				
 				Writer.OpenBracket ();
 				
