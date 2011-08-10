@@ -2238,7 +2238,7 @@ impl_attr		:
 			}
 			| impl_attr K_CIL		{ $$ = (MethodImplAttributes) $1 | MethodImplAttributes.IL; }
 			| impl_attr K_IL		{ $$ = (MethodImplAttributes) $1 | MethodImplAttributes.IL; }
-			| impl_attr K_OPTIL		{ /*$$ = (MethodImplAttributes) $1 | MethodImplAttributes.OPTIL;*/ }
+			| impl_attr K_OPTIL		{ /* TODO: $$ = (MethodImplAttributes) $1 | MethodImplAttributes.OPTIL;*/ }
 			| impl_attr K_MANAGED
 			| impl_attr K_UNMANAGED
 			{
