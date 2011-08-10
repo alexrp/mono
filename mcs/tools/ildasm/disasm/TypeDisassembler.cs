@@ -265,6 +265,8 @@ namespace Mono.ILDasm {
 				if (field.Offset != -1)
 					Writer.Write ("[{0}] ", field.Offset);
 				
+				// TODO: Write marshal clause.
+				
 				Writer.Write ("{0} ", Stringize (field.FieldType));
 				Writer.Write (Escape (field.Name));
 				
