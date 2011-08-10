@@ -1989,14 +1989,18 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 
 					// Go over all branching instructions and attempt to map
 					// them to a label. If we can't find a label, we error.
+					// This holds true for offsets too, which is unlike MS.NET's
+					// ILAsm where invalid offsets are allowed...
 					foreach (var jump in label_jumps) {
 						if (jump.Value is List<object>) {
 							var jumpLabels = new List<Instruction> ();
 
 							foreach (var obj in (List<object>) jump.Value) {
-								if (obj is int)
-									jumpLabels.Add (FindInstruction ((int) obj));
-								else
+								if (obj is int) {
+									var size = jump.Key.GetSize ();
+									var addr = jump.Key.Offset + size + (int) obj;
+									jumpLabels.Add (FindInstruction (addr));
+								} else
 									jumpLabels.Add (FindInstruction ((string) obj));
 							}
 
@@ -2004,9 +2008,11 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 						} else {
 							Instruction target;
 
-							if (jump.Value is int)
-								target = FindInstruction ((int) jump.Value);
-							else
+							if (jump.Value is int) {
+								var size = jump.Key.GetSize ();
+								var addr = jump.Key.Offset + size + (int) jump.Value;
+								target = FindInstruction (addr);
+							} else
 								target = FindInstruction ((string) jump.Value);
 
 							jump.Key.Operand = target;
