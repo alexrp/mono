@@ -414,7 +414,6 @@ namespace Mono.ILAsm {
 %token K_TBSTR
 %token K_LPVOID
 %token K_ANY
-%token K_FLOAT
 %token K_LPSTRUCT
 %token K_NULL
 %token K_PTR
@@ -1528,8 +1527,15 @@ marshal_info		:
 					SizeParameterMultiplier = (int) $4,
 				};
 			}
-			| K_SAFEARRAY variant_type
+			| K_SAFEARRAY safearray_type
 			{
+				$$ = new SafeArrayMarshalInfo {
+					ElementType = (VariantType) $2,
+				};
+			}
+			| K_SAFEARRAY safearray_type comp_qstring
+			{
+				// TODO: What do we do with the string?
 				$$ = new SafeArrayMarshalInfo {
 					ElementType = (VariantType) $2,
 				};
@@ -4491,10 +4497,6 @@ truefalse		: K_TRUE
 			{
 				$$ = false;
 			}
-			;
-
-opt_id			:
-			| id
 			;
 
 id			: ID
