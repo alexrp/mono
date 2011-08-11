@@ -222,8 +222,7 @@ namespace Mono.ILDasm {
 			WriteEntryPoint ();
 			WriteMaxStack ();
 			WriteLocals ();
-			
-			// TODO: Write method body.
+			WriteInstructions ();
 			
 			Writer.CloseBracket ();
 			
@@ -259,6 +258,18 @@ namespace Mono.ILDasm {
 		{
 			if (method == method.Module.EntryPoint)
 				Writer.WriteIndentedLine (".entrypoint");
+		}
+		
+		void WriteInstructions ()
+		{
+			if (method.Body.Instructions.Count == 0)
+				return;
+			
+			Writer.WriteLine ();
+			
+			foreach (var instr in method.Body.Instructions) {
+				Writer.WriteIndentedLine (instr.ToString ());
+			}
 		}
 	}
 }
