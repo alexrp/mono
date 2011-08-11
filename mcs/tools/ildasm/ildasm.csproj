@@ -68,6 +68,7 @@
     <Compile Include="disasm\KeywordTable.cs" />
     <Compile Include="CodeWriter.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="disasm\FieldDisassembler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>
