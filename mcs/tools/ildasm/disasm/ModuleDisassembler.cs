@@ -57,7 +57,10 @@ namespace Mono.ILDasm {
 			WriteModuleManifest ();
 			WriteManifestResources ();
 			
-			foreach (var method in module.GetType ("<Module>").Methods)
+			foreach (var field in module.GetModuleType ().Fields)
+				new FieldDisassembler (this, field).Disassemble ();
+			
+			foreach (var method in module.GetModuleType ().Methods)
 				new MethodDisassembler (this, method).Disassemble ();
 			
 			foreach (var type in module.Types)
