@@ -194,6 +194,9 @@ namespace Mono.ILDasm {
 				var corName = TypeToName (type);
 				var isCorlib = type.Scope.Name == "mscorlib" && corName != type.FullName;
 				
+				if (!isCorlib)
+					sb.Append ("class ");
+				
 				if (type.Scope is ModuleReference) {
 					if (type.Scope.Name != ModuleName)
 						sb.AppendFormat ("[.module {0}]", type.Scope.Name);
