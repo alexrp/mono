@@ -3,8 +3,9 @@
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
+//       Jb Evain (jbevain@gmail.com)
 // 
-// Copyright (c) 2011 Alex Rønne Petersen
+// Copyright (c) 2011 Alex Rønne Petersen, Jb Evain
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +75,21 @@ namespace Mono.ILDasm {
 		
 		public static string EscapeQString (string str)
 		{
-			return str.Replace ("\"", "\\\"").Replace ("\\", "\\\\");
+			var sb = new StringBuilder (str);
+			sb.Replace ("\"", "\\\"").Replace ("\\", "\\\\");
+			
+			foreach (var chr in str) {
+				if (chr == '\t')
+					sb.Append ("\\t");
+				else if (chr == '\n')
+					sb.Append ("\\n");
+				else if (chr == '\r')
+					sb.Append ("\\r");
+				else
+					sb.Append (chr);
+			}
+			
+			return sb.ToString ();
 		}
 		
 		public static string ToByteList (byte[] bytes)
