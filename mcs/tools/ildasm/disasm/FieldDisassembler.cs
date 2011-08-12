@@ -92,8 +92,7 @@ namespace Mono.ILDasm {
 				var val = field.Constant;
 				
 				if (val is string)
-					// TODO: This seems broken.
-					Writer.Write ("\"{0}\"", val);
+					Writer.Write ("\"{0}\"", EscapeQString ((string) val));
 				else if (val is bool)
 					Writer.Write ("bool ({0})", (bool) val ? "true" : "false");
 				else if (val is char)

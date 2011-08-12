@@ -26,6 +26,7 @@
 using System;
 using System.IO;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.ILDasm {
 	internal sealed class MethodDisassembler : DisassemblerBase {
@@ -268,7 +269,45 @@ namespace Mono.ILDasm {
 			Writer.WriteLine ();
 			
 			foreach (var instr in method.Body.Instructions) {
-				Writer.WriteIndentedLine (instr.ToString ());
+				Writer.WriteIndented (Stringize (instr));
+				
+				if (instr.Operand != null) {
+					Writer.Write (" ");
+					
+					var arg = instr.Operand;
+					
+					if (arg is Instruction)
+						Writer.Write (((Instruction) arg).MakeLabel ());
+					else if (arg is Instruction[]) {
+						var labels = (Instruction[]) arg;
+						
+						Writer.Write ("( ");
+						
+						for (var i = 0; i < labels.Length; i++) {
+							Writer.Write (labels [i].MakeLabel ());
+							
+							if (i != labels.Length - 1)
+								Writer.Write (", ");
+						}
+						
+						Writer.Write (" )");
+					} else if (arg is ParameterDefinition)
+						Writer.Write (Escape (((ParameterDefinition) arg).Name));
+					else if (arg is VariableDefinition)
+						Writer.Write (Escape (((VariableDefinition) arg).Name));
+					else if (arg is TypeReference)
+						Writer.Write (Stringize ((TypeReference) arg));
+					else if (arg is MethodReference)
+						Writer.Write (Stringize ((MethodReference) arg));
+					else if (arg is FieldReference)
+						Writer.Write (Stringize ((FieldReference) arg));
+					else if (arg is string) {
+						Writer.Write ("\"{0}\"", EscapeQString ((string) arg));
+					} else// Integers and floats.
+						Writer.Write (arg.ToString ());
+				}
+				
+				Writer.WriteLine ();
 			}
 		}
 	}

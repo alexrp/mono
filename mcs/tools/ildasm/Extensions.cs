@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.ILDasm {
 	internal static class Extensions {
@@ -56,6 +57,11 @@ namespace Mono.ILDasm {
 		public static TypeDefinition GetModuleType (this ModuleDefinition module)
 		{
 			return module.GetType ("<Module>");
+		}
+		
+		public static string MakeLabel (this Instruction instr)
+		{
+			return "IL_" + instr.Offset.ToString ("X8");
 		}
 	}
 }

@@ -70,7 +70,7 @@ namespace Mono.ILDasm {
 				}
 				
 				ModuleDisassembler.EscapeAlways = quote_all;
-				ModuleDisassembler.ModuleName = module.Name;
+				ModuleDisassembler.Module = module;
 				
 				new ModuleDisassembler (output, module) {
 					VerbalCustomAttributes = ca_verbal,

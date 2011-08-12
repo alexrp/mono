@@ -27,6 +27,7 @@ using System;
 using System.IO;
 using System.Text;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Mono.ILDasm {
 	internal abstract class DisassemblerBase {
@@ -44,7 +45,7 @@ namespace Mono.ILDasm {
 		
 		public static bool EscapeAlways { get; set; }
 		
-		public static string ModuleName { get; set; }
+		public static ModuleDefinition Module { get; set; }
 		
 		public static string Escape (string identifier)
 		{
@@ -69,6 +70,11 @@ namespace Mono.ILDasm {
 		public static string EscapeString (string str)
 		{
 			return str.Replace ("'", "\\'").Replace ("\\", "\\\\");
+		}
+		
+		public static string EscapeQString (string str)
+		{
+			return str.Replace ("\"", "\\\"").Replace ("\\", "\\\\");
 		}
 		
 		public static string ToByteList (byte[] bytes)
@@ -198,7 +204,7 @@ namespace Mono.ILDasm {
 					sb.Append ("class ");
 				
 				if (type.Scope is ModuleReference) {
-					if (type.Scope.Name != ModuleName)
+					if (type.Scope.Name != Module.Name)
 						sb.AppendFormat ("[.module {0}]", type.Scope.Name);
 				} else if (!isCorlib)
 					sb.AppendFormat ("[{0}]", type.Scope.Name);
@@ -365,6 +371,25 @@ namespace Mono.ILDasm {
 			sb.Append (")");
 			
 			return sb.ToString ();
+		}
+		
+		public static string Stringize (FieldReference field)
+		{
+			var sb = new StringBuilder ();
+			
+			sb.AppendFormat ("{0} ", Stringize (field.FieldType));
+			
+			if (field.DeclaringType != Module.GetModuleType ())
+				sb.AppendFormat ("{0}::", Stringize (field.DeclaringType));
+			
+			sb.Append (Escape (field.Name));
+			
+			return sb.ToString ();
+		}
+		
+		public static string Stringize (Instruction instr)
+		{
+			return instr.MakeLabel () + ": " + instr.OpCode;
 		}
 	}
 }
