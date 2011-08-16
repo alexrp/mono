@@ -187,6 +187,7 @@
     <None Include="tests\custom\custom-001.il" />
     <None Include="tests\custom\custom-002.il" />
     <None Include="tests\custom\custom-003.il" />
+    <None Include="tests\assembly\assembly-008.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />

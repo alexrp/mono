@@ -199,5 +199,16 @@ namespace Mono.ILAsm.Tests {
 				.Expect (x => x.AssemblyReferences.ContainsOne (
 					y => y.Version.Equals (new Version (1, 0, 0, 0))));
 		}
+		
+		[Test]
+		public void TestLocaleBytes ()
+		{
+			ILAsm ()
+				.Input ("assembly/assembly-008.il")
+				.Run ()
+				.Expect (ExitCode.Success)
+				.GetModule ()
+				.Expect (x => x.Assembly.Name.Culture == "en-US");
+		}
 	}
 }
