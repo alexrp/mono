@@ -1,5 +1,5 @@
 // 
-// CustomAttributeTests.cs
+// custom-002.il
 //  
 // Author:
 //       Alex Rønne Petersen <alex@alexrp.com>
@@ -23,49 +23,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.Text;
-using NUnit.Framework;
 
-namespace Mono.ILAsm.Tests {
-	[TestFixture]
-	public class CustomAttributeTests : AssemblerTester {
-		[Test]
-		public void TestSimpleAttribute ()
-		{
-			ILAsm ()
-				.Input ("custom/custom-001.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.CustomAttributes.ContainsOne (
-					y => y.AttributeType.FullName == "System.Attribute"));
-		}
-		
-		[Test]
-		public void TestAttributeByteBlob ()
-		{
-			ILAsm ()
-				.Input ("custom/custom-002.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.CustomAttributes.ContainsOne (
-					y => y.GetBlob ().ListEquals (new byte[] {
-						0x00, 0x01, 0x02, 0x03
-					})));
-		}
-		
-		[Test]
-		public void TestAttributeStringBlob ()
-		{
-			ILAsm ()
-				.Input ("custom/custom-003.il")
-				.Run ()
-				.Expect (ExitCode.Success)
-				.GetModule ()
-				.Expect (x => x.CustomAttributes.ContainsOne (
-					y => Encoding.Unicode.GetString (y.GetBlob ()) == "Hello World"));
-		}
-	}
+.assembly extern mscorlib
+{
 }
+
+.custom void [mscorlib]System.Attribute::.ctor () = ( 00 01 02 03 )

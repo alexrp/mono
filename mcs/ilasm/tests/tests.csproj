@@ -184,6 +184,9 @@
     <None Include="tests\method-body\method-body-012.il" />
     <None Include="tests\method-body\method-body-013.il" />
     <None Include="tests\method-body\method-body-014.il" />
+    <None Include="tests\custom\custom-001.il" />
+    <None Include="tests\custom\custom-002.il" />
+    <None Include="tests\custom\custom-003.il" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="tests\assembly\" />
@@ -213,5 +216,6 @@
     <Folder Include="tests\method\" />
     <Folder Include="tests\method-generic\" />
     <Folder Include="tests\method-body\" />
+    <Folder Include="tests\custom\" />
   </ItemGroup>
 </Project>
