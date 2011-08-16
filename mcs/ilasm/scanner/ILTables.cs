@@ -374,6 +374,8 @@ namespace Mono.ILAsm {
 			keywords ["unused"] = new ILToken (Token.K_UNUSED, "unused");
 			keywords ["wrapper"] = new ILToken (Token.K_WRAPPER, "wrapper");
 			keywords ["forwarder"] = new ILToken (Token.K_FORWARDER, "forwarder");
+			keywords ["callconv"] = new ILToken (Token.K_CALLCONV, "callconv");
+			keywords ["flags"] = new ILToken (Token.K_FLAGS, "flags");
 			
 			Keywords = new ReadOnlyDictionaryAdapter<string, ILToken> (keywords);
 			
