@@ -166,8 +166,8 @@ namespace Mono.ILDasm {
 			
 			for (var i = 0; i < method.Parameters.Count; i++) {
 				var param = method.Parameters [i];
-				Writer.Write ("{0} {1}", Stringize (param.ParameterType),
-					Escape (param.Name));
+				Writer.Write ("{0}{1}", Stringize (param.ParameterType),
+					EscapeOrEmpty (param.Name));
 				
 				if (i != method.Parameters.Count - 1)
 					Writer.Write (", ");
@@ -232,12 +232,13 @@ namespace Mono.ILDasm {
 		
 		void WriteMaxStack ()
 		{
-			Writer.WriteIndentedLine (".maxstack {0}", method.Body.MaxStackSize);
+			if (method.Body != null)
+				Writer.WriteIndentedLine (".maxstack {0}", method.Body.MaxStackSize);
 		}
 		
 		void WriteLocals ()
 		{
-			if (!method.Body.HasVariables)
+			if (method.Body == null || !method.Body.HasVariables)
 				return;
 			
 			Writer.WriteIndented (".locals{0} (", method.Body.InitLocals ?
@@ -245,8 +246,8 @@ namespace Mono.ILDasm {
 			
 			for (var i = 0; i < method.Body.Variables.Count; i++) {
 				var local = method.Body.Variables [i];
-				Writer.Write ("{0} {1}", Stringize (local.VariableType),
-					Escape (local.Name));
+				Writer.Write ("{0}{1}", Stringize (local.VariableType),
+					EscapeOrEmpty (local.Name));
 				
 				if (i != method.Body.Variables.Count - 1)
 					Writer.Write (", ");
@@ -263,7 +264,7 @@ namespace Mono.ILDasm {
 		
 		void WriteInstructions ()
 		{
-			if (method.Body.Instructions.Count == 0)
+			if (method.Body == null || method.Body.Instructions.Count == 0)
 				return;
 			
 			Writer.WriteLine ();
@@ -291,11 +292,21 @@ namespace Mono.ILDasm {
 						}
 						
 						Writer.Write (" )");
-					} else if (arg is ParameterDefinition)
-						Writer.Write (Escape (((ParameterDefinition) arg).Name));
-					else if (arg is VariableDefinition)
-						Writer.Write (Escape (((VariableDefinition) arg).Name));
-					else if (arg is TypeReference)
+					} else if (arg is ParameterDefinition) {
+						var paramArg = (ParameterDefinition) arg;
+						
+						if (paramArg.Name == string.Empty)
+							Writer.Write (paramArg.Index.ToString ());
+						else
+							Writer.Write (Escape (((ParameterDefinition) arg).Name));
+					} else if (arg is VariableDefinition) {
+						var varArg = (VariableDefinition) arg;
+						
+						if (varArg.Name == string.Empty)
+							Writer.Write (varArg.Index.ToString ());
+						else
+							Writer.Write (Escape (((VariableDefinition) arg).Name));
+					} else if (arg is TypeReference)
 						Writer.Write (Stringize ((TypeReference) arg));
 					else if (arg is MethodReference)
 						Writer.Write (Stringize ((MethodReference) arg));

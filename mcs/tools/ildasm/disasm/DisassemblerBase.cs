@@ -48,6 +48,12 @@ namespace Mono.ILDasm {
 		
 		public static ModuleDefinition Module { get; set; }
 		
+		public static string EscapeOrEmpty (string identifier)
+		{
+			return identifier == string.Empty ?
+				string.Empty : " " + Escape (identifier);
+		}
+		
 		public static string Escape (string identifier)
 		{
 			if (EscapeAlways)
@@ -127,6 +133,7 @@ namespace Mono.ILDasm {
 			switch (conv)
 			{
 			case MethodCallingConvention.Default:
+			case (MethodCallingConvention) 0x10: // Has generic arguments.
 				return "default";
 			case MethodCallingConvention.VarArg:
 				return "vararg";
@@ -138,6 +145,10 @@ namespace Mono.ILDasm {
 				return "unmanaged thiscall";
 			case MethodCallingConvention.FastCall:
 				return "unmanaged fastcall";
+			case (MethodCallingConvention) 0x20:
+				return "instance";
+			case (MethodCallingConvention) 0x40:
+				return "explicit";
 			default:
 				return "callconv (" + conv.ToInt32Hex () + ")";
 			}
@@ -318,7 +329,14 @@ namespace Mono.ILDasm {
 		
 		public static string Stringize (GenericParameter type)
 		{
-			return type.Name;
+			// HACK: This shouldn't be needed with newer Cecil versions.
+			if (type.Name.StartsWith ("!"))
+				return type.Name;
+			
+			if (type.Owner is MethodReference)
+				return "!!" + type.Name;
+			else
+				return "!" + type.Name;
 		}
 		
 		public static string Stringize (GenericInstanceType type)
@@ -363,7 +381,7 @@ namespace Mono.ILDasm {
 				
 				var genMeth = (GenericInstanceMethod) method;
 				for (var i = 0; i < genMeth.GenericArguments.Count; i++) {
-					sb.Append (genMeth.GenericArguments [i].Name);
+					sb.Append (Stringize (genMeth.GenericArguments [i]));
 					
 					if (i != genMeth.GenericArguments.Count - 1)
 						sb.Append (", ");
@@ -376,8 +394,7 @@ namespace Mono.ILDasm {
 			
 			for (var i = 0; i < method.Parameters.Count; i++) {
 				var param = method.Parameters [i];
-				sb.AppendFormat ("{0} {1}", Stringize (param.ParameterType),
-					Escape (param.Name));
+				sb.AppendFormat (Stringize (param.ParameterType));
 				
 				if (i != method.Parameters.Count - 1)
 					sb.Append (", ");
