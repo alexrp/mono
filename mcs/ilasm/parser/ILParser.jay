@@ -2114,8 +2114,7 @@ method_head		: D_METHOD
 					codegen.CurrentPInvokeInfo = null;
 				}
 
-				// TODO: We can't do this with Cecil currently.
-				//method.MethodReturnType.Attributes = (ParameterAttributes) $5;
+				method.MethodReturnType.Attributes = (ParameterAttributes) $5;
 
 				method.MethodReturnType.MarshalInfo = $7 != null ? (MarshalInfo) $7 : null;
 
