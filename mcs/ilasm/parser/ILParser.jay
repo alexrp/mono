@@ -3877,9 +3877,7 @@ sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PA
 			| D_PERMISSIONSET sec_action sec_bytearray
 			{
 				if (codegen.CurrentSecurityDeclaration == null)
-					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
-
-				// TODO: We need a way to set the blob.
+					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2, (byte[]) $3);
 			}
 			| D_PERMISSIONSET sec_action comp_qstring
 			{
