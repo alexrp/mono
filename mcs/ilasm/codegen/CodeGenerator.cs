@@ -84,7 +84,6 @@ namespace Mono.ILAsm {
 			
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,
 				target == Target.Dll ? ModuleKind.Dll : ModuleKind.Console);
-			CurrentModule.Assembly.Name.Version = new Version (0, 0, 0, 0);
 		}
 		
 		void EmitDataConstants ()
@@ -422,7 +421,7 @@ namespace Mono.ILAsm {
 			}
 			
 			// OK, so all attempts failed. We'll just assume it works...
-			return new AssemblyNameReference (name, new Version ());
+			return new AssemblyNameReference (name, new Version (0, 0, 0, 0));
 		}
 		
 		Corlib GetCorlib ()
@@ -440,7 +439,7 @@ namespace Mono.ILAsm {
 			
 			// TODO: Should we error if we can't resolve it?
 			asm = ResolveAssemblyReference (corlibStr) ??
-				new AssemblyNameReference (corlibStr, new Version ());
+				new AssemblyNameReference (corlibStr, new Version (0, 0, 0, 0));
 			CurrentModule.AssemblyReferences.Add (asm);
 			
 			return new Corlib (CurrentModule, asm, false);
