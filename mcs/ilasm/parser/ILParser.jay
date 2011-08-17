@@ -534,9 +534,8 @@ decl			: class_all
 			| module_head
 			| sec_decl
 			{
-				// TODO: We can't set security attributes on modules with Cecil.
-				//codegen.CurrentModule.SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
-				//codegen.CurrentSecurityDeclaration = null;
+				codegen.CurrentModule.GetModuleType ().SecurityDeclarations.Add (codegen.CurrentSecurityDeclaration);
+				codegen.CurrentSecurityDeclaration = null;
 			}
 			| customattr_decl
 			{
