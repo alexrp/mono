@@ -3353,7 +3353,10 @@ customattr_blob_type	: simple_type
 			{
 				$$ = codegen.Corlib.Object;
 			}
-			| K_ENUM K_CLASS SQSTRING // TODO: We need an S.R.E notation parser.
+			| K_ENUM K_CLASS SQSTRING
+			{
+				$$ = codegen.CurrentModule.GetType ((string) $3, true);
+			}
 			| K_ENUM class_ref
 			{
 				$$ = $2;
@@ -3451,7 +3454,11 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 			{
 				$$ = new CustomAttributeArgument (codegen.Corlib.String, $3);
 			}
-			| K_TYPE OPEN_PARENS K_CLASS SQSTRING CLOSE_PARENS // TODO: We need an S.R.E notation parser.
+			| K_TYPE OPEN_PARENS K_CLASS SQSTRING CLOSE_PARENS
+			{
+				$$ = new CustomAttributeArgument (codegen.Corlib.Type,
+					codegen.CurrentModule.GetType ((string) $4, true));
+			}
 			| K_TYPE OPEN_PARENS class_ref CLOSE_PARENS
 			{
 				$$ = new CustomAttributeArgument (codegen.Corlib.Type, $3);
@@ -3782,7 +3789,16 @@ class_seq		:
 						null);
 				}
 			}
-			| class_seq K_CLASS SQSTRING // TODO: We need an S.R.E notation parser.
+			| class_seq K_CLASS SQSTRING
+			{
+				var arr = (CustomAttributeArgument[]) $1;
+
+				if (arr.Length != custom_attr_blob_seq_length) {
+					arr = arr.Inflate (1);
+					arr [arr.Length - 1] = new CustomAttributeArgument (codegen.Corlib.Type,
+						codegen.CurrentModule.GetType ((string) $3, true));
+				}
+			}
 			| class_seq class_ref
 			{
 				var arr = (CustomAttributeArgument[]) $1;
@@ -3922,7 +3938,19 @@ permission		: class_ref ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE
 
 				$$ = attr;
 			}
-			| K_CLASS SQSTRING ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE // TODO: We need an S.R.E notation parser.
+			| K_CLASS SQSTRING ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE
+			{
+				var attr = new SecurityAttribute (codegen.CurrentModule.GetType ((string) $2, true));
+
+				foreach (var arg in (List<Tuple<TokenType, CustomAttributeNamedArgument>>) $5) {
+					if (arg.X == TokenType.Field)
+						attr.Fields.Add (arg.Y);
+					else
+						attr.Properties.Add (arg.Y);
+				}
+
+				$$ = attr;
+			}
 			;
 
 nameval_pairs		: nameval_pair
