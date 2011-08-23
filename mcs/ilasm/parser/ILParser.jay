@@ -28,8 +28,6 @@ namespace Mono.ILAsm {
 		readonly Stack<Scope> scope_stack = new Stack<Scope> ();
 		readonly Dictionary<Instruction, object> label_jumps = new Dictionary<Instruction, object> ();
 		readonly List<Label> current_labels = new List<Label> ();
-		MethodReference dummy_method;
-		TypeReference dummy_type;
 		bool is_enum_class;
 		bool is_value_class;
 		bool has_public_key;
@@ -39,9 +37,6 @@ namespace Mono.ILAsm {
 		bool is_parameter_marshal_notation;
 		bool type_attr_visibility_set;
 		bool is_inside_scope;
-		bool generic_typeref_in_method;
-		bool generic_typeref_in_methoddef;
-		bool generic_typeref_in_field;
 		bool custom_attr_unsigned;
 		int custom_attr_blob_seq_length;
 		string pinvoke_mod_name;
@@ -55,9 +50,20 @@ namespace Mono.ILAsm {
 			this.tokenizer = tokenizer;
 
 			scope_stack.Push (null);
+		}
 
-			ResetDummyMethod ();
-			ResetDummyType ();
+		delegate TypeReference TypeCreator ();
+
+		// Gives type inference, e.g.:
+		// $$ = DeferType (() => new TypeReference(null, null, null, null));
+		static TypeCreator DeferType (TypeCreator fun)
+		{
+			return fun;
+		}
+
+		static TypeReference EvaluateType (object obj)
+		{
+			return ((TypeCreator) obj) ();
 		}
 
 		Instruction FindInstruction (int idx)
@@ -80,82 +86,6 @@ namespace Mono.ILAsm {
 			return label.Instruction;
 		}
 
-		GenericParameter GetGenericParameter (MethodReference method, string name)
-		{
-			if (method == null)
-				report.WriteError (Error.GenericParameterAccessOutsideMethod,
-					"Cannot access a generic parameter outside a method definition.");
-
-			method = method.GetElementMethod ();
-
-			GenericParameter param = null;
-
-			foreach (var genParam in method.GenericParameters)
-				if (genParam.Name == name)
-					param = genParam;
-
-			if (param == null)
-				report.WriteError (Error.GenericParameterNameInvalid,
-					"Generic parameter '{0}' not found.", name);
-
-			return param;
-		}
-
-		GenericParameter GetGenericParameter (MethodReference method, int idx)
-		{
-			if (method == null)
-				report.WriteError (Error.GenericParameterAccessOutsideMethod,
-					"Cannot access a generic parameter outside a method definition.");
-
-			method = method.GetElementMethod ();
-
-			var genParams = method.GenericParameters;
-
-			if (idx < 0 || idx >= genParams.Count)
-				report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-					"Generic parameter ordinal '{0}' is invalid.", idx);
-
-			return genParams [idx];
-		}
-
-		GenericParameter GetGenericParameter (TypeReference type, string name)
-		{
-			if (type == null)
-				report.WriteError (Error.GenericParameterAccessOutsideType,
-					"Cannot access a generic parameter outside a type definition.");
-
-			type = type.GetElementType ();
-
-			GenericParameter param = null;
-
-			foreach (var genParam in type.GenericParameters)
-				if (genParam.Name == name)
-					param = genParam;
-
-			if (param == null)
-				report.WriteError (Error.GenericParameterNameInvalid,
-					"Generic parameter '{0}' not found.", name);
-
-			return param;
-		}
-
-		GenericParameter GetGenericParameter (TypeReference type, int idx)
-		{
-			if (type == null)
-				report.WriteError (Error.GenericParameterAccessOutsideType,
-					"Cannot access a generic parameter outside a type definition.");
-
-			type = type.GetElementType ();
-
-			var genParams = type.GenericParameters;
-
-			if (idx < 0 || idx >= genParams.Count)
-				report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-					"Generic parameter ordinal '{0}' is invalid.", idx);
-
-			return genParams [idx];
-		}
-
 		ICustomAttributeProvider ResolveCustomAttributeOwner (object owner)
 		{
 			ICustomAttributeProvider provider;
@@ -172,18 +102,6 @@ namespace Mono.ILAsm {
 					"Could not resolve custom attribute owner: {0}", owner);
 
 			return provider;
-		}
-
-		void ResetDummyType ()
-		{
-			dummy_type = new TypeReference (null, null, codegen.CurrentModule, null);
-		}
-
-		void ResetDummyMethod ()
-		{
-			dummy_method = new MethodReference (null,
-				new TypeReference (null, null, null, null),
-				new TypeReference (null, null, codegen.CurrentModule, null));
 		}
 
 %}
@@ -668,12 +586,12 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 					codegen.Corlib.Object = codegen.CurrentType;
 
 				codegen.CurrentType = null;
-				codegen.CurrentGenericParameterProvider = null;
+				codegen.GenericContext.CurrentProvider = null;
 				codegen.CurrentCustomAttributeProvider = null;
 
 				if (typedef_stack.Count > 0) {
 					codegen.CurrentType = typedef_stack.Pop ();
-					codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+					codegen.GenericContext.CurrentProvider = codegen.CurrentType;
 				}
 			}
 			;
@@ -712,7 +630,7 @@ class_head		: D_CLASS class_attr comp_name
 				if (nester != null)
 					nester.NestedTypes.Add (codegen.CurrentType);
 
-				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+				codegen.GenericContext.CurrentProvider = codegen.CurrentType;
 			}
 			  formal_typars_clause
 			{
@@ -749,7 +667,7 @@ class_head		: D_CLASS class_attr comp_name
 						report.WriteError (Error.BaseClassInInterface,
 							"Base type specified on an interface.");
 
-					baseType = (TypeReference) $7;
+					baseType = EvaluateType ($7);
 				}
 
 				if (isSysObj && baseType != null) {
@@ -760,8 +678,8 @@ class_head		: D_CLASS class_attr comp_name
 				} else
 					codegen.CurrentType.BaseType = baseType;
 
-				foreach (var interf in (List<TypeReference>) $8)
-					codegen.CurrentType.Interfaces.Add (interf);
+				foreach (var interf in (List<TypeCreator>) $8)
+					codegen.CurrentType.Interfaces.Add (interf ());
 
 				codegen.CurrentModule.Types.Add (codegen.CurrentType);
 			}
@@ -820,7 +738,7 @@ extends_clause		:
 
 impl_clause		:
 			{
-				$$ = new List<TypeReference> ();
+				$$ = new List<TypeCreator> ();
 			}
 			| impl_class_refs
 			;
@@ -828,13 +746,13 @@ impl_clause		:
 impl_class_refs		:
 			| K_IMPLEMENTS type_spec
 			{
-				$$ = new List<TypeReference> () {
-					(TypeReference) $2,
+				$$ = new List<TypeCreator> () {
+					(TypeCreator) $2,
 				};
 			}
 			| impl_class_refs COMMA type_spec
 			{
-				((List<TypeReference>) $1).Add ((TypeReference) $3);
+				((List<TypeCreator>) $1).Add ((TypeCreator) $3);
 			}
 			;
 
@@ -863,12 +781,12 @@ formal_typars		: formal_typar_gpar
 formal_typar_gpar	: formal_typar_attr constraints_clause formal_typar
 			{
 				var gp = new GenericParameter ((string) $3,
-					codegen.CurrentGenericParameterProvider) {
+					codegen.GenericContext.CurrentProvider) {
 					Attributes = (GenericParameterAttributes) $1,
 				};
 
-				foreach (var constraint in (List<TypeReference>) $2)
-					gp.Constraints.Add (constraint);
+				foreach (var constraint in (List<TypeCreator>) $2)
+					gp.Constraints.Add (constraint ());
 
 				$$ = gp;
 			}
@@ -889,7 +807,7 @@ formal_typar		: comp_name_str
 
 constraints_clause	:
 			{
-				$$ = new List<TypeReference> ();
+				$$ = new List<TypeCreator> ();
 			}
 			| OPEN_PARENS constraints CLOSE_PARENS
 			{
@@ -899,13 +817,13 @@ constraints_clause	:
 
 constraints		: type_spec
 			{
-				$$ = new List<TypeReference> () {
-					(TypeReference) $1,
+				$$ = new List<TypeCreator> () {
+					(TypeCreator) $1,
 				};
 			}
 			| constraints COMMA type_spec
 			{
-				((List<TypeReference>) $1).Add ((TypeReference) $3);
+				((List<TypeCreator>) $1).Add ((TypeCreator) $3);
 			}
 			;
 
@@ -963,13 +881,13 @@ class_decl		: method_all
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name K_WITH call_conv type type_spec DOUBLE_COLON method_name OPEN_PARENS sig_args CLOSE_PARENS
 			{
 				var conv = (MethodCallingConvention) $6;
-				var retType = (TypeReference) $7;
+				var retType = EvaluateType ($7);
 
-				var overridingMethod = new MethodReference ((string) $10, retType, (TypeReference) $8) {
+				var overridingMethod = new MethodReference ((string) $10, retType, EvaluateType ($8)) {
 					CallingConvention = conv,
 				};
 
-				var baseMethod = new MethodReference ((string) $4, retType, (TypeReference) $2) {
+				var baseMethod = new MethodReference ((string) $4, retType, EvaluateType ($2)) {
 					CallingConvention = conv,
 				};
 
@@ -986,10 +904,8 @@ class_decl		: method_all
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				foreach (var arg in (List<TypeReference>) $12) {
-					overridingMethod.Parameters.Add (new ParameterDefinition (arg));
-					baseMethod.Parameters.Add (new ParameterDefinition (arg));
-				}
+				foreach (var arg in (List<ParameterDefinition>) $12)
+					baseMethod.Parameters.Add (arg);
 
 				var resolvedMethod = overridingMethod.Resolve ();
 
@@ -1020,7 +936,7 @@ param_type_decl		: D_PARAM K_TYPE id
 				var name = (string) $3;
 				GenericParameter param = null;
 
-				foreach (var parameter in codegen.CurrentGenericParameterProvider.GenericParameters)
+				foreach (var parameter in codegen.GenericContext.CurrentProvider.GenericParameters)
 					if (parameter.Name == name)
 						param = parameter;
 
@@ -1033,7 +949,7 @@ param_type_decl		: D_PARAM K_TYPE id
 			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				var id = (int) $4; // One-based.
-				var genParams = codegen.CurrentGenericParameterProvider.GenericParameters;
+				var genParams = codegen.GenericContext.CurrentProvider.GenericParameters;
 
 				if (id <= 0 || id > genParams.Count)
 					report.WriteError (Error.InvalidGenericParameter,
@@ -1045,13 +961,13 @@ param_type_decl		: D_PARAM K_TYPE id
 
 class_refs		: class_ref
 			{
-				$$ = new List<TypeReference> {
-					(TypeReference) $1,
+				$$ = new List<TypeCreator> {
+					(TypeCreator) $1,
 				};
 			}
 			| class_refs COMMA class_ref
 			{
-				((List<TypeReference>) $1).Add ((TypeReference) $3);
+				((List<TypeCreator>) $1).Add ((TypeCreator) $3);
 			}
 			;
 
@@ -1061,7 +977,8 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				var type = (QualifiedName) $4;
 				var scope = codegen.GetScope (name.FullName, false);
 
-				$$ = new TypeReference (type.FullNamespace, type.Name, codegen.CurrentModule, scope);
+				$$ = DeferType (() => new TypeReference (type.FullNamespace,
+					type.Name, codegen.CurrentModule, scope));
 			}
 			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name // TODO: How does this work?
 			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
@@ -1076,12 +993,12 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 
 					codegen.ModuleTypeReferences.Add (typeRef);
 
-					$$ = typeRef;
+					$$ = DeferType (() => typeRef);
 				} else {
 					var scope = codegen.GetScope (module, true);
 
-					$$ = new TypeReference (type.FullNamespace,
-						type.Name, codegen.CurrentModule, scope);
+					$$ = DeferType (() => new TypeReference (type.FullNamespace,
+						type.Name, codegen.CurrentModule, scope));
 				}
 			}
 			| slashed_name
@@ -1092,7 +1009,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 
 				codegen.ModuleTypeReferences.Add (typeRef);
 
-				$$ = typeRef;
+				$$ = DeferType (() => typeRef);
 			}
 			| mdtoken_type
 			| D_THIS
@@ -1101,7 +1018,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 					report.WriteError (Error.RelativeTypeReferenceOutsideTypeDefinition,
 						".this directive used outside type definition scope.");
 
-				$$ = codegen.CurrentType;
+				$$ = DeferType (() => codegen.CurrentType);
 			}
 			| D_BASE
 			{
@@ -1115,7 +1032,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 					report.WriteError (Error.NoBaseType,
 						"Type has no base type.");
 
-				$$ = baseType;
+				$$ = DeferType (() => baseType);
 			}
 			| D_NESTER
 			{
@@ -1129,174 +1046,166 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 					report.WriteError (Error.NoDeclaringType,
 						"Type has no declaring type.");
 
-				$$ = nester;
+				$$ = DeferType (() => nester);
 			}
 			;
 
 mdtoken_type		: mdtoken
 			{
-				$$ = codegen.GetTypeByMetadataToken ((int) $1);
+				var type = codegen.GetTypeByMetadataToken ((int) $1);
+
+				$$ = DeferType (() => type);
 			}
 			;
 
-type			: K_CLASS class_ref
-			{
-				$$ = $2;
-			}
-			| K_VALUE K_CLASS class_ref
-			{
-				$$ = $3;
-			}
-			| K_VALUETYPE class_ref
+type_prefix		: K_CLASS
+			| K_VALUE K_CLASS
+			| K_VALUETYPE
+			;
+
+type			: type_prefix class_ref
 			{
 				$$ = $2;
 			}
 			| type OPEN_BRACKET CLOSE_BRACKET
 			{
-				$$ = new ArrayType ((TypeReference) $1);
+				var elem = $1;
+
+				$$ = DeferType (() => new ArrayType (EvaluateType (elem)));
 			}
 			| type OPEN_BRACKET bounds CLOSE_BRACKET
 			{
+				var elem = $1;
 				var bounds = (List<ArrayDimension>) $3;
-				var type = new ArrayType ((TypeReference) $1, bounds.Count);
 
-				for (var i = 0; i < bounds.Count; i++)
-					type.Dimensions [i] = bounds [i];
+				$$ = DeferType (() =>
+				{
+					var type = new ArrayType (EvaluateType (elem), bounds.Count);
 
-				$$ = type;
+					for (var i = 0; i < bounds.Count; i++)
+						type.Dimensions [i] = bounds [i];
+
+					return type;
+				});
 			}
 			| type AMPERSAND
 			{
-				$$ = new ByReferenceType ((TypeReference) $1);
+				var elem = $1;
+
+				$$ = DeferType (() => new ByReferenceType (EvaluateType (elem)));
 			}
 			| type STAR
 			{
-				$$ = new PointerType ((TypeReference) $1);
+				var elem = $1;
+
+				$$ = DeferType (() => new PointerType (EvaluateType (elem)));
 			}
 			| type K_PINNED
 			{
-				$$ = new PinnedType ((TypeReference) $1);
+				var elem = $1;
+
+				$$ = DeferType (() => new PinnedType (EvaluateType (elem)));
 			}
 			| type K_MODREQ OPEN_PARENS type_spec CLOSE_PARENS
 			{
-				$$ = new RequiredModifierType ((TypeReference) $4, (TypeReference) $1);
+				var type = $1;
+				var mod = $4;
+
+				$$ = DeferType (() => new RequiredModifierType (EvaluateType (mod), EvaluateType (type)));
 			}
 			| type K_MODOPT OPEN_PARENS type_spec CLOSE_PARENS
 			{
-				$$ = new OptionalModifierType ((TypeReference) $4, (TypeReference) $1);
+				var type = $1;
+				var mod = $4;
+
+				$$ = DeferType (() => new OptionalModifierType (EvaluateType (mod), EvaluateType (type)));
 			}
 			| K_METHOD call_conv type STAR OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				var func = new FunctionPointerType {
-					CallingConvention = (MethodCallingConvention) $2,
-					ReturnType = (TypeReference) $3,
-				};
+				var callConv = $2;
+				var retType = $3;
+				var args = $6;
 
-				if (is_instance_call)
-					func.HasThis = true;
+				$$ = DeferType (() =>
+				{
+					var func = new FunctionPointerType {
+						CallingConvention = (MethodCallingConvention) callConv,
+						ReturnType = EvaluateType (retType),
+					};
 
-				if (is_explicit_call)
-					func.ExplicitThis = true;
+					if (is_instance_call)
+						func.HasThis = true;
 
-				is_instance_call = false;
-				is_explicit_call = false;
+					if (is_explicit_call)
+						func.ExplicitThis = true;
 
-				foreach (var arg in (List<ParameterDefinition>) $6)
-					func.Parameters.Add (arg);
+					is_instance_call = false;
+					is_explicit_call = false;
 
-				$$ = func;
+					foreach (var arg in (List<ParameterDefinition>) args)
+						func.Parameters.Add (arg);
+
+					return func;
+				});
 			}
 			| type typars_clause
 			{
-				var typeArgs = (List<TypeReference>) $2;
+				var type = $1;
+				var typArgs = $2;
 
-				if (typeArgs.Count > 0) {
-					var gti = new GenericInstanceType ((TypeReference) $1);
+				$$ = DeferType (() =>
+				{
+					var innerType = EvaluateType (type);
 
-					foreach (var ga in typeArgs)
-						gti.GenericArguments.Add (ga);
+					var gti = new GenericInstanceType (innerType);
 
-					$$ = gti;
-				}
+					foreach (var ga in (List<TypeCreator>) typArgs)
+						gti.GenericArguments.Add (ga ());
+
+					return gti;
+				});
 			}
 			| BANG int32
 			{
-				var pos = (int) $2;
+				var i = (int) $2;
 
-				if (!generic_typeref_in_field)
-					$$ = GetGenericParameter (codegen.CurrentType, pos);
-				else {
-					GenericParameter cachedGp = null;
-
-					for (var i = 0; i < dummy_type.GenericParameters.Count; i++)
-						if (i == pos)
-							if ((cachedGp = dummy_type.GenericParameters [i]) != null)
-								break;
-
-					if (cachedGp == null) {
-						if (pos >= dummy_type.GenericParameters.Count)
-							dummy_type.GenericParameters.NullResize (pos + 1);
-
-						var gp = new GenericParameter (dummy_type);
-						dummy_type.GenericParameters [pos] = gp;
-
-						$$ = gp;
-					} else
-						$$ = cachedGp;
-				}
+				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Type));
 			}
 			| BANG id
 			{
-				$$ = GetGenericParameter (codegen.CurrentType, (string) $2);
+				var id = (string) $2;
+
+				$$ = DeferType (() =>
+				{
+					var gp = codegen.GenericContext.Resolve (id, GenericParameterType.Type);
+
+					if (gp == null)
+						report.WriteError (Error.InvalidGenericParameter,
+							"Unknown generic parameter: {0}", id);
+
+					return gp;
+				});
 			}
 			| BANG BANG int32
 			{
-				var pos = (int) $3;
+				var i = (int) $3;
 
-				if (!generic_typeref_in_method)
-					$$ = GetGenericParameter (codegen.CurrentMethod, pos);
-				else {
-					GenericParameter cachedGp = null;
-
-					for (var i = 0; i < dummy_method.GenericParameters.Count; i++)
-						if (i == pos)
-							if ((cachedGp = dummy_method.GenericParameters [i]) != null)
-								break;
-
-					if (cachedGp == null) {
-						if (pos >= dummy_method.GenericParameters.Count)
-							dummy_method.GenericParameters.NullResize (pos + 1);
-
-						var gp = new GenericParameter (dummy_method);
-						dummy_method.GenericParameters [pos] = gp;
-
-						$$ = gp;
-					} else
-						$$ = cachedGp;
-				}
+				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Method));
 			}
 			| BANG BANG id
 			{
-				var name = (string) $3;
+				var id = (string) $3;
 
-				if (!generic_typeref_in_methoddef)
-					$$ = GetGenericParameter (codegen.CurrentMethod, name);
-				else {
-					GenericParameter cachedGp = null;
+				$$ = DeferType (() =>
+				{
+					var gp = codegen.GenericContext.Resolve (id, GenericParameterType.Method);
 
-					foreach (var genParam in dummy_method.GenericParameters)
-						if (genParam.Name == name)
-							if ((cachedGp = genParam) != null)
-								break;
+					if (gp == null)
+						report.WriteError (Error.InvalidGenericParameter,
+							"Unknown generic parameter: {0}", id);
 
-					if (cachedGp == null) {
-						var gp = new GenericParameter (name, dummy_method);
-						dummy_method.GenericParameters.Add (gp);
-
-						$$ = gp;
-					} else
-						$$ = cachedGp;
-				}
+					return gp;
+				});
 			}
 			| K_OBJECT
 			{
@@ -1306,18 +1215,20 @@ type			: K_CLASS class_ref
 					report.WriteError (Error.SystemObjectUndefined,
 						"System.Object has not been defined.");
 
-				$$ = obj;
+				$$ = DeferType (() => obj);
 			}
-			| K_VOID			{ $$ = codegen.Corlib.Void; }
-			| K_TYPEDREF			{ $$ = codegen.Corlib.TypedReference; }
-			| K_NATIVE K_INT		{ $$ = codegen.Corlib.IntPtr; }
-			| K_NATIVE K_UNSIGNED K_INT	{ $$ = codegen.Corlib.UIntPtr; }
-			| K_NATIVE K_UINT		{ $$ = codegen.Corlib.UIntPtr; }
-			| K_NATIVE K_FLOAT		{ $$ = codegen.Corlib.Single; }
+			| K_VOID			{ $$ = DeferType (() => codegen.Corlib.Void); }
+			| K_TYPEDREF			{ $$ = DeferType (() => codegen.Corlib.TypedReference); }
+			| K_NATIVE K_INT		{ $$ = DeferType (() => codegen.Corlib.IntPtr); }
+			| K_NATIVE K_UNSIGNED K_INT	{ $$ = DeferType (() => codegen.Corlib.UIntPtr); }
+			| K_NATIVE K_UINT		{ $$ = DeferType (() => codegen.Corlib.UIntPtr); }
+			| K_NATIVE K_FLOAT		{ $$ = DeferType (() => codegen.Corlib.Single); }
 			| simple_type
 			| ELLIPSIS type
 			{
-				$$ = new SentinelType ((TypeReference) $2);
+				var elem = $2;
+
+				$$ = DeferType (() => new SentinelType (EvaluateType (elem)));
 			}
 			;
 
@@ -1337,20 +1248,20 @@ unsigned_int64		: K_UINT64
 			| K_UNSIGNED K_INT64
 			;
 
-int_type		: K_INT8			{ $$ = codegen.Corlib.SByte; }
-			| K_INT16			{ $$ = codegen.Corlib.Int16; }
-			| K_INT32			{ $$ = codegen.Corlib.Int32; }
-			| K_INT64			{ $$ = codegen.Corlib.Int64; }
-			| unsigned_int8			{ $$ = codegen.Corlib.Byte; }
-			| unsigned_int16		{ $$ = codegen.Corlib.UInt16; }
-			| unsigned_int32		{ $$ = codegen.Corlib.UInt32; }
-			| unsigned_int64		{ $$ = codegen.Corlib.UInt64; }
+int_type		: K_INT8			{ $$ = DeferType (() => codegen.Corlib.SByte); }
+			| K_INT16			{ $$ = DeferType (() => codegen.Corlib.Int16); }
+			| K_INT32			{ $$ = DeferType (() => codegen.Corlib.Int32); }
+			| K_INT64			{ $$ = DeferType (() => codegen.Corlib.Int64); }
+			| unsigned_int8			{ $$ = DeferType (() => codegen.Corlib.Byte); }
+			| unsigned_int16		{ $$ = DeferType (() => codegen.Corlib.UInt16); }
+			| unsigned_int32		{ $$ = DeferType (() => codegen.Corlib.UInt32); }
+			| unsigned_int64		{ $$ = DeferType (() => codegen.Corlib.UInt64); }
 
-simple_type		: K_FLOAT32			{ $$ = codegen.Corlib.Single; }
-			| K_FLOAT64			{ $$ = codegen.Corlib.Double; }
-			| K_CHAR			{ $$ = codegen.Corlib.Char; }
-			| K_BOOL			{ $$ = codegen.Corlib.Boolean; }
-			| K_STRING			{ $$ = codegen.Corlib.String; }
+simple_type		: K_FLOAT32			{ $$ = DeferType (() => codegen.Corlib.Single); }
+			| K_FLOAT64			{ $$ = DeferType (() => codegen.Corlib.Double); }
+			| K_CHAR			{ $$ = DeferType (() => codegen.Corlib.Char); }
+			| K_BOOL			{ $$ = DeferType (() => codegen.Corlib.Boolean); }
+			| K_STRING			{ $$ = DeferType (() => codegen.Corlib.String); }
 			| int_type
 			;
 
@@ -1366,13 +1277,13 @@ typars_clause		: OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET
 
 typars			: type
 			{
-				$$ = new List<TypeReference> () {
-					(TypeReference) $1,
+				$$ = new List<TypeCreator> () {
+					(TypeCreator) $1,
 				};
 			}
 			| typars COMMA type
 			{
-				((List<TypeReference>) $1).Add ((TypeReference) $3);
+				((List<TypeCreator>) $1).Add ((TypeCreator) $3);
 			}
 			;
 
@@ -1383,7 +1294,7 @@ type_spec		: class_ref
 				var module = (string) $3;
 
 				if (module == codegen.CurrentModule.Name)
-					$$ = codegen.CurrentModule.GetModuleType ();
+					$$ = DeferType (() => codegen.CurrentModule.GetModuleType ());
 				else {
 					var mod = codegen.GetModuleReference (module);
 
@@ -1391,8 +1302,8 @@ type_spec		: class_ref
 						report.WriteError (Error.UndeclaredModuleReference,
 							"Use of undeclared module: {0}", module);
 
-					$$ = new TypeReference (string.Empty, "<Module>",
-						codegen.CurrentModule, mod);
+					$$ = DeferType (() => new TypeReference (string.Empty,
+						"<Module>", codegen.CurrentModule, mod));
 				}
 			}
 			| type
@@ -1464,7 +1375,7 @@ call_kind		:
 			| K_UNMANAGED K_FASTCALL	{ $$ = MethodCallingConvention.FastCall; }
 			;
 
-marshal_info		:
+marshal_info		: // TODO: Implement custom marshalers.
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring COMMA comp_qstring COMMA comp_qstring CLOSE_PARENS
 			| K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET
@@ -1661,7 +1572,7 @@ field_decl		: D_FIELD repeat_opt field_attr marshal_spec type id at_opt init_opt
 						"Global field made static.");
 				}
 
-				var field = new FieldDefinition((string) $6, attrs, (TypeReference) $5);
+				var field = new FieldDefinition ((string) $6, attrs, EvaluateType ($5));
 
 				if ($2 != null) {
 					if (!isGlobal)
@@ -2024,7 +1935,7 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 				codegen.CurrentMethod = null;
 				codegen.CurrentScope = null;
 				codegen.CurrentCustomAttributeProvider = null;
-				codegen.CurrentGenericParameterProvider = codegen.CurrentType;
+				codegen.GenericContext.CurrentProvider = codegen.CurrentType;
 				il = null;
 
 				current_labels.Clear ();
@@ -2033,19 +1944,10 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 			}
 			;
 
-method_head		: D_METHOD
+method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause method_name
 			{
-				// This is some dirty hackery because we can't verify the
-				// validity of the generic parameter (!!T syntax) for the
-				// return type until we get further into the method def.
-				generic_typeref_in_methoddef = true;
-			}
-			  meth_attr call_conv param_attr type sig_marshal_clause method_name
-			{
-				generic_typeref_in_methoddef = false;
-
-				var name = (string) $8;
-				var attr = (MethodAttributes) $3;
+				var name = (string) $7;
+				var attr = (MethodAttributes) $2;
 				var isClassMember = codegen.CurrentType != null;
 
 				if (isClassMember) {
@@ -2070,8 +1972,9 @@ method_head		: D_METHOD
 					}
 				}
 
-				var method = new MethodDefinition (name, attr, (TypeReference) $6) {
-					CallingConvention = (MethodCallingConvention) $4,
+				var method = new MethodDefinition (name, attr,
+					new TypeReference (null, null, null, null)) {
+					CallingConvention = (MethodCallingConvention) $3,
 				};
 
 				// Even though this doesn't make much sense, we have to
@@ -2113,37 +2016,30 @@ method_head		: D_METHOD
 					codegen.CurrentPInvokeInfo = null;
 				}
 
-				method.MethodReturnType.Attributes = (ParameterAttributes) $5;
+				method.MethodReturnType.Attributes = (ParameterAttributes) $4;
 
-				method.MethodReturnType.MarshalInfo = $7 != null ? (MarshalInfo) $7 : null;
+				method.MethodReturnType.MarshalInfo = $6 != null ? (MarshalInfo) $6 : null;
 
 				codegen.CurrentMethod = method;
-				codegen.CurrentGenericParameterProvider = method;
+				codegen.GenericContext.CurrentProvider = method;
 			}
 			  formal_typars_clause
 			{
-				foreach (var arg in (List<GenericParameter>) $10)
+				foreach (var arg in (List<GenericParameter>) $9)
 					codegen.CurrentMethod.GenericParameters.Add (arg);
 
-				generic_typeref_in_methoddef = true;
+				codegen.GenericContext.CurrentLocalMethodProvider = codegen.CurrentMethod;
+
+				codegen.CurrentMethod.ReturnType = EvaluateType ($5);
 			}
 			  OPEN_PARENS sig_args CLOSE_PARENS impl_attr
 			{
-				generic_typeref_in_methoddef = false;
-
-				foreach (var arg in (List<ParameterDefinition>) $13)
+				foreach (var arg in (List<ParameterDefinition>) $12)
 					codegen.CurrentMethod.Parameters.Add (arg);
 
-				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
-					var genParam = dummy_method.GenericParameters [i];
-					GetGenericParameter (codegen.CurrentMethod, genParam.Name);
+				codegen.GenericContext.CurrentLocalMethodProvider = null;
 
-					codegen.CurrentMethod.GenericParameters [i] = genParam;
-				}
-
-				ResetDummyMethod ();
-
-				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $15;
+				codegen.CurrentMethod.ImplAttributes = (MethodImplAttributes) $14;
 
 				codegen.CurrentScope = codegen.CurrentMethod.Body.Scope;
 
@@ -2236,7 +2132,7 @@ impl_attr		:
 			}
 			| impl_attr K_CIL		{ $$ = (MethodImplAttributes) $1 | MethodImplAttributes.IL; }
 			| impl_attr K_IL		{ $$ = (MethodImplAttributes) $1 | MethodImplAttributes.IL; }
-			| impl_attr K_OPTIL		{ /* TODO: $$ = (MethodImplAttributes) $1 | MethodImplAttributes.OPTIL;*/ }
+			| impl_attr K_OPTIL
 			| impl_attr K_MANAGED
 			| impl_attr K_UNMANAGED
 			{
@@ -2291,7 +2187,7 @@ sig_marshal_clause	:
 sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
 			| param_attr type sig_marshal_clause
 			{
-				$$ = new ParameterDefinition ((TypeReference) $2) {
+				$$ = new ParameterDefinition (EvaluateType ($2)) {
 					Attributes = (ParameterAttributes) $1,
 					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
 				};
@@ -2299,7 +2195,7 @@ sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
 			| param_attr type sig_marshal_clause id
 			{
 				$$ = new ParameterDefinition ((string) $4, (ParameterAttributes) $1,
-					(TypeReference) $2) {
+					EvaluateType ($2)) {
 					MarshalInfo = $3 != null ? (MarshalInfo) $3 : null,
 				};
 			}
@@ -2358,7 +2254,7 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			| D_OVERRIDE type_spec DOUBLE_COLON method_name
 			{
 				var overridenMethod = new MethodReference ((string) $4,
-					codegen.CurrentMethod.ReturnType, (TypeReference) $2);
+					codegen.CurrentMethod.ReturnType, EvaluateType ($2));
 
 				codegen.CurrentMethod.Overrides.Add (overridenMethod);
 			}
@@ -2371,11 +2267,22 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				var idx = (int) $3;
 
-				if (idx <= 0 || idx > codegen.CurrentMethod.Parameters.Count)
+				var paramCount = codegen.CurrentMethod.Parameters.Count;
+
+				if (!codegen.CurrentMethod.IsStatic)
+					paramCount++;
+
+				if (idx <= 0 || idx > paramCount)
 					report.WriteWarning (Warning.OutOfRangeParameterIndex,
 						"Parameter at index '{0}' not found.", idx);
 
-				var param = codegen.CurrentMethod.Parameters [idx - 1];
+				ParameterDefinition param;
+
+				if (!codegen.CurrentMethod.IsStatic && idx == 1)
+					param = codegen.CurrentMethod.Body.ThisParameter;
+				else
+					param = codegen.CurrentMethod.Parameters [idx - 1];
+
 				codegen.CurrentCustomAttributeProvider = param;
 
 				if ($5 != null)
@@ -2512,7 +2419,7 @@ seh_clause		: K_CATCH type_spec handler_block
 				var clause = (Tuple<Instruction, Instruction>) $3;
 
 				$$ = new ExceptionHandler (ExceptionHandlerType.Catch) {
-					CatchType = (TypeReference) $2,
+					CatchType = EvaluateType ($2),
 					HandlerStart = clause.X,
 					HandlerEnd = clause.Y,
 				};
@@ -2638,11 +2545,26 @@ instr			: INSTR_NONE
 			{
 				var idx = (int) $2;
 
-				if (idx < 0 || idx >= codegen.CurrentMethod.Parameters.Count)
+				var paramCount = codegen.CurrentMethod.Parameters.Count;
+
+				if (!codegen.CurrentMethod.IsStatic)
+					paramCount++;
+
+				if (idx < 0 || idx >= paramCount)
 					report.WriteError (Error.InvalidParameter,
 						"Parameter at index '{0}' not found.", idx);
 
-				var param = codegen.CurrentMethod.Parameters [idx];
+				ParameterDefinition param;
+
+				if (!codegen.CurrentMethod.IsStatic && idx == 0)
+					param = codegen.CurrentMethod.Body.ThisParameter;
+				else {
+					if (codegen.CurrentMethod.IsStatic)
+						param = codegen.CurrentMethod.Parameters [idx];
+					else
+						param = codegen.CurrentMethod.Parameters [idx - 1];
+				}
+
 				var instr = il.Create ((OpCode) $1, param);
 				il.Append (instr);
 
@@ -2773,7 +2695,7 @@ instr			: INSTR_NONE
 			}
 			| INSTR_TYPE type_spec
 			{
-				var instr = il.Create ((OpCode) $1, (TypeReference) $2);
+				var instr = il.Create ((OpCode) $1, EvaluateType ($2));
 				il.Append (instr);
 
 				$$ = instr;
@@ -2803,7 +2725,7 @@ instr			: INSTR_NONE
 			}
 			| INSTR_SIG call_conv type OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				var call = new CallSite ((TypeReference) $3);
+				var call = new CallSite (EvaluateType ($3));
 
 				if (is_instance_call)
 					call.HasThis = true;
@@ -2826,8 +2748,8 @@ instr			: INSTR_NONE
 			{
 				Instruction instr;
 
-				if ($2 is TypeReference)
-					instr = il.Create ((OpCode) $1, (TypeReference) $2);
+				if ($2 is TypeCreator)
+					instr = il.Create ((OpCode) $1, EvaluateType ($2));
 				else if ($2 is FieldReference)
 					instr = il.Create ((OpCode) $1, (FieldReference) $2);
 				else
@@ -2883,46 +2805,18 @@ member_ref		: K_METHOD method_ref
 			}
 			;
 
-field_ref		:
+field_ref		: type declaring_type comp_name_str
 			{
-				generic_typeref_in_field = true;
-			}
-			  type declaring_type comp_name_str
-			{
-				generic_typeref_in_field = false;
+				var declType = EvaluateType ($2);
 
-				var declType = (TypeReference) $3;
+				codegen.GenericContext.CurrentLocalTypeProvider = declType;
 
-				if (dummy_type.GenericParameters.Count > 0 &&
-					!(declType is GenericInstanceType))
-					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-						"Declaring type is not generic.");
+				var type = EvaluateType ($1);
 
-				for (var i = 0; i < dummy_type.GenericParameters.Count; i++) {
-					var genParam = dummy_type.GenericParameters [i];
+				codegen.GenericContext.CurrentLocalTypeProvider = null;
 
-					if (genParam == null) {
-						var gp = new GenericParameter (declType.GetElementType ());
-
-						dummy_type.GenericParameters [i] = gp;
-						declType.GenericParameters.Add (gp);
-
-						continue;
-					}
-
-					var pos = genParam.Position;
-
-					if (pos >= ((GenericInstanceType) declType).GenericArguments.Count)
-						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-							"Generic argument '{0}' not found.", pos);
-
-					declType.GetElementType ().GenericParameters.Add (genParam);
-				}
-
-				ResetDummyType ();
-
-				var field = new FieldReference ((string) $4,
-					(TypeReference) $2, declType);
+				var field = new FieldReference ((string) $3,
+					type, declType);
 
 				if (declType == codegen.CurrentModule.GetModuleType ())
 					codegen.ModuleFieldReferences.Add (field);
@@ -2942,24 +2836,17 @@ declaring_type		:
 				// not agree, and insists that this syntax can only refer
 				// to module-global methods. We maintain compatibility in
 				// this case.
-				$$ = codegen.CurrentModule.GetModuleType ();
+				$$ = DeferType (() => codegen.CurrentModule.GetModuleType ());
 			}
 			| type_spec DOUBLE_COLON
 			;
 
-method_ref		: call_conv
+method_ref		: call_conv type declaring_type method_name typars_clause_opt
 			{
-				// See the note in method_head.
-				generic_typeref_in_field = true;
-				generic_typeref_in_method = true;
-			}
-			  type declaring_type method_name
-			{
-				generic_typeref_in_method = false;
-				generic_typeref_in_field = false;
+				var declType = EvaluateType ($3);
 
-				var method = new MethodReference ((string) $5,
-					(TypeReference) $3, (TypeReference) $4) {
+				var method = new MethodReference ((string) $4,
+					new TypeReference (null, null, null, null), declType) {
 					CallingConvention = (MethodCallingConvention) $1,
 				};
 
@@ -2972,86 +2859,33 @@ method_ref		: call_conv
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				codegen.CurrentMethodReference = method;
-			}
-			  typars_clause_opt
-			{
-				generic_typeref_in_method = true;
-				generic_typeref_in_field = true;
-			}
-			  OPEN_PARENS sig_args CLOSE_PARENS
-			{
-				generic_typeref_in_method = false;
-				generic_typeref_in_field = false;
-
-				var method = codegen.CurrentMethodReference;
-
-				foreach (var arg in (List<ParameterDefinition>) $10)
-					method.Parameters.Add (arg);
-
-				var declType = method.DeclaringType;
-
-				if (dummy_type.GenericParameters.Count > 0 &&
-					!(declType is GenericInstanceType))
-					report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-						"Declaring type is not generic.");
-
-				for (var i = 0; i < dummy_type.GenericParameters.Count; i++) {
-					var genParam = dummy_type.GenericParameters [i];
-
-					if (genParam == null) {
-						var gp = new GenericParameter (declType.GetElementType ());
-
-						dummy_type.GenericParameters [i] = gp;
-						declType.GenericParameters.Add (gp);
-
-						continue;
-					}
-
-					var pos = genParam.Position;
-
-					if (pos >= ((GenericInstanceType) declType).GenericArguments.Count)
-						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-							"Generic argument '{0}' not found.", pos);
-
-					declType.GetElementType ().GenericParameters.Add (genParam);
-				}
-
-				ResetDummyType ();
-
-				if ($7 != null) {
+				if ($5 != null) {
 					var genMethod = new GenericInstanceMethod (method);
 
-					foreach (var typeArg in (List<TypeReference>) $7)
-						genMethod.GenericArguments.Add (typeArg);
+					foreach (var typeArg in (List<TypeCreator>) $5)
+						genMethod.GenericArguments.Add (typeArg ());
 
 					method = genMethod;
 				}
 
-				for (var i = 0; i < dummy_method.GenericParameters.Count; i++) {
-					var genParam = dummy_method.GenericParameters [i];
+				codegen.GenericContext.CurrentLocalTypeProvider = declType;
+				codegen.GenericContext.CurrentLocalMethodProvider = method;
 
-					if (genParam == null) {
-						var gp = new GenericParameter (method.GetElementMethod ());
+				method.ReturnType = EvaluateType ($2);
 
-						dummy_method.GenericParameters [i] = gp;
-						method.GetElementMethod ().GenericParameters.Add (gp);
-
-						continue;
-					}
-
-					var pos = genParam.Position;
-
-					if (pos >= ((GenericInstanceMethod) method).GenericArguments.Count)
-						report.WriteError (Error.GenericParameterOrdinalOutOfRange,
-							"Generic argument '{0}' not found.", pos);
-
-					method.GetElementMethod ().GenericParameters.Add (genParam);
-				}
-
-				ResetDummyMethod ();
+				codegen.CurrentMethodReference = method;
+			}
+			  OPEN_PARENS sig_args CLOSE_PARENS
+			{
+				var method = codegen.CurrentMethodReference;
 
 				codegen.CurrentMethodReference = null;
+
+				foreach (var arg in (List<ParameterDefinition>) $8)
+					method.Parameters.Add (arg);
+
+				codegen.GenericContext.CurrentLocalMethodProvider = null;
+				codegen.GenericContext.CurrentLocalTypeProvider = null;
 
 				if (method.DeclaringType == codegen.CurrentModule.GetModuleType ())
 					codegen.ModuleMethodReferences.Add (method);
@@ -3071,7 +2905,7 @@ method_name		: D_CTOR
 
 generic_method_ref	: K_METHOD call_conv type type_spec DOUBLE_COLON method_name generic_arity OPEN_PARENS sig_args CLOSE_PARENS
 			{
-				var method = new MethodReference ((string) $6, (TypeReference) $3, (TypeReference) $4) {
+				var method = new MethodReference ((string) $6, EvaluateType ($3), EvaluateType ($4)) {
 					CallingConvention = (MethodCallingConvention) $2,
 				};
 
@@ -3103,6 +2937,9 @@ generic_arity		:
 			;
 
 owner_type		: type_spec
+			{
+				$$ = EvaluateType ($1);
+			}
 			| member_ref
 			;
 
@@ -3116,7 +2953,7 @@ event_all		: event_head OPEN_BRACE event_decls CLOSE_BRACE
 event_head		: D_EVENT event_attr type_spec comp_name_str
 			{
 				codegen.CurrentEvent = new EventDefinition ((string) $4,
-					(EventAttributes) $2, (TypeReference) $3);
+					(EventAttributes) $2, EvaluateType ($3));
 			}
 			| D_EVENT event_attr id // TODO: What do we do here? Infer some type?
 			;
@@ -3183,7 +3020,7 @@ prop_all		: prop_head OPEN_BRACE prop_decls CLOSE_BRACE
 prop_head		: D_PROPERTY call_conv prop_attr type comp_name_str OPEN_PARENS sig_args CLOSE_PARENS init_opt
 			{
 				codegen.CurrentProperty = new PropertyDefinition ((string) $5,
-					(PropertyAttributes) $3, (TypeReference) $4);
+					(PropertyAttributes) $3, EvaluateType ($4));
 
 				if (is_instance_call)
 					codegen.CurrentProperty.HasThis = true;
@@ -3344,6 +3181,9 @@ customattr_blob_nvp	:
 			;
 
 customattr_blob_type	: simple_type
+			{
+				$$ = EvaluateType ($1);
+			}
 			| K_TYPE
 			{
 				$$ = codegen.Corlib.Type;
@@ -3358,11 +3198,11 @@ customattr_blob_type	: simple_type
 			}
 			| K_ENUM class_ref
 			{
-				$$ = $2;
+				$$ = EvaluateType ($2);
 			}
 			| customattr_blob_type OPEN_BRACKET CLOSE_BRACKET
 			{
-				$$ = new ArrayType ((TypeReference) $1);
+				$$ = new ArrayType (EvaluateType ($1));
 			}
 			;
 
@@ -3841,7 +3681,7 @@ sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PA
 				if (codegen.CurrentSecurityDeclaration == null)
 					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
 
-				var attr = new SecurityAttribute ((TypeReference) $3);
+				var attr = new SecurityAttribute (EvaluateType ($3));
 
 				foreach (var obj in (List<Tuple<string, object>>) $5) {
 					TypeReference type;
@@ -3871,7 +3711,7 @@ sec_decl		: D_PERMISSION sec_action type_spec OPEN_PARENS nameval_pairs CLOSE_PA
 				if (codegen.CurrentSecurityDeclaration == null)
 					codegen.CurrentSecurityDeclaration = new SecurityDeclaration ((SecurityAction) $2);
 
-				codegen.CurrentSecurityDeclaration.SecurityAttributes.Add (new SecurityAttribute ((TypeReference) $3));
+				codegen.CurrentSecurityDeclaration.SecurityAttributes.Add (new SecurityAttribute (EvaluateType ($3)));
 			}
 			| D_PERMISSIONSET sec_action sec_bytearray
 			{
@@ -3924,7 +3764,7 @@ permissions		: permission
 
 permission		: class_ref ASSIGN OPEN_BRACE customattr_blob_nvp CLOSE_BRACE
 			{
-				var attr = new SecurityAttribute ((TypeReference) $1);
+				var attr = new SecurityAttribute (EvaluateType ($1));
 
 				foreach (var arg in (List<Tuple<TokenType, CustomAttributeNamedArgument>>) $4) {
 					if (arg.X == TokenType.Field)
@@ -3990,7 +3830,7 @@ prop_or_field		: K_PROPERTY
 			}
 			;
 
-module_head		: D_MODULE
+module_head		: D_MODULE // Probably does nothing.
 			| D_MODULE comp_name_str
 			{
 				var name = (string) $2;
@@ -4018,6 +3858,7 @@ module_head		: D_MODULE
 			}
 			;
 
+// TODO: Manipulate the file table (Cecil doesn't support this yet).
 file_decl		: D_FILE file_attr comp_name file_entry D_HASH ASSIGN bytes_list file_entry
 			| D_FILE file_attr comp_name file_entry
 			;

@@ -43,10 +43,10 @@
     <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Security.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+    <Reference Include="Mono.Cecil, Version=0.9.5.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Cecil.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Cecil.Mdb, Version=0.9.4.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+    <Reference Include="Mono.Cecil.Mdb, Version=0.9.5.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
       <HintPath>..\class\lib\net_2_0\Mono.Cecil.Mdb.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -84,6 +84,7 @@
     <Compile Include="codegen\Label.cs" />
     <Compile Include="Action.cs" />
     <Compile Include="codegen\AccessorType.cs" />
+    <Compile Include="codegen\GenericContext.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
   <ProjectExtensions>

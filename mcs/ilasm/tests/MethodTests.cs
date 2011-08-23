@@ -82,10 +82,6 @@ namespace Mono.ILAsm.Tests {
 						z => z.Name == "T2")));
 		}
 		
-		/*
-		 * FIXME: These tests fail due to Cecil's lack of support for unbound
-		 * generic parameters. They can be uncommented when this support has
-		 * been added upstream.
 		[Test]
 		public void TestGenericMethodWithGenericReturnType ()
 		{
@@ -110,7 +106,6 @@ namespace Mono.ILAsm.Tests {
 					y => y.Parameters.ContainsOne (
 						z => z.ParameterType.Name == "T")));
 		}
-		*/
 		
 		/*
 		 * FIXME: This test fails because Cecil forces a calculated stack

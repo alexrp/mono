@@ -29,8 +29,6 @@ namespace Mono.ILAsm {
 		
 		public AssemblyNameReference CurrentAssemblyReference { get; set; }
 		
-		public IGenericParameterProvider CurrentGenericParameterProvider { get; set; }
-		
 		public ICustomAttributeProvider CurrentCustomAttributeProvider { get; set; }
 		
 		public CustomAttribute CurrentCustomAttribute { get; set; }
@@ -42,6 +40,8 @@ namespace Mono.ILAsm {
 		public MethodReference CurrentMethodReference { get; set; }
 		
 		public SecurityDeclaration CurrentSecurityDeclaration { get; set; }
+		
+		public GenericContext GenericContext { get; set; }
 		
 		public bool HasAssemblyDirective { get; set; }
 		
@@ -80,6 +80,7 @@ namespace Mono.ILAsm {
 			ModuleMethodReferences = new List<MethodReference> ();
 			EventAccessorMethods = new List<Tuple<EventDefinition, AccessorType, MethodReference>> ();
 			PropertyAccessorMethods = new List<Tuple<PropertyDefinition, AccessorType, MethodReference>> ();
+			GenericContext = new GenericContext ();
 			CurrentNamespace = string.Empty;
 			
 			CurrentModule = ModuleDefinition.CreateModule (moduleName,

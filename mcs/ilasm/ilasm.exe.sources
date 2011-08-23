@@ -15,6 +15,7 @@ codegen/AccessorType.cs
 codegen/AliasedAssemblyNameReference.cs
 codegen/CodeGenerator.cs
 codegen/Corlib.cs
+codegen/GenericContext.cs
 codegen/Label.cs
 codegen/Null.cs
 codegen/QualifiedName.cs
