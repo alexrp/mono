@@ -308,13 +308,19 @@ namespace Mono.ILDasm {
 							Writer.Write (Escape (((VariableDefinition) arg).Name));
 					} else if (arg is TypeReference)
 						Writer.Write (Stringize ((TypeReference) arg));
-					else if (arg is MethodReference)
+					else if (arg is MethodReference) {
+						if (instr.OpCode.OperandType == OperandType.InlineTok)
+							Writer.Write ("method ");
+						
 						Writer.Write (Stringize ((MethodReference) arg));
-					else if (arg is FieldReference)
+					} else if (arg is FieldReference) {
+						if (instr.OpCode.OperandType == OperandType.InlineTok)
+							Writer.Write ("field ");
+						
 						Writer.Write (Stringize ((FieldReference) arg));
-					else if (arg is string) {
+					} else if (arg is string) {
 						Writer.Write ("\"{0}\"", EscapeQString ((string) arg));
-					} else// Integers and floats.
+					} else // Integers and floats.
 						Writer.Write (arg.ToString ());
 				}
 				

@@ -302,7 +302,9 @@ namespace Mono.ILDasm {
 				"illegal",
 				"unused",
 				"wrapper",
-				"forwarder");
+				"forwarder",
+				"flags",
+				"callconv");
 			
 			// opcodes
 			foreach (var opCode in typeof (OpCodes).GetFields ())

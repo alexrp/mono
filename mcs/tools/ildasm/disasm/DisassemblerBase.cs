@@ -74,6 +74,18 @@ namespace Mono.ILDasm {
 			return identifier;
 		}
 		
+		public static string EscapeType (string identifier)
+		{
+			var strings = identifier.Split ('/');
+			
+			var sb = new StringBuilder (Escape (strings [0]));
+			
+			for (var i = 1; i < strings.Length; i++)
+				sb.Append ("/").Append (Escape (strings [i]));
+			
+			return sb.ToString ();
+		}
+		
 		public static string EscapeString (string str)
 		{
 			return str.Replace ("'", "\\'").Replace ("\\", "\\\\");
@@ -219,9 +231,9 @@ namespace Mono.ILDasm {
 				return Stringize ((SentinelType) type);
 			else if (type is GenericParameter)
 				return Stringize ((GenericParameter) type);
-			else if (type is GenericInstanceType) {
+			else if (type is GenericInstanceType)
 				return Stringize ((GenericInstanceType) type);
-			} else {
+			else {
 				var sb = new StringBuilder ();
 				var corName = TypeToName (type);
 				var isCorlib = type.Scope.Name == "mscorlib" && corName != type.FullName;
@@ -235,7 +247,7 @@ namespace Mono.ILDasm {
 				} else if (!isCorlib)
 					sb.AppendFormat ("[{0}]", type.Scope.Name);
 				
-				sb.Append (isCorlib ? corName : type.FullName);
+				sb.Append (isCorlib ? corName : EscapeType (type.FullName));
 				
 				return sb.ToString ();
 			}
@@ -329,14 +341,11 @@ namespace Mono.ILDasm {
 		
 		public static string Stringize (GenericParameter type)
 		{
-			// HACK: This shouldn't be needed with newer Cecil versions.
-			if (type.Name.StartsWith ("!"))
-				return type.Name;
-			
+			// HACK: We sometimes get incorrect names from Cecil.
 			if (type.Owner is MethodReference)
-				return "!!" + type.Name;
+				return "!!" + type.Position;
 			else
-				return "!" + type.Name;
+				return "!" + type.Position;
 		}
 		
 		public static string Stringize (GenericInstanceType type)
