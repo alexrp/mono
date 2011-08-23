@@ -872,7 +872,7 @@ class_decl		: method_all
 
 				var p = (int) $2;
 
-				if (p < 1 || p > 128 || (p & (p - 1)) != 0)
+				if (p < 0 || p > 128 || (p & (p - 1)) != 0)
 					report.WriteError (Error.InvalidPackSize,
 						"Class pack size must be a power of two between 1 and 128.");
 
