@@ -66,6 +66,30 @@ namespace Mono.ILAsm {
 			return ((TypeCreator) obj) ();
 		}
 
+		TypeReference MakeTypeReference (QualifiedName name, IMetadataScope scope)
+		{
+			if (name.Nestings.Count == 0)
+				return new TypeReference (name.FullNamespace, name.Name,
+					codegen.CurrentModule, scope);
+
+			var outer = new TypeReference (name.FullNamespace, name.Nestings [0],
+				codegen.CurrentModule, scope);
+
+			var nested = outer;
+
+			for (var i = 1; i < name.Nestings.Count; i++) {
+				nested = new TypeReference (null, name.Nestings [i],
+					codegen.CurrentModule, scope) {
+					DeclaringType = nested,
+				};
+			}
+
+			return new TypeReference (null, name.Name,
+				codegen.CurrentModule, scope) {
+				DeclaringType = nested,
+			};
+		}
+
 		Instruction FindInstruction (int idx)
 		{
 			if (idx < 0 || idx >= il.Body.Instructions.Count)
@@ -977,8 +1001,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				var type = (QualifiedName) $4;
 				var scope = codegen.GetScope (name.FullName, false);
 
-				$$ = DeferType (() => new TypeReference (type.FullNamespace,
-					type.Name, codegen.CurrentModule, scope));
+				$$ = DeferType (() => MakeTypeReference (type, scope));
 			}
 			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name // TODO: How does this work?
 			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
@@ -988,8 +1011,7 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				var type = (QualifiedName) $5;
 
 				if (module == codegen.CurrentModule.Name) {
-					var typeRef = new TypeReference (type.FullNamespace,
-						type.Name, codegen.CurrentModule, codegen.CurrentModule);
+					var typeRef = MakeTypeReference (type, codegen.CurrentModule);
 
 					codegen.ModuleTypeReferences.Add (typeRef);
 
@@ -997,15 +1019,13 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 				} else {
 					var scope = codegen.GetScope (module, true);
 
-					$$ = DeferType (() => new TypeReference (type.FullNamespace,
-						type.Name, codegen.CurrentModule, scope));
+					$$ = DeferType (() => MakeTypeReference (type, scope));
 				}
 			}
 			| slashed_name
 			{
 				var qn = (QualifiedName) $1;
-				var typeRef = new TypeReference (qn.FullNamespace, qn.Name,
-					codegen.CurrentModule, codegen.CurrentModule);
+				var typeRef = MakeTypeReference (qn, codegen.CurrentModule);
 
 				codegen.ModuleTypeReferences.Add (typeRef);
 

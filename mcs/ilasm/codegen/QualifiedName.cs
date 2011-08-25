@@ -65,10 +65,11 @@ namespace Mono.ILAsm {
 				
 				foreach (var nesting in Nestings) {
 					name.Append (nesting);
-					name.Append ("+");
+					name.Append ("/");
 				}
 				
 				name.Append (Name);
+				
 				return name.ToString ();
 			}
 		}
