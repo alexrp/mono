@@ -946,25 +946,13 @@ class_decl		: method_all
 					baseMethod.Parameters.Add (arg);
 				}
 
-				var resolvedMethod = overridingMethod.Resolve ();
-
-				if (resolvedMethod == null)
-					report.WriteError (Error.InvalidOverrideMethod,
-						"Could not resolve overriding method: {0}",
-						overridingMethod);
-
-				resolvedMethod.Overrides.Add (baseMethod);
+				var tup = new Tuple<MethodReference, MethodReference> (overridingMethod, baseMethod);
+				codegen.ExplicitOverrides.Add (tup);
 			}
 			| D_OVERRIDE generic_method_ref K_WITH generic_method_ref
 			{
-				var overridingMethod = ((MethodReference) $4).Resolve ();
-
-				if (overridingMethod == null)
-					report.WriteError (Error.InvalidOverrideMethod,
-						"Could not resolve overriding method: {0}",
-						overridingMethod);
-
-				overridingMethod.Overrides.Add ((MethodReference) $2);
+				var tup = new Tuple<MethodReference, MethodReference> ((MethodReference) $4, (MethodReference) $2);
+				codegen.ExplicitOverrides.Add (tup);
 			}
 			| language_decl
 			| comp_control

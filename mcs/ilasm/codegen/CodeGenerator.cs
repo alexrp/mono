@@ -63,6 +63,8 @@ namespace Mono.ILAsm {
 		
 		public List<Tuple<PropertyDefinition, AccessorType, MethodReference>> PropertyAccessorMethods { get; private set; }
 		
+		public List<Tuple<MethodReference, MethodReference>> ExplicitOverrides { get; private set; }
+		
 		public Dictionary<string, AliasedAssemblyNameReference> AliasedAssemblyReferences { get; private set; }
 		
 		public Dictionary<string, object> DataConstants { get; private set; }
@@ -80,6 +82,7 @@ namespace Mono.ILAsm {
 			ModuleMethodReferences = new List<MethodReference> ();
 			EventAccessorMethods = new List<Tuple<EventDefinition, AccessorType, MethodReference>> ();
 			PropertyAccessorMethods = new List<Tuple<PropertyDefinition, AccessorType, MethodReference>> ();
+			ExplicitOverrides = new List<Tuple<MethodReference, MethodReference>> ();
 			GenericContext = new GenericContext ();
 			CurrentNamespace = string.Empty;
 			
@@ -237,6 +240,20 @@ namespace Mono.ILAsm {
 							evnt);
 		}
 		
+		void EmitExplicitOverrides ()
+		{
+			foreach (var tup in ExplicitOverrides) {
+				var resolved = tup.X.Resolve ();
+				
+				if (resolved == null)
+					report.WriteError (Error.InvalidOverrideMethod,
+						"Could not resolve overriding method: {0}",
+						tup.X);
+				
+				resolved.Overrides.Add (tup.Y);
+			}
+		}
+		
 		public void Write (string outputFile)
 		{
 			ResolveModuleTypeReferences ();
@@ -245,6 +262,7 @@ namespace Mono.ILAsm {
 			CheckEventAccessors ();
 			EmitPropertyAccessors ();
 			EmitDataConstants ();
+			EmitExplicitOverrides ();
 			
 			CurrentModule.Write (outputFile, new WriterParameters {
 				SymbolWriterProvider = DebuggingSymbols ? new MdbWriterProvider () : null,
