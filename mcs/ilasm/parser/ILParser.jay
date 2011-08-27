@@ -3198,7 +3198,7 @@ customattr		: D_CUSTOM method_ref
 			{
 				$$ = codegen.CurrentCustomAttribute = new CustomAttribute ((MethodReference) $2);
 			}
-			  customattr_blob CLOSE_BRACE
+			  customattr_blob /* Unused; intentional. */ CLOSE_BRACE
 			;
 
 customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
@@ -3227,7 +3227,7 @@ customattr_owner	: D_CUSTOM OPEN_PARENS owner_type CLOSE_PARENS method_ref
 
 				$$ = ResolveCustomAttributeOwner ($3);
 			}
-			  customattr_blob CLOSE_BRACE
+			  customattr_blob /* Unused; intentional. */ CLOSE_BRACE
 			;
 
 customattr_blob		: customattr_blob_args
@@ -3898,13 +3898,9 @@ cavalue 		: truefalse
 				$$ = $3;
 			}
 			| comp_qstring
-			// TODO: No idea how these work. They're not standard.
-			| class_ref OPEN_PARENS K_INT8 COLON int32 CLOSE_PARENS
-			| class_ref OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS
-			| class_ref OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS
-			| class_ref OPEN_PARENS int32 CLOSE_PARENS
 			| obscure_cavalue
 			{
+				// TODO: Figure out how these work.
 				report.WriteError (Error.UnimplementedFeatureUsed,
 					"Nonstandard CA value format not currently supported.");
 			}

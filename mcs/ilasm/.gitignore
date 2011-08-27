@@ -2,6 +2,8 @@ ILParser.cs
 bin/*
 obj/*
 test-results/*
+parser/*.tab.jac
+parser/*.output
 */bin/*
 */obj/*
 */test-results/*
@@ -9,3 +11,4 @@ test-results/*
 *.suo
 *.userprefs
 *.pidb
+
