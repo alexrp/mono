@@ -93,6 +93,7 @@ namespace Mono.ILAsm.Tests {
 		{
 			ILAsm ()
 				.Input ("misc-decl/misc-decl-007.il")
+				.ExpectWarning (Warning.UnimplementedFeatureUsed)
 				.Run ()
 				.Expect (ExitCode.Success);
 		}

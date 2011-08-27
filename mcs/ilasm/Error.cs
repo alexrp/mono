@@ -214,5 +214,9 @@ namespace Mono.ILAsm {
 		/// Happens if any invalid opcode is encountered.
 		/// </summary>
 		InvalidOpCode = 42,
+		/// <summary>
+		/// An unimplemented feature was used, and assembly could not continue.
+		/// </summary>
+		UnimplementedFeatureUsed = 43,
 	}
 }

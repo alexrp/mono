@@ -564,14 +564,27 @@ vtfixup_attr		:
 			| vtfixup_attr K_RETAINAPPDOMAIN
 			;
 
-typedef_decl		: D_TYPEDEF type K_AS comp_name
+typedef_decl		: typedef_directive
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					".typedef is currently unimplemented (directive ignored).");
+			}
+
+typedef_directive	: D_TYPEDEF type K_AS comp_name
 			| D_TYPEDEF class_ref K_AS comp_name
 			| D_TYPEDEF member_ref K_AS comp_name
 			| D_TYPEDEF customattr K_AS comp_name
 			| D_TYPEDEF customattr_owner K_AS comp_name
 			;
 
-comp_control		: D_XDEFINE comp_name
+comp_control		: comp_control_decl
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"The preprocessor is unimplemented (directive ignored).");
+			}
+			;
+
+comp_control_decl	: D_XDEFINE comp_name
 			| D_XDEFINE comp_name QSTRING
 			| D_XUNDEF comp_name
 			| D_XIFDEF comp_name
@@ -1003,8 +1016,19 @@ class_ref		: OPEN_BRACKET comp_name CLOSE_BRACKET slashed_name
 
 				$$ = DeferType (() => MakeTypeReference (type, scope));
 			}
-			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name // TODO: How does this work?
-			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name // TODO: How does this work?
+			| OPEN_BRACKET mdtoken CLOSE_BRACKET slashed_name
+			{
+				// TODO: We need to look up a module or assembly reference
+				// by the given metadata token and construct a type.
+				report.WriteError (Error.UnimplementedFeatureUsed,
+					"This class reference syntax is unimplemented.");
+			}
+			| OPEN_BRACKET STAR CLOSE_BRACKET slashed_name
+			{
+				// TODO: How does this work?
+				report.WriteError (Error.UnimplementedFeatureUsed,
+					"This class reference syntax is unimplemented.");
+			}
 			| OPEN_BRACKET D_MODULE comp_name_str CLOSE_BRACKET slashed_name
 			{
 				var module = (string) $3;
@@ -1308,7 +1332,13 @@ typars			: type
 			;
 
 type_spec		: class_ref
-			| OPEN_BRACKET comp_name CLOSE_BRACKET // TODO: What do we do with this?
+			| OPEN_BRACKET comp_name CLOSE_BRACKET
+			{
+				// TODO: This probably means that we should return a
+				// reference to the <Module> type in the given module.
+				report.WriteError (Error.UnimplementedFeatureUsed,
+					"This type reference syntax is unimplemented.");
+			}
 			| OPEN_BRACKET D_MODULE comp_name_str CLOSE_BRACKET
 			{
 				var module = (string) $3;
@@ -1397,7 +1427,19 @@ call_kind		:
 
 marshal_info		: // TODO: Implement custom marshalers.
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Custom marshalers are not currently supported (no marshal spec emitted).");
+
+				$$ = null;
+			}
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring COMMA comp_qstring COMMA comp_qstring CLOSE_PARENS
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Custom marshalers are not currently supported (no marshal spec emitted).");
+
+				$$ = null;
+			}
 			| K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				$$ = new FixedSysStringMarshalInfo {
@@ -1510,7 +1552,7 @@ marshal_type		: K_CURRENCY				{ $$ = NativeType.Currency; }
 			{
 				// The grammar supports these types, but we can't
 				// actually use them.
-				report.WriteError(Error.UnsupportedNativeType,
+				report.WriteError (Error.UnsupportedNativeType,
 					"Unsupported native type used in marshaling signature.");
 			}
 			;
@@ -1547,7 +1589,7 @@ safearray_type		: K_VARIANT		{ $$ = VariantType.Variant; }
 			{
 				// The grammar supports these types, but we can't
 				// actually use them.
-				report.WriteError(Error.UnsupportedVariantType,
+				report.WriteError (Error.UnsupportedVariantType,
 					"Unsupported variant type used in safe array signature.");
 			}
 			;
@@ -2204,7 +2246,12 @@ sig_marshal_clause	:
 			}
 			;
 
-sig_arg			: ELLIPSIS // TODO: Construct the sentinel type...
+sig_arg			: ELLIPSIS
+			{
+				// TODO: Construct the sentinel type somehow...
+				report.WriteError (Error.UnimplementedFeatureUsed,
+					"Sentinel types are not currently supported.");
+			}
 			| param_attr type sig_marshal_clause
 			{
 				$$ = new ParameterDefinition (EvaluateType ($2)) {
@@ -2225,7 +2272,12 @@ method_decls		:
 			| method_decls method_decl
 			;
 
-method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
+method_decl		: D_EMITBYTE int32
+			{
+				// TODO: Cecil doesn't support this.
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Raw byte emission is not currently supported.");
+			}
 			| D_MAXSTACK int32
 			{
 				il.Body.MaxStackSize = (int) $2;
@@ -2264,8 +2316,17 @@ method_decl		: D_EMITBYTE int32 // TODO: Cecil doesn't support this.
 			{
 				il.Body.InitLocals = true;
 			}
-			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET // TODO: How do we deal with this?
+			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET
+			{
+				// TODO: Implement exports (Cecil doesn't support these yet).
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Method exports are not currently supported (directive ignored).");
+			}
 			| D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Method exports are not currently supported (directive ignored).");
+			}
 			| D_VTENTRY int32 COLON int32
 			{
 				report.WriteWarning (Warning.UnimplementedFeatureUsed,
@@ -2790,7 +2851,12 @@ instr			: INSTR_NONE
 
 				$$ = instr;
 			}
-			| INSTR_PHI int16_seq // Not actually used.
+			| INSTR_PHI int16_seq
+			{
+				// Not actually used.
+				report.WriteError (Error.InvalidOpCode,
+					"Phi opcodes do not exist.");
+			}
 			;
 
 label			: id
@@ -3838,6 +3904,17 @@ cavalue 		: truefalse
 			| class_ref OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS
 			| class_ref OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS
 			| class_ref OPEN_PARENS int32 CLOSE_PARENS
+			| obscure_cavalue
+			{
+				report.WriteError (Error.UnimplementedFeatureUsed,
+					"Nonstandard CA value format not currently supported.");
+			}
+			;
+
+obscure_cavalue		: class_ref OPEN_PARENS K_INT8 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS
+			| class_ref OPEN_PARENS int32 CLOSE_PARENS
 			;
 
 prop_or_field		: K_PROPERTY
@@ -4080,6 +4157,10 @@ assemblyref_decl	: D_VER int32 COLON int32 COLON int32 COLON int32
 				codegen.CurrentAssemblyReference.Hash = (byte[]) $3;
 			}
 			| K_AUTO // TODO: Implement this.
+			{
+				report.WriteWarning (Warning.UnimplementedFeatureUsed,
+					"Auto syntax for assembly references not implemented.");
+			}
 			| customattr_decl // TODO: How do we set CAs on assembly name refs?
 			| comp_control
 			;
