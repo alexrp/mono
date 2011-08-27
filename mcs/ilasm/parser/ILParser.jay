@@ -941,8 +941,10 @@ class_decl		: method_all
 				is_instance_call = false;
 				is_explicit_call = false;
 
-				foreach (var arg in (List<ParameterDefinition>) $12)
+				foreach (var arg in (List<ParameterDefinition>) $12) {
+					overridingMethod.Parameters.Add (arg);
 					baseMethod.Parameters.Add (arg);
+				}
 
 				var resolvedMethod = overridingMethod.Resolve ();
 
@@ -951,7 +953,7 @@ class_decl		: method_all
 						"Could not resolve overriding method: {0}",
 						overridingMethod);
 
-				resolvedMethod.Overrides.Add ((MethodReference) $2);
+				resolvedMethod.Overrides.Add (baseMethod);
 			}
 			| D_OVERRIDE generic_method_ref K_WITH generic_method_ref
 			{
