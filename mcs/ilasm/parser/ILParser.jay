@@ -1458,8 +1458,8 @@ marshal_info		:
 			}
 			| marshal_type OPEN_BRACKET CLOSE_BRACKET
 			{
-				// This is not Microsoft-compatible. I have no idea how they
-				// calculate the values they emit for jagged arrays.
+				// FIXME: This is not Microsoft-compatible. I have no idea how
+				// they calculate the values they emit for jagged arrays.
 				$$ = new ArrayMarshalInfo {
 					ElementType = (NativeType) $1,
 				};
