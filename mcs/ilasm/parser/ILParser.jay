@@ -1496,7 +1496,7 @@ marshal_info		:
 					ElementType = (VariantType) $2,
 				};
 			}
-			| K_SAFEARRAY safearray_type comp_qstring
+			| K_SAFEARRAY safearray_type COMMA comp_qstring
 			{
 				// TODO: What do we do with the string?
 				$$ = new SafeArrayMarshalInfo {
