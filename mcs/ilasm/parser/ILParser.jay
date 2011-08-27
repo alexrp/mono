@@ -1415,20 +1415,25 @@ call_kind		:
 			| K_UNMANAGED K_FASTCALL	{ $$ = MethodCallingConvention.FastCall; }
 			;
 
-marshal_info		: // TODO: Implement custom marshalers.
+marshal_info		:
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring CLOSE_PARENS
 			{
-				report.WriteWarning (Warning.UnimplementedFeatureUsed,
-					"Custom marshalers are not currently supported (no marshal spec emitted).");
+				var type = codegen.CurrentModule.GetType ((string) $3, true);
 
-				$$ = null;
+				$$ = new CustomMarshalInfo {
+					Cookie = (string) $5,
+					ManagedType = type,
+				};
 			}
 			| K_CUSTOM OPEN_PARENS comp_qstring COMMA comp_qstring COMMA comp_qstring COMMA comp_qstring CLOSE_PARENS
 			{
-				report.WriteWarning (Warning.UnimplementedFeatureUsed,
-					"Custom marshalers are not currently supported (no marshal spec emitted).");
+				// TODO: What do we do with the two last strings?
+				var type = codegen.CurrentModule.GetType ((string) $3, true);
 
-				$$ = null;
+				$$ = new CustomMarshalInfo {
+					Cookie = (string) $5,
+					ManagedType = type,
+				};
 			}
 			| K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET
 			{
