@@ -3418,7 +3418,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.SByte),
-					$6);
+					$7);
 			}
 			| K_INT16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3429,7 +3429,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Int16),
-					$6);
+					$7);
 			}
 			| K_INT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3440,7 +3440,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Int32),
-					$6);
+					$7);
 			}
 			| K_INT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3451,7 +3451,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Int64),
-					$6);
+					$7);
 			}
 			| unsigned_int8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3462,7 +3462,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Byte),
-					$6);
+					$7);
 			}
 			| unsigned_int16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3473,7 +3473,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.UInt16),
-					$6);
+					$7);
 			}
 			| unsigned_int32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3484,7 +3484,7 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.UInt32),
-					$6);
+					$7);
 			}
 			| unsigned_int64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS
 			{
@@ -3495,21 +3495,21 @@ customattr_blob_init	: K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.UInt64),
-					$6);
+					$7);
 			}
 			| K_CHAR OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS int16_seq CLOSE_PARENS
 			{
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Char),
-					$6);
+					$7);
 			}
 			| K_BOOL OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS bool_seq CLOSE_PARENS
 			{
 				custom_attr_blob_seq_length = System.Math.Max (0, (int) $3);
 
 				$$ = new CustomAttributeArgument (new ArrayType (codegen.Corlib.Boolean),
-					$6);
+					$7);
 			}
 			| K_STRING OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS string_seq CLOSE_PARENS
 			{
