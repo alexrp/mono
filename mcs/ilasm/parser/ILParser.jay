@@ -2034,6 +2034,9 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 					}
 				}
 
+				// Use a dummy return type. Since the return type may be
+				// a generic parameter, we delay resolving it until we have
+				// the full list of generic parameters.
 				var method = new MethodDefinition (name, attr,
 					new TypeReference (null, null, null, null)) {
 					CallingConvention = (MethodCallingConvention) $3,
@@ -2931,6 +2934,7 @@ method_ref		: call_conv type declaring_type method_name typars_clause_opt
 			{
 				var declType = EvaluateType ($3);
 
+				// See the note in method_head.
 				var method = new MethodReference ((string) $4,
 					new TypeReference (null, null, null, null), declType) {
 					CallingConvention = (MethodCallingConvention) $1,
