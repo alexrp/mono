@@ -1203,7 +1203,8 @@ type			: type_prefix class_ref
 			{
 				var i = (int) $2;
 
-				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Type));
+				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Type,
+					codegen.CurrentModule));
 			}
 			| BANG id
 			{
@@ -1224,7 +1225,8 @@ type			: type_prefix class_ref
 			{
 				var i = (int) $3;
 
-				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Method));
+				$$ = DeferType (() => new GenericParameter (i, GenericParameterType.Method,
+					codegen.CurrentModule));
 			}
 			| BANG BANG id
 			{
@@ -2827,8 +2829,8 @@ instr			: INSTR_NONE
 			{
 				Instruction instr;
 
-				if ($2 is TypeCreator)
-					instr = il.Create ((OpCode) $1, EvaluateType ($2));
+				if ($2 is TypeReference)
+					instr = il.Create ((OpCode) $1, (TypeReference) $2);
 				else if ($2 is FieldReference)
 					instr = il.Create ((OpCode) $1, (FieldReference) $2);
 				else
