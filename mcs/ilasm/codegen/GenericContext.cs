@@ -28,7 +28,9 @@ using Mono.Cecil;
 
 namespace Mono.ILAsm {
 	internal sealed class GenericContext {
-		public IGenericParameterProvider CurrentProvider { get; set; }
+		public IGenericParameterProvider CurrentTypeProvider { get; set; }
+		
+		public IGenericParameterProvider CurrentMethodProvider { get; set; }
 		
 		public IGenericParameterProvider CurrentLocalTypeProvider { get; set; }
 		
@@ -44,8 +46,8 @@ namespace Mono.ILAsm {
 						if (gp.Name == name)
 							return gp;
 				
-				if (CurrentProvider != null && CurrentProvider is MethodReference)
-					foreach (var gp in CurrentProvider.GenericParameters)
+				if (CurrentMethodProvider != null)
+					foreach (var gp in CurrentMethodProvider.GenericParameters)
 						if (gp.Name == name)
 							return gp;
 				
@@ -56,10 +58,11 @@ namespace Mono.ILAsm {
 						if (gp.Name == name)
 							return gp;
 				
-				if (CurrentProvider != null && CurrentProvider is TypeReference)
-					foreach (var gp in CurrentProvider.GenericParameters)
+				if (CurrentTypeProvider != null)
+					foreach (var gp in CurrentTypeProvider.GenericParameters)
 						if (gp.Name == name)
 							return gp;
+				
 				break;
 			}
 			

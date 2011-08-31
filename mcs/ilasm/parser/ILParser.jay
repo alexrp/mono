@@ -38,6 +38,7 @@ namespace Mono.ILAsm {
 		bool type_attr_visibility_set;
 		bool is_inside_scope;
 		bool custom_attr_unsigned;
+		bool generic_param_in_method;
 		int custom_attr_blob_seq_length;
 		string pinvoke_mod_name;
 		ILProcessor il;
@@ -623,12 +624,12 @@ class_all		: class_head OPEN_BRACE class_decls CLOSE_BRACE
 					codegen.Corlib.Object = codegen.CurrentType;
 
 				codegen.CurrentType = null;
-				codegen.GenericContext.CurrentProvider = null;
+				codegen.GenericContext.CurrentTypeProvider = null;
 				codegen.CurrentCustomAttributeProvider = null;
 
 				if (typedef_stack.Count > 0) {
 					codegen.CurrentType = typedef_stack.Pop ();
-					codegen.GenericContext.CurrentProvider = codegen.CurrentType;
+					codegen.GenericContext.CurrentTypeProvider = codegen.CurrentType;
 				}
 			}
 			;
@@ -667,7 +668,7 @@ class_head		: D_CLASS class_attr comp_name
 				if (nester != null)
 					nester.NestedTypes.Add (codegen.CurrentType);
 
-				codegen.GenericContext.CurrentProvider = codegen.CurrentType;
+				codegen.GenericContext.CurrentTypeProvider = codegen.CurrentType;
 			}
 			  formal_typars_clause
 			{
@@ -818,7 +819,8 @@ formal_typars		: formal_typar_gpar
 formal_typar_gpar	: formal_typar_attr constraints_clause formal_typar
 			{
 				var gp = new GenericParameter ((string) $3,
-					codegen.GenericContext.CurrentProvider) {
+					generic_param_in_method ? codegen.GenericContext.CurrentMethodProvider :
+						codegen.GenericContext.CurrentTypeProvider) {
 					Attributes = (GenericParameterAttributes) $1,
 				};
 
@@ -963,7 +965,10 @@ param_type_decl		: D_PARAM K_TYPE id
 				var name = (string) $3;
 				GenericParameter param = null;
 
-				foreach (var parameter in codegen.GenericContext.CurrentProvider.GenericParameters)
+				var provider = generic_param_in_method ? codegen.GenericContext.CurrentMethodProvider :
+					codegen.GenericContext.CurrentTypeProvider;
+
+				foreach (var parameter in provider.GenericParameters)
 					if (parameter.Name == name)
 						param = parameter;
 
@@ -976,7 +981,9 @@ param_type_decl		: D_PARAM K_TYPE id
 			| D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET
 			{
 				var id = (int) $4; // One-based.
-				var genParams = codegen.GenericContext.CurrentProvider.GenericParameters;
+				var provider = generic_param_in_method ? codegen.GenericContext.CurrentMethodProvider :
+					codegen.GenericContext.CurrentTypeProvider;
+				var genParams = provider.GenericParameters;
 
 				if (id <= 0 || id > genParams.Count)
 					report.WriteError (Error.InvalidGenericParameter,
@@ -1994,7 +2001,8 @@ method_all		: method_head OPEN_BRACE method_decls CLOSE_BRACE
 				codegen.CurrentMethod = null;
 				codegen.CurrentScope = null;
 				codegen.CurrentCustomAttributeProvider = null;
-				codegen.GenericContext.CurrentProvider = codegen.CurrentType;
+				codegen.GenericContext.CurrentTypeProvider = codegen.CurrentType;
+				generic_param_in_method = false;
 				il = null;
 
 				current_labels.Clear ();
@@ -2083,7 +2091,8 @@ method_head		: D_METHOD meth_attr call_conv param_attr type sig_marshal_clause m
 				method.MethodReturnType.MarshalInfo = $6 != null ? (MarshalInfo) $6 : null;
 
 				codegen.CurrentMethod = method;
-				codegen.GenericContext.CurrentProvider = method;
+				codegen.GenericContext.CurrentMethodProvider = method;
+				generic_param_in_method = true;
 			}
 			  formal_typars_clause
 			{
@@ -2572,6 +2581,10 @@ handler_block		: scope_block
 			}
 			;
 
+assign_opt		:
+			| ASSIGN
+			;
+
 instr			: INSTR_NONE
 			{
 				if ($1 == null)
@@ -2796,7 +2809,7 @@ instr			: INSTR_NONE
 
 				$$ = instr;
 			}
-			| INSTR_STRING K_BYTEARRAY ASSIGN bytes_list
+			| INSTR_STRING K_BYTEARRAY assign_opt bytes_list
 			{
 				var text = Encoding.Unicode.GetString ((byte[]) $4);
 				var instr = il.Create ((OpCode) $1, text);
