@@ -330,6 +330,14 @@ namespace Mono.ILDasm {
 				"ildasm [options] <target file>{0}" +
 				"   --about             About the Mono IL disassembler.{0}" +
 				"   --version           Print the version number of the Mono IL disassembler.{0}" +
+				"   /output:file_name   Output disassembly to the specified file.{0}" +
+				"   /text               Print disassembly to console.{0}" +
+				"   /quoteallnames      Quote all metadata names.{0}" +
+				"   /raweh              Print raw exception handlers.{0}" +
+				"   /tokens             Show metadata tokens as comments.{0}" +
+				"   /noil               Don't disassemble. Very useful...{0}" +
+				"   /unicode            Output text as UTF-16.{0}" +
+				"   /utf8               Output text as UTF-8.{0}" +
 				"Options can be of the form -option or /option.",
 				n);
 		}
