@@ -186,8 +186,6 @@ namespace Mono.ILDasm {
 				if (method.IsIL)
 					Writer.Write ("cil ");
 				
-				// TODO: Write optil? Cecil limitation?
-				
 				if (method.IsManaged)
 					Writer.Write ("managed ");
 				
