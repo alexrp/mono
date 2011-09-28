@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -269,7 +270,62 @@ namespace Mono.ILDasm {
 			
 			Writer.WriteLine ();
 			
+			var ehCount = 0;
+			var filterCount = 0;
+			
 			foreach (var instr in method.Body.Instructions) {
+				foreach (var ex in method.Body.ExceptionHandlers) {
+					// TODO: Raw exception handlers.
+					
+					if (instr == ex.TryStart) {
+						ehCount++;
+						
+						Writer.WriteIndentedLine (".try");
+						Writer.OpenBracket ();
+					}
+					
+					if (instr == ex.HandlerStart) {
+						if (ehCount > 0) {
+							ehCount--;
+							
+							Writer.CloseBracket ();
+						}
+						
+						switch (ex.HandlerType) {
+						case ExceptionHandlerType.Catch:
+							Writer.WriteIndentedLine ("catch {0}", Stringize (ex.CatchType));
+							break;
+						case ExceptionHandlerType.Fault:
+							Writer.WriteIndentedLine ("fault");
+							break;
+						case ExceptionHandlerType.Filter:
+							// The handler clause of a filter does not have any
+							// keyword associated with it.
+							if (filterCount > 0) {
+								filterCount--;
+								
+								Writer.CloseBracket ();
+							}
+							break;
+						case ExceptionHandlerType.Finally:
+							Writer.WriteIndentedLine ("finally");
+							break;
+						}
+						
+						Writer.OpenBracket ();
+					}
+					
+					if (instr == ex.FilterStart) {
+						filterCount++;
+						
+						Writer.WriteIndentedLine ("filter");
+						Writer.OpenBracket ();
+					}
+					
+					if (instr == ex.HandlerEnd)
+						Writer.CloseBracket ();
+				}
+				
 				Writer.WriteIndented (Stringize (instr));
 				
 				if (instr.Operand != null) {
@@ -325,6 +381,11 @@ namespace Mono.ILDasm {
 				}
 				
 				Writer.WriteLine ();
+				
+				foreach (var ex in method.Body.ExceptionHandlers)
+					if (instr == method.Body.Instructions [method.Body.Instructions.Count - 1])
+						for (var i = 0; i < ehCount; i++)
+							Writer.CloseBracket ();
 			}
 		}
 	}
