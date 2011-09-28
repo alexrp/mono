@@ -272,56 +272,56 @@ namespace Mono.ILDasm {
 			var filterCount = 0;
 			
 			foreach (var instr in method.Body.Instructions) {
-				foreach (var ex in method.Body.ExceptionHandlers) {
-					// TODO: Raw exception handlers.
-					
-					if (instr == ex.TryStart) {
-						ehCount++;
-						
-						Writer.WriteIndentedLine (".try");
-						Writer.OpenBracket ();
-					}
-					
-					if (instr == ex.HandlerStart) {
-						if (ehCount > 0) {
-							ehCount--;
+				if (!module.RawExceptionHandlers) {
+					foreach (var ex in method.Body.ExceptionHandlers) {
+						if (instr == ex.TryStart) {
+							ehCount++;
 							
-							Writer.CloseBracket ();
+							Writer.WriteIndentedLine (".try");
+							Writer.OpenBracket ();
 						}
 						
-						switch (ex.HandlerType) {
-						case ExceptionHandlerType.Catch:
-							Writer.WriteIndentedLine ("catch {0}", Stringize (ex.CatchType));
-							break;
-						case ExceptionHandlerType.Fault:
-							Writer.WriteIndentedLine ("fault");
-							break;
-						case ExceptionHandlerType.Filter:
-							// The handler clause of a filter does not have any
-							// keyword associated with it.
-							if (filterCount > 0) {
-								filterCount--;
+						if (instr == ex.HandlerStart) {
+							if (ehCount > 0) {
+								ehCount--;
 								
 								Writer.CloseBracket ();
 							}
-							break;
-						case ExceptionHandlerType.Finally:
-							Writer.WriteIndentedLine ("finally");
-							break;
+							
+							switch (ex.HandlerType) {
+							case ExceptionHandlerType.Catch:
+								Writer.WriteIndentedLine ("catch {0}", Stringize (ex.CatchType));
+								break;
+							case ExceptionHandlerType.Fault:
+								Writer.WriteIndentedLine ("fault");
+								break;
+							case ExceptionHandlerType.Filter:
+								// The handler clause of a filter does not have any
+								// keyword associated with it.
+								if (filterCount > 0) {
+									filterCount--;
+									
+									Writer.CloseBracket ();
+								}
+								break;
+							case ExceptionHandlerType.Finally:
+								Writer.WriteIndentedLine ("finally");
+								break;
+							}
+							
+							Writer.OpenBracket ();
 						}
 						
-						Writer.OpenBracket ();
-					}
-					
-					if (instr == ex.FilterStart) {
-						filterCount++;
+						if (instr == ex.FilterStart) {
+							filterCount++;
+							
+							Writer.WriteIndentedLine ("filter");
+							Writer.OpenBracket ();
+						}
 						
-						Writer.WriteIndentedLine ("filter");
-						Writer.OpenBracket ();
+						if (instr == ex.HandlerEnd)
+							Writer.CloseBracket ();
 					}
-					
-					if (instr == ex.HandlerEnd)
-						Writer.CloseBracket ();
 				}
 				
 				Writer.WriteIndented (Stringize (instr));
@@ -380,10 +380,39 @@ namespace Mono.ILDasm {
 				
 				Writer.WriteLine ();
 				
-				foreach (var ex in method.Body.ExceptionHandlers)
-					if (instr == method.Body.Instructions [method.Body.Instructions.Count - 1])
-						for (var i = 0; i < ehCount; i++)
-							Writer.CloseBracket ();
+				if (!module.RawExceptionHandlers)
+					foreach (var ex in method.Body.ExceptionHandlers)
+						if (instr == method.Body.Instructions [method.Body.Instructions.Count - 1])
+							for (var i = 0; i < ehCount; i++)
+								Writer.CloseBracket ();
+			}
+			
+			if (module.RawExceptionHandlers) {
+				if (method.Body.ExceptionHandlers.Count > 0)
+					Writer.WriteLine ();
+				
+				foreach (var ex in method.Body.ExceptionHandlers) {
+					Writer.WriteIndented (".try {0} to {1} ", ex.TryStart.MakeLabel (),
+						ex.TryEnd.MakeLabel ());
+					
+					switch (ex.HandlerType) {
+					case ExceptionHandlerType.Catch:
+						Writer.Write ("catch {0} ", Stringize (ex.CatchType));
+						break;
+					case ExceptionHandlerType.Fault:
+						Writer.Write ("fault ");
+						break;
+					case ExceptionHandlerType.Filter:
+						Writer.Write ("filter {0} ", ex.FilterStart.MakeLabel ());
+						break;
+					case ExceptionHandlerType.Finally:
+						Writer.Write ("finally ");
+						break;
+					}
+					
+					Writer.WriteLine ("handler {0} to {1}", ex.HandlerStart.MakeLabel (),
+						ex.HandlerEnd.Previous.MakeLabel ());
+				}
 			}
 		}
 	}
