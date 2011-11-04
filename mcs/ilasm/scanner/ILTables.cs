@@ -493,14 +493,6 @@ namespace Mono.ILAsm {
 			opCodes ["conv.ovf.u4"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U4);
 			opCodes ["conv.ovf.i8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I8);
 			opCodes ["conv.ovf.u8"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U8);
-			opCodes ["conv.ovf.u1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U1_Un);
-			opCodes ["conv.ovf.u2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U2_Un);
-			opCodes ["conv.ovf.u4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U4_Un);
-			opCodes ["conv.ovf.u8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_U8_Un);
-			opCodes ["conv.ovf.i1.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I1_Un);
-			opCodes ["conv.ovf.i2.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I2_Un);
-			opCodes ["conv.ovf.i4.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I4_Un);
-			opCodes ["conv.ovf.i8.un"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_Ovf_I8_Un);
 			opCodes ["ckfinite"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Ckfinite);
 			opCodes ["conv.u2"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U2);
 			opCodes ["conv.u1"] = new ILToken (Token.INSTR_NONE, Cecil.Cil.OpCodes.Conv_U1);
