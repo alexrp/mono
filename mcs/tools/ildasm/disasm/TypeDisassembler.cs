@@ -267,8 +267,8 @@ namespace Mono.ILDasm {
 				
 				for (var i = 0; i < prop.Parameters.Count; i++) {
 					var param = prop.Parameters [i];
-					Writer.Write ("{0} {1}", Stringize (param.ParameterType),
-						Escape (param.Name));
+					Writer.Write ("{0}{1}", Stringize (param.ParameterType),
+						EscapeOrEmpty (param.Name));
 					
 					if (i != prop.Parameters.Count - 1)
 						Writer.Write (", ");
