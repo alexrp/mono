@@ -200,12 +200,6 @@
     <Folder Include="tests\module-extern\" />
     <Folder Include="tests\namespace\" />
     <Folder Include="tests\" />
-    <Folder Include="tests\" />
-    <Folder Include="tests\" />
-    <Folder Include="tests\" />
-    <Folder Include="tests\" />
-    <Folder Include="tests\" />
-    <Folder Include="tests\" />
     <Folder Include="tests\class-generic\" />
     <Folder Include="tests\data\" />
     <Folder Include="tests\field-generic\" />
