@@ -4489,6 +4489,25 @@ comp_name		: id
 				var str = (string) $1;
 				var nspaces = str.Split ('.');
 
+				if (str.StartsWith (".")) {
+					var dots = string.Empty;
+
+					foreach (var chr in str) {
+						if (chr == '.')
+							dots += chr;
+						else
+							break;
+					}
+
+					var newNamespaces = new string[nspaces.Length - dots.Length];
+
+					for (int i = dots.Length, j = 0; i < nspaces.Length; i++, j++)
+						newNamespaces [j] = nspaces [i];
+
+					newNamespaces [0] = dots + newNamespaces [0];
+					nspaces = newNamespaces;
+				}
+
 				var qn = new QualifiedName {
 					Name = nspaces [nspaces.Length - 1],
 				};
