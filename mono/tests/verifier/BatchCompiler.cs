@@ -59,7 +59,7 @@ namespace Verifier {
 
 		public bool Compile (String src) {
 			try {
-				Mono.ILASM.Driver.Main (new string[] { src });
+				new Mono.ILAsm.Driver ().Run (new string[] { src });
 				string binary = src.Substring (0, src.Length - 3) + ".exe";
 				return File.Exists (binary);
 			} catch (Exception e) {
