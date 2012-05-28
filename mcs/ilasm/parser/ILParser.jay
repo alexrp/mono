@@ -713,7 +713,7 @@ class_head		: D_CLASS class_attr comp_name
 						"System.Object should not have a base type; removed.");
 
 					codegen.CurrentType.BaseType = null;
-				} else
+				} else if (!codegen.CurrentType.IsInterface)
 					codegen.CurrentType.BaseType = baseType;
 
 				foreach (var interf in (List<TypeCreator>) $8)
