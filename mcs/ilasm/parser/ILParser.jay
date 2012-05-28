@@ -719,7 +719,8 @@ class_head		: D_CLASS class_attr comp_name
 				foreach (var interf in (List<TypeCreator>) $8)
 					codegen.CurrentType.Interfaces.Add (interf ());
 
-				codegen.CurrentModule.Types.Add (codegen.CurrentType);
+				if (!codegen.CurrentType.IsNested)
+					codegen.CurrentModule.Types.Add (codegen.CurrentType);
 			}
 			;
 
