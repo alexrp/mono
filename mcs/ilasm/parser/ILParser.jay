@@ -1100,14 +1100,24 @@ mdtoken_type		: mdtoken
 			}
 			;
 
-type_prefix		: K_CLASS
-			| K_VALUE K_CLASS
+value_type_prefix	: K_VALUE K_CLASS
 			| K_VALUETYPE
 			;
 
-type			: type_prefix class_ref
+type			: K_CLASS class_ref
 			{
 				$$ = $2;
+			}
+			| value_type_prefix class_ref
+			{
+				var type = $2;
+
+				$$ = DeferType (() => {
+					var t = EvaluateType (type);
+					t.IsValueType = true;
+
+					return t;
+				});
 			}
 			| type OPEN_BRACKET CLOSE_BRACKET
 			{
