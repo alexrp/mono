@@ -2973,8 +2973,10 @@ method_ref		: call_conv type declaring_type method_name typars_clause_opt
 				if ($5 != null) {
 					var genMethod = new GenericInstanceMethod (method);
 
-					foreach (var typeArg in (List<TypeCreator>) $5)
+					foreach (var typeArg in (List<TypeCreator>) $5) {
+						method.GenericParameters.Add(new GenericParameter(method));
 						genMethod.GenericArguments.Add (typeArg ());
+					}
 
 					method = genMethod;
 				}
