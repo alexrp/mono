@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{3F8EC7C8-7F63-4341-AE4F-859CED50CE07}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>ilasm</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>ilasm</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_2_0</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NET_2_0</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.CompilerServices.SymbolWriter">
+      <HintPath>..\class\lib\net_2_0\Mono.CompilerServices.SymbolWriter.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Security">
+      <HintPath>..\class\lib\net_2_0\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="PEAPI">
+      <HintPath>..\class\lib\net_2_0\PEAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="errors\abs_method4.il" />
+    <None Include="errors\abs_method9.il" />
+    <None Include="errors\bad-bytearray.il" />
+    <None Include="errors\err-abstract.il" />
+    <None Include="errors\err-assembly.il" />
+    <None Include="errors\err-cattr.il" />
+    <None Include="errors\err-custom-mod-1.il" />
+    <None Include="errors\err-dup-datalabel.il" />
+    <None Include="errors\err-dup-label.il" />
+    <None Include="errors\err-field-dup1.il" />
+    <None Include="errors\err-field-dup2.il" />
+    <None Include="errors\err-field-dup3.il" />
+    <None Include="errors\err-field-dup4.il" />
+    <None Include="errors\err-field-dup5.il" />
+    <None Include="errors\err-field-dup6-gen.il" />
+    <None Include="errors\err-field-dup7-gen.il" />
+    <None Include="errors\err-gen-2.il" />
+    <None Include="errors\err-gen-3.il" />
+    <None Include="errors\err-gen-cattr-1.il" />
+    <None Include="errors\err-gen-cattr-2.il" />
+    <None Include="errors\err-gen-cattr-3.il" />
+    <None Include="errors\err-gen-cattr-4.il" />
+    <None Include="errors\err-global.il" />
+    <None Include="errors\err-global2.il" />
+    <None Include="errors\err-internalcall.il" />
+    <None Include="errors\err-invalid-array-bounds.il" />
+    <None Include="errors\err-ldarg.il" />
+    <None Include="errors\err-native.il" />
+    <None Include="errors\err-pinvoke-a.il" />
+    <None Include="errors\err-runtime.il" />
+    <None Include="errors\error-label-a.il" />
+    <None Include="errors\test-perm_fail-1.il" />
+    <None Include="errors\test-perm_fail-2.il" />
+    <None Include="errors\test-perm_fail-3.il" />
+    <None Include="errors\test-perm_fail-4.il" />
+    <None Include="parser\ILParser.jay" />
+    <None Include="tests\abs_method1.il" />
+    <None Include="tests\abs_method10.il" />
+    <None Include="tests\abs_method2.il" />
+    <None Include="tests\abs_method3.il" />
+    <None Include="tests\abs_method5.il" />
+    <None Include="tests\abs_method6.il" />
+    <None Include="tests\abs_method7.il" />
+    <None Include="tests\abs_method8.il" />
+    <None Include="tests\assembly.il" />
+    <None Include="tests\dotted-names.il" />
+    <None Include="tests\field-dup-gen2.il" />
+    <None Include="tests\field-dup1.il" />
+    <None Include="tests\gen-1.il" />
+    <None Include="tests\gen-array1.il" />
+    <None Include="tests\gen-array2.il" />
+    <None Include="tests\gen-constraints1.il" />
+    <None Include="tests\gen-dotted-name.il" />
+    <None Include="tests\gen-extern-type.il" />
+    <None Include="tests\gen-field.il" />
+    <None Include="tests\gen-instr1.il" />
+    <None Include="tests\gen-interf-1.il" />
+    <None Include="tests\gen-interf-2.il" />
+    <None Include="tests\gen-local.il" />
+    <None Include="tests\gen-meth1.il" />
+    <None Include="tests\gen-meth2.il" />
+    <None Include="tests\gen-meth3.il" />
+    <None Include="tests\gen-nested.il" />
+    <None Include="tests\gen-nested2.il" />
+    <None Include="tests\gen-nested3.il" />
+    <None Include="tests\gen-recur.il" />
+    <None Include="tests\gen-struct.il" />
+    <None Include="tests\generics-b.il" />
+    <None Include="tests\generics-c.il" />
+    <None Include="tests\generics-d.il" />
+    <None Include="tests\generics-variance.il" />
+    <None Include="tests\global.il" />
+    <None Include="tests\global2.il" />
+    <None Include="tests\invalid-field.il" />
+    <None Include="tests\invalid-method.il" />
+    <None Include="tests\nested.il" />
+    <None Include="tests\sn.snk" />
+    <None Include="tests\test-1.il" />
+    <None Include="tests\test-10.il" />
+    <None Include="tests\test-11.il" />
+    <None Include="tests\test-12.il" />
+    <None Include="tests\test-13.il" />
+    <None Include="tests\test-14.il" />
+    <None Include="tests\test-15.il" />
+    <None Include="tests\test-16.il" />
+    <None Include="tests\test-17.il" />
+    <None Include="tests\test-18.il" />
+    <None Include="tests\test-19.il" />
+    <None Include="tests\test-2.il" />
+    <None Include="tests\test-20.il" />
+    <None Include="tests\test-21.il" />
+    <None Include="tests\test-22.il" />
+    <None Include="tests\test-23.il" />
+    <None Include="tests\test-24.il" />
+    <None Include="tests\test-25.il" />
+    <None Include="tests\test-26.il" />
+    <None Include="tests\test-27.il" />
+    <None Include="tests\test-28.il" />
+    <None Include="tests\test-3.il" />
+    <None Include="tests\test-30.il" />
+    <None Include="tests\test-31.il" />
+    <None Include="tests\test-32.il" />
+    <None Include="tests\test-33.il" />
+    <None Include="tests\test-34.il" />
+    <None Include="tests\test-4.il" />
+    <None Include="tests\test-5.il" />
+    <None Include="tests\test-6.il" />
+    <None Include="tests\test-7.il" />
+    <None Include="tests\test-8.il" />
+    <None Include="tests\test-9.il" />
+    <None Include="tests\test-array-2.il" />
+    <None Include="tests\test-array.il" />
+    <None Include="tests\test-assembly2.il" />
+    <None Include="tests\test-bounded-array.il" />
+    <None Include="tests\test-byref.il" />
+    <None Include="tests\test-cattr-1.il" />
+    <None Include="tests\test-cattr-declsec.il" />
+    <None Include="tests\test-comment-a.il" />
+    <None Include="tests\test-custom-mod-1.il" />
+    <None Include="tests\test-data-a.il" />
+    <None Include="tests\test-data-b.il" />
+    <None Include="tests\test-data-c.il" />
+    <None Include="tests\test-emitbyte.il" />
+    <None Include="tests\test-field-init.il" />
+    <None Include="tests\test-fixedarray.il" />
+    <None Include="tests\test-gen-meth-a.il" />
+    <None Include="tests\test-int64.il" />
+    <None Include="tests\test-ldcr-bytes.il" />
+    <None Include="tests\test-marshal-array.il" />
+    <None Include="tests\test-marshal.il" />
+    <None Include="tests\test-method-pointer-in-signature.il" />
+    <None Include="tests\test-method-pointer.il" />
+    <None Include="tests\test-modifiers.il" />
+    <None Include="tests\test-module-cattr.il" />
+    <None Include="tests\test-module.il" />
+    <None Include="tests\test-no-body.il" />
+    <None Include="tests\test-nonsealed-valueclass.il" />
+    <None Include="tests\test-override-1.il" />
+    <None Include="tests\test-override-2.il" />
+    <None Include="tests\test-perm_pass-1.il" />
+    <None Include="tests\test-perm_pass-2.il" />
+    <None Include="tests\test-perm_pass-3.il" />
+    <None Include="tests\test-pinvoke-a.il" />
+    <None Include="tests\test-pinvoke-b.il" />
+    <None Include="tests\test-safearray.il" />
+    <None Include="tests\test-sec-suppress.il" />
+    <None Include="tests\test-seh-a.il" />
+    <None Include="tests\test-seh-b.il" />
+    <None Include="tests\test-seh-c.il" />
+    <None Include="tests\test-seh-d.il" />
+    <None Include="tests\test-seh-e.il" />
+    <None Include="tests\test-sn-key.il" />
+    <None Include="tests\test-sn-module.il" />
+    <None Include="tests\test-sn.il" />
+    <None Include="tests\test-uint.il" />
+    <None Include="tests\test-pinvoke.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\build\common\Consts.cs">
+      <Link>Consts.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="codegen\Assembly.cs" />
+    <None Include="codegen\AssemblyNameStore.cs" />
+    <Compile Include="codegen\BaseClassRef.cs" />
+    <Compile Include="codegen\BaseGenericTypeRef.cs" />
+    <Compile Include="codegen\BaseMethodRef.cs" />
+    <Compile Include="codegen\BaseTypeRef.cs" />
+    <Compile Include="codegen\BranchInstr.cs" />
+    <Compile Include="codegen\CalliInstr.cs" />
+    <Compile Include="codegen\CatchBlock.cs" />
+    <None Include="codegen\Class.cs" />
+    <None Include="codegen\ClassTable.cs" />
+    <Compile Include="codegen\CodeGen.cs" />
+    <Compile Include="codegen\CustomAttr.cs" />
+    <Compile Include="codegen\DataDef.cs" />
+    <Compile Include="codegen\DebuggingInfo.cs" />
+    <Compile Include="codegen\DeclSecurity.cs" />
+    <Compile Include="codegen\EmitByteInstr.cs" />
+    <Compile Include="codegen\EventDef.cs" />
+    <Compile Include="codegen\ExternFieldRef.cs" />
+    <Compile Include="codegen\ExternMethodRef.cs" />
+    <Compile Include="codegen\ExternTable.cs" />
+    <Compile Include="codegen\ExternTypeRef.cs" />
+    <None Include="codegen\ExternTypeRefInst.cs" />
+    <Compile Include="codegen\FaultBlock.cs" />
+    <Compile Include="codegen\FeatureAttr.cs" />
+    <Compile Include="codegen\FieldDef.cs" />
+    <Compile Include="codegen\FieldInstr.cs" />
+    <Compile Include="codegen\FieldRef.cs" />
+    <None Include="codegen\FieldTable.cs" />
+    <Compile Include="codegen\FileRef.cs" />
+    <Compile Include="codegen\FilterBlock.cs" />
+    <Compile Include="codegen\FinallyBlock.cs" />
+    <Compile Include="codegen\GenericArguments.cs" />
+    <Compile Include="codegen\GenericMethodRef.cs" />
+    <Compile Include="codegen\GenericMethodSig.cs" />
+    <Compile Include="codegen\GenericParameters.cs" />
+    <Compile Include="codegen\GenericParamRef.cs" />
+    <Compile Include="codegen\GenericTypeInst.cs" />
+    <Compile Include="codegen\GlobalFieldRef.cs" />
+    <Compile Include="codegen\GlobalMethodRef.cs" />
+    <Compile Include="codegen\HandlerBlock.cs" />
+    <None Include="codegen\IClassRef.cs" />
+    <Compile Include="codegen\IFieldRef.cs" />
+    <Compile Include="codegen\IInstr.cs" />
+    <Compile Include="codegen\IMethodRef.cs" />
+    <Compile Include="codegen\InstrTable.cs" />
+    <Compile Include="codegen\IntInstr.cs" />
+    <Compile Include="codegen\ISehClause.cs" />
+    <None Include="codegen\ITypeRef.cs" />
+    <Compile Include="codegen\LabelInfo.cs" />
+    <Compile Include="codegen\LdcInstr.cs" />
+    <Compile Include="codegen\LdstrInstr.cs" />
+    <Compile Include="codegen\LdtokenInstr.cs" />
+    <Compile Include="codegen\Local.cs" />
+    <None Include="codegen\Location.cs" />
+    <None Include="codegen\Method.cs" />
+    <Compile Include="codegen\MethodDef.cs" />
+    <Compile Include="codegen\MethodInstr.cs" />
+    <Compile Include="codegen\MethodPointerTypeRef.cs" />
+    <Compile Include="codegen\MethodRef.cs" />
+    <None Include="codegen\MethodTable.cs" />
+    <Compile Include="codegen\MiscInstr.cs" />
+    <Compile Include="codegen\ModifiableType.cs" />
+    <Compile Include="codegen\Module.cs" />
+    <Compile Include="codegen\ParamDef.cs" />
+    <Compile Include="codegen\PeapiTypeRef.cs" />
+    <Compile Include="codegen\Permission.cs" />
+    <Compile Include="codegen\PermissionMember.cs" />
+    <Compile Include="codegen\PermissionSet.cs" />
+    <Compile Include="codegen\PrimitiveTypeRef.cs" />
+    <Compile Include="codegen\PropertyDef.cs" />
+    <Compile Include="codegen\Sentinel.cs" />
+    <Compile Include="codegen\SimpInstr.cs" />
+    <Compile Include="codegen\SwitchInstr.cs" />
+    <Compile Include="codegen\TryBlock.cs" />
+    <Compile Include="codegen\TypeDef.cs" />
+    <Compile Include="codegen\TypeInstr.cs" />
+    <Compile Include="codegen\TypeManager.cs" />
+    <Compile Include="codegen\TypeRef.cs" />
+    <Compile Include="codegen\Types.cs" />
+    <Compile Include="codegen\TypeSpecFieldRef.cs" />
+    <Compile Include="codegen\TypeSpecMethodRef.cs" />
+    <Compile Include="Driver.cs" />
+    <Compile Include="ILParser.cs" />
+    <None Include="Main.cs" />
+    <Compile Include="parser\ScannerAdapter.cs" />
+    <Compile Include="Report.cs" />
+    <Compile Include="scanner\ILReader.cs" />
+    <Compile Include="scanner\ILSyntaxError.cs" />
+    <Compile Include="scanner\ILTables.cs" />
+    <Compile Include="scanner\ILToken.cs" />
+    <Compile Include="scanner\ILTokenizer.cs" />
+    <Compile Include="scanner\ILTokenizingException.cs" />
+    <Compile Include="scanner\InstrToken.cs" />
+    <Compile Include="scanner\ITokenStream.cs" />
+    <Compile Include="scanner\Location.cs" />
+    <Compile Include="scanner\NumberHelper.cs" />
+    <Compile Include="scanner\StringHelper.cs" />
+    <Compile Include="scanner\StringHelperBase.cs" />
+    <None Include="tests\one.cs" />
+    <None Include="tests\oneg.cs" />
+    <None Include="tests\two.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>

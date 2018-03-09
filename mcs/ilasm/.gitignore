@@ -1,1 +1,7 @@
 /ILParser.cs
+bin/*
+obj/*
+*.user
+*.suo
+*.userprefs
+*.pidb
