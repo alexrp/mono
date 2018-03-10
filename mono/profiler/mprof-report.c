@@ -2085,6 +2085,8 @@ decode_bt (ProfContext *ctx, MethodDesc** sframes, int *size, unsigned char *p, 
 		} else {
 			frames [i] = lookup_method (ptr_base + ptrdiff);
 		}
+		if (ctx->data_version > 16)
+			decode_uleb128 (p, &p); /* il offset */
 	}
 	*size = count;
 	*endp = p;
@@ -2922,10 +2924,10 @@ decode_buffer (ProfContext *ctx)
 						method = lookup_method (method_base);
 						if (debug)
 							fprintf (outfile, "sample hit bt %d: %s\n", i, method->name);
-						if (ctx->data_version < 13) {
+						if (ctx->data_version < 13 || ctx->data_version > 16)
 							decode_sleb128 (p, &p); /* il offset */
+						if (ctx->data_version < 13)
 							decode_sleb128 (p, &p); /* native offset */
-						}
 					}
 				}
 			} else if (subtype == TYPE_SAMPLE_USYM) {

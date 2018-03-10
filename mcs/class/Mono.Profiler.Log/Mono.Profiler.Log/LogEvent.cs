@@ -51,10 +51,10 @@ namespace Mono.Profiler.Log {
 						var elemIndent = propIndent + Indent;
 						var elemHeader = $"[{i}] = ";
 
-						if (type.IsClass && type != typeof (string))
-							ToString (elem, result, elemIndent, $"{elemHeader}{type.Name}", level + 1);
-						else
+						if (type.IsPrimitive || type.IsEnum || type == typeof (string))
 							result.AppendLine ($"{elemIndent}{elemHeader}{elem}");
+						else
+							ToString (elem, result, elemIndent, $"{elemHeader}{type.Name}", level + 1);
 					}
 
 					result.AppendLine ($"{propIndent}}}");

@@ -7,10 +7,10 @@ using System;
 namespace Mono.Profiler.Log {
 
 	public sealed class LogStreamHeader {
-		
+
 		const int MinVersion = 13;
 
-		const int MaxVersion = 16;
+		const int MaxVersion = 17;
 
 		const int Id = 0x4d505a01;
 

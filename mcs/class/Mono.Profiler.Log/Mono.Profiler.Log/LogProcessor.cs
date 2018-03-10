@@ -131,7 +131,7 @@ namespace Mono.Profiler.Log {
 						VTablePointer = StreamHeader.FormatVersion >= 15 ? ReadPointer () : 0,
 						ObjectPointer = ReadObject (),
 						ObjectSize = (long) _reader.ReadULeb128 (),
-						Backtrace = ReadBacktrace (extType == LogEventType.AllocationBacktrace),
+						Backtrace = ReadManagedBacktrace (extType == LogEventType.AllocationBacktrace),
 					};
 					break;
 				default:
@@ -169,7 +169,7 @@ namespace Mono.Profiler.Log {
 						Type = (LogGCHandleType) _reader.ReadULeb128 (),
 						Handle = (long) _reader.ReadULeb128 (),
 						ObjectPointer = ReadObject (),
-						Backtrace = ReadBacktrace (extType == LogEventType.GCHandleCreationBacktrace),
+						Backtrace = ReadManagedBacktrace (extType == LogEventType.GCHandleCreationBacktrace),
 					};
 					break;
 				case LogEventType.GCHandleDeletionNoBacktrace:
@@ -177,7 +177,7 @@ namespace Mono.Profiler.Log {
 					ev = new GCHandleDeletionEvent {
 						Type = (LogGCHandleType) _reader.ReadULeb128 (),
 						Handle = (long) _reader.ReadULeb128 (),
-						Backtrace = ReadBacktrace (extType == LogEventType.GCHandleDeletionBacktrace),
+						Backtrace = ReadManagedBacktrace (extType == LogEventType.GCHandleDeletionBacktrace),
 					};
 					break;
 				case LogEventType.GCFinalizeBegin:
@@ -364,7 +364,7 @@ namespace Mono.Profiler.Log {
 				case LogEventType.ExceptionThrowBacktrace:
 					ev = new ThrowEvent {
 						ObjectPointer = ReadObject (),
-						Backtrace = ReadBacktrace (extType == LogEventType.ExceptionThrowBacktrace),
+						Backtrace = ReadManagedBacktrace (extType == LogEventType.ExceptionThrowBacktrace),
 					};
 					break;
 				case LogEventType.ExceptionClause:
@@ -395,7 +395,7 @@ namespace Mono.Profiler.Log {
 						        (LogMonitorEvent) _reader.ReadByte () :
 						        (LogMonitorEvent) ((((byte) type & 0xf0) >> 4) & 0x3),
 						ObjectPointer = ReadObject (),
-						Backtrace = ReadBacktrace (extType == LogEventType.MonitorBacktrace),
+						Backtrace = ReadManagedBacktrace (extType == LogEventType.MonitorBacktrace),
 					};
 					break;
 				default:
@@ -486,8 +486,8 @@ namespace Mono.Profiler.Log {
 					}
 					ev = new SampleHitEvent {
 						ThreadId = ReadPointer (),
-						UnmanagedBacktrace = ReadBacktrace (true, false),
-						ManagedBacktrace = ReadBacktrace (true).Reverse ().ToArray (),
+						UnmanagedBacktrace = ReadUnmanagedBacktrace (),
+						ManagedBacktrace = ReadManagedBacktrace (true, true),
 					};
 					break;
 				case LogEventType.SampleUnmanagedSymbol:
@@ -647,15 +647,32 @@ namespace Mono.Profiler.Log {
 			return _bufferHeader.CurrentTime += _reader.ReadULeb128 ();
 		}
 
-		IReadOnlyList<long> ReadBacktrace (bool actuallyRead, bool managed = true)
+		IReadOnlyList<long> ReadUnmanagedBacktrace ()
 		{
-			if (!actuallyRead)
-				return Array.Empty<long> ();
-
 			var list = new long [(int) _reader.ReadULeb128 ()];
 
 			for (var i = 0; i < list.Length; i++)
-				list [i] = managed ? ReadMethod () : ReadPointer ();
+				list [i] = ReadPointer ();
+
+			return list;
+		}
+
+		IReadOnlyList<LogBacktraceFrame> ReadManagedBacktrace (bool actuallyRead, bool reverse = false)
+		{
+			if (!actuallyRead)
+				return Array.Empty<LogBacktraceFrame> ();
+
+			var list = new LogBacktraceFrame [(int) _reader.ReadULeb128 ()];
+
+			for (var i = 0; i < list.Length; i++) {
+				list [i] = new LogBacktraceFrame {
+					MethodPointer = ReadMethod (),
+					ILOffset = StreamHeader.FormatVersion >= 17 ? (long) _reader.ReadULeb128 () : 0,
+				};
+			}
+
+			if (reverse)
+				list.Reverse ();
 
 			return list;
 		}

@@ -17,6 +17,7 @@
 #include <mono/metadata/loader.h>
 #include <mono/metadata/metadata-internals.h>
 #include <mono/metadata/mono-config.h>
+#include <mono/metadata/mono-debug.h>
 #include <mono/metadata/mono-gc.h>
 #include <mono/metadata/mono-perfcounters.h>
 #include <mono/metadata/object-internals.h>
@@ -25,6 +26,7 @@
 #include <mono/metadata/threads.h>
 #include <mono/metadata/threads-types.h>
 #include <mono/mini/jit.h>
+#include <mono/mini/seq-points.h>
 #include <mono/utils/atomic.h>
 #include <mono/utils/hazard-pointer.h>
 #include <mono/utils/lock-free-alloc.h>
@@ -1501,8 +1503,12 @@ emit_bt (LogBuffer *logbuffer, FrameData *data)
 {
 	emit_value (logbuffer, data->count);
 
-	while (data->count)
-		emit_method (logbuffer, data->methods [--data->count]);
+	while (data->count) {
+		--data->count;
+
+		emit_method (logbuffer, data->methods [data->count]);
+		emit_value (logbuffer, data->il_offsets [data->count]);
+	}
 }
 
 static void
@@ -1526,7 +1532,8 @@ gc_alloc (MonoProfiler *prof, MonoObject *obj)
 		(do_bt ? (
 			LEB128_SIZE /* count */ +
 			data.count * (
-				LEB128_SIZE /* method */
+				LEB128_SIZE /* method */ +
+				LEB128_SIZE /* offset */
 			)
 		) : 0)
 	);
@@ -1583,7 +1590,8 @@ gc_handle (MonoProfiler *prof, int op, MonoGCHandleType type, uint32_t handle, M
 		(do_bt ? (
 			LEB128_SIZE /* count */ +
 			data.count * (
-				LEB128_SIZE /* method */
+				LEB128_SIZE /* method */ +
+				LEB128_SIZE /* offset */
 			)
 		) : 0)
 	);
@@ -2008,7 +2016,8 @@ throw_exc (MonoProfiler *prof, MonoObject *object)
 		(do_bt ? (
 			LEB128_SIZE /* count */ +
 			data.count * (
-				LEB128_SIZE /* method */
+				LEB128_SIZE /* method */ +
+				LEB128_SIZE /* offset */
 			)
 		) : 0)
 	);
@@ -2058,7 +2067,8 @@ monitor_event (MonoProfiler *profiler, MonoObject *object, MonoProfilerMonitorEv
 		(do_bt ? (
 			LEB128_SIZE /* count */ +
 			data.count * (
-				LEB128_SIZE /* method */
+				LEB128_SIZE /* method */ +
+				LEB128_SIZE /* offset */
 			)
 		) : 0)
 	);
@@ -2247,7 +2257,8 @@ typedef struct {
 	MonoMethod *method;
 	MonoDomain *domain;
 	void *base_address;
-	int offset;
+	int native_offset;
+	int il_offset;
 } AsyncFrameInfo;
 
 typedef struct {
@@ -2270,7 +2281,7 @@ async_walk_stack (MonoMethod *method, MonoDomain *domain, void *base_address, in
 		sample->frames [i].method = method;
 		sample->frames [i].domain = domain;
 		sample->frames [i].base_address = base_address;
-		sample->frames [i].offset = offset;
+		sample->frames [i].native_offset = offset;
 
 		sample->count++;
 	}
@@ -3437,6 +3448,7 @@ handle_dumper_queue_entry (void)
 			MonoMethod *method = sample->frames [i].method;
 			MonoDomain *domain = sample->frames [i].domain;
 			void *address = sample->frames [i].base_address;
+			int offset = sample->frames [i].native_offset;
 
 			if (!method) {
 				g_assert (domain && "What happened to the domain pointer?");
@@ -3447,6 +3459,18 @@ handle_dumper_queue_entry (void)
 				if (ji)
 					sample->frames [i].method = mono_jit_info_get_method (ji);
 			}
+
+			MonoDebugSourceLocation *source = mono_debug_lookup_source_location (method, offset, domain);
+
+			if (!source) {
+				SeqPoint sp;
+
+				if (mono_find_prev_seq_point_for_native_offset (domain, method, offset, NULL, &sp))
+					sample->frames [i].il_offset = sp.il_offset;
+			} else
+				sample->frames [i].il_offset = source->il_offset;
+
+			mono_debug_free_source_location (source);
 		}
 
 		ENTER_LOG (&sample_hits_ctr, logbuffer,
@@ -3458,7 +3482,8 @@ handle_dumper_queue_entry (void)
 			) +
 			LEB128_SIZE /* managed count */ +
 			sample->count * (
-				LEB128_SIZE /* method */
+				LEB128_SIZE /* method */ +
+				LEB128_SIZE /* offset */
 			)
 		);
 
@@ -3475,8 +3500,10 @@ handle_dumper_queue_entry (void)
 		/* new in data version 6 */
 		emit_uvalue (logbuffer, sample->count);
 
-		for (int i = 0; i < sample->count; ++i)
+		for (int i = 0; i < sample->count; ++i) {
 			emit_method (logbuffer, sample->frames [i].method);
+			emit_value (logbuffer, sample->frames [i].il_offset);
+		}
 
 		EXIT_LOG;
 

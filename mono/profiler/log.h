@@ -9,7 +9,7 @@
 #define LOG_HEADER_ID 0x4D505A01
 #define LOG_VERSION_MAJOR 3
 #define LOG_VERSION_MINOR 0
-#define LOG_DATA_VERSION 16
+#define LOG_DATA_VERSION 17
 
 /*
  * Changes in major/minor versions:
@@ -85,6 +85,7 @@
                added generation field to TYPE_HEAO_OBJECT
                added TYPE_AOT_ID
                removed TYPE_SAMPLE_UBIN
+ * version 17: added IL offsets to all managed backtraces
  */
 
 /*
@@ -160,9 +161,11 @@
  * strings are represented as a 0-terminated utf8 sequence.
  *
  * backtrace format:
- * [num: uleb128] number of frames following
- * [frame: sleb128]* mum MonoMethod* as a pointer difference from the last such
- * pointer or the buffer method_base
+ * [num_frames: uleb128] number of frames following
+ * for i = 0 to num_frames
+ * 	[method: sleb128] MonoMethod* as a pointer difference from the last such
+ * 	pointer or the buffer method_base
+ * 	[offset: uleb128] the IL offset within the method
  *
  * type alloc format:
  * type: TYPE_ALLOC

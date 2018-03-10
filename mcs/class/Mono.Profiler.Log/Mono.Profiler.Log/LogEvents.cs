@@ -220,7 +220,7 @@ namespace Mono.Profiler.Log {
 
 		public long ObjectSize { get; internal set; }
 
-		public IReadOnlyList<long> Backtrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> Backtrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
@@ -368,7 +368,7 @@ namespace Mono.Profiler.Log {
 
 		public long ObjectPointer { get; internal set; }
 
-		public IReadOnlyList<long> Backtrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> Backtrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
@@ -382,7 +382,7 @@ namespace Mono.Profiler.Log {
 
 		public long Handle { get; internal set; }
 
-		public IReadOnlyList<long> Backtrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> Backtrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
@@ -430,7 +430,7 @@ namespace Mono.Profiler.Log {
 
 		public long ObjectPointer { get; internal set; }
 
-		public IReadOnlyList<long> Backtrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> Backtrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
@@ -490,7 +490,7 @@ namespace Mono.Profiler.Log {
 
 		public long ObjectPointer { get; internal set; }
 
-		public IReadOnlyList<long> Backtrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> Backtrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
@@ -504,7 +504,7 @@ namespace Mono.Profiler.Log {
 
 		public IReadOnlyList<long> UnmanagedBacktrace { get; internal set; }
 
-		public IReadOnlyList<long> ManagedBacktrace { get; internal set; }
+		public IReadOnlyList<LogBacktraceFrame> ManagedBacktrace { get; internal set; }
 
 		internal override void Accept (LogEventVisitor visitor)
 		{
