@@ -311,7 +311,6 @@ typedef struct MonoInst MonoInst;
 typedef struct MonoCallInst MonoCallInst;
 typedef struct MonoCallArgParm MonoCallArgParm;
 typedef struct MonoMethodVar MonoMethodVar;
-typedef struct MonoBasicBlock MonoBasicBlock;
 typedef struct MonoLMF MonoLMF;
 typedef struct MonoSpillInfo MonoSpillInfo;
 
@@ -373,7 +372,7 @@ typedef struct {
 	/* The next offset after the call instruction */
 	int pc_offset;
 	/* The basic block containing the call site */
-	MonoBasicBlock *bb;
+	struct _MonoBasicBlock *bb;
 	/* 
 	 * The set of variables live at the call site.
 	 * Has length cfg->num_varinfo in bits.
@@ -396,11 +395,11 @@ typedef struct {
  * midstream, ie, execution of a basic block (or extened bb) always start
  * at the beginning of the block, never in the middle.
  */
-struct MonoBasicBlock {
+typedef struct _MonoBasicBlock {
 	MonoInst *last_ins;
 
 	/* the next basic block in the order it appears in IL */
-	MonoBasicBlock *next_bb;
+	struct _MonoBasicBlock *next_bb;
 
 	/*
 	 * Before instruction selection it is the first tree in the
@@ -418,8 +417,8 @@ struct MonoBasicBlock {
 	/* Basic blocks: incoming and outgoing counts and pointers */
 	/* Each bb should only appear once in each array */
 	gint16 out_count, in_count;
-	MonoBasicBlock **in_bb;
-	MonoBasicBlock **out_bb;
+	struct _MonoBasicBlock **in_bb;
+	struct _MonoBasicBlock **out_bb;
 
 	/* Points to the start of the CIL code that initiated this BB */
 	unsigned char* cil_code;
@@ -444,10 +443,10 @@ struct MonoBasicBlock {
 	 */
 	MonoBitSet *dominators;
 	MonoBitSet *dfrontier;
-	MonoBasicBlock *idom;
+	struct _MonoBasicBlock *idom;
 	GSList *dominated;
 	/* fast dominator algorithm */
-	MonoBasicBlock *df_parent, *ancestor, *child, *label;
+	struct _MonoBasicBlock *df_parent, *ancestor, *child, *label;
 	int size, sdom, idomn;
 	
 	/* loop nesting and recognition */
@@ -536,7 +535,7 @@ struct MonoBasicBlock {
 
 	/* The current symbolic register number, used in local register allocation. */
 	guint32 max_vreg;
-};
+} MonoBasicBlock;
 
 /* BBlock flags */
 enum {
@@ -1145,7 +1144,7 @@ typedef enum {
 /*
  * Control Flow Graph and compilation unit information
  */
-typedef struct {
+typedef struct _MonoCompile {
 	MonoMethod      *method;
 	MonoMethodHeader *header;
 	MonoMemPool     *mempool;
