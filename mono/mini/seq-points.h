@@ -8,6 +8,10 @@
 #define __MONO_SEQ_POINTS_H__
 
 #include <mono/metadata/seq-points-data.h>
+#include <mono/utils/mono-publib.h>
+
+typedef struct _MonoBasicBlock MonoBasicBlock;
+typedef struct _MonoCompile MonoCompile;
 
 void
 mono_save_seq_point_info (MonoCompile *cfg);
@@ -18,7 +22,7 @@ mono_get_seq_points (MonoDomain *domain, MonoMethod *method);
 gboolean
 mono_find_next_seq_point_for_native_offset (MonoDomain *domain, MonoMethod *method, gint32 native_offset, MonoSeqPointInfo **info, SeqPoint* seq_point);
 
-gboolean
+MONO_PROFILER_API gboolean
 mono_find_prev_seq_point_for_native_offset (MonoDomain *domain, MonoMethod *method, gint32 native_offset, MonoSeqPointInfo **info, SeqPoint* seq_point);
 
 gboolean
