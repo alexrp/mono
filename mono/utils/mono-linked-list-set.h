@@ -12,7 +12,7 @@
 #define __MONO_SPLIT_ORDERED_LIST_H__
 
 #include <mono/utils/hazard-pointer.h>
-#include <mono/utils/mono-membar.h>
+#include <mono/utils/mono-atomic.h>
 
 typedef struct _MonoLinkedListSetNode MonoLinkedListSetNode;
 
@@ -115,7 +115,7 @@ mono_lls_filter_accept_all (gpointer elem, gpointer dummy)
 				} \
 				MonoLinkedListSetNode *next__ = (MonoLinkedListSetNode *) mono_lls_get_hazardous_pointer_with_mask ((gpointer *) &cur__->next, hp__, 0); \
 				uintptr_t ckey__ = cur__->key; \
-				mono_memory_read_barrier (); \
+				mono_atomic_fence (MONO_ATOMIC_STRONG); \
 				if (*prev__ != cur__) { \
 					restart__ = TRUE; \
 					break; \
@@ -149,7 +149,7 @@ mono_lls_filter_accept_all (gpointer elem, gpointer dummy)
 				} else { \
 					next__ = (MonoLinkedListSetNode *) mono_lls_pointer_unmask (next__); \
 					if (mono_atomic_cas_ptr ((volatile gpointer *) prev__, next__, cur__) == cur__) { \
-						mono_memory_write_barrier (); \
+						mono_atomic_fence (MONO_ATOMIC_STRONG); \
 						mono_hazard_pointer_clear (hp__, 1); \
 						if (list__->free_node_func) { \
 							mono_thread_hazardous_queue_free (cur__, list__->free_node_func); \

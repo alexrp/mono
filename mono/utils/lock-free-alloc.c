@@ -66,14 +66,13 @@
 #include <glib.h>
 #include <stdlib.h>
 
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 #ifdef SGEN_WITHOUT_MONO
 #include <mono/sgen/sgen-gc.h>
 #include <mono/sgen/sgen-client.h>
 #else
 #include <mono/utils/mono-mmap.h>
 #endif
-#include <mono/utils/mono-membar.h>
 #include <mono/utils/hazard-pointer.h>
 #include <mono/utils/lock-free-queue.h>
 
@@ -193,7 +192,7 @@ desc_alloc (MonoMemAccountType type)
 				d = next;
 			}
 
-			mono_memory_write_barrier ();
+			mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 			success = (mono_atomic_cas_ptr ((volatile gpointer *)&desc_avail, desc->next, NULL) == NULL);
 
@@ -225,7 +224,7 @@ desc_enqueue_avail (gpointer _desc)
 	do {
 		old_head = desc_avail;
 		desc->next = old_head;
-		mono_memory_write_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 	} while (mono_atomic_cas_ptr ((volatile gpointer *)&desc_avail, desc, old_head) != old_head);
 }
 
@@ -368,7 +367,7 @@ alloc_from_active_or_partial (MonoLockFreeAllocator *heap)
 
 		addr = (char*)desc->sb + old_anchor.data.avail * desc->slot_size;
 
-		mono_memory_read_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 		next = *(unsigned int*)addr;
 		g_assert (next < LOCK_FREE_ALLOC_SB_USABLE_SIZE (desc->block_size) / desc->slot_size);
@@ -419,7 +418,7 @@ alloc_from_new_sb (MonoLockFreeAllocator *heap)
 
 	*(unsigned int*)((char*)desc->sb + (count - 1) * slot_size) = 0;
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	/* Make it active or free it again. */
 	if (mono_atomic_cas_ptr ((volatile gpointer *)&heap->active, desc, NULL) == NULL) {

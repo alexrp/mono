@@ -17,7 +17,7 @@
 
 #include <mono/utils/mono-linked-list-set.h>
 
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 
 static gpointer
 mask (gpointer n, uintptr_t bit)
@@ -40,7 +40,7 @@ mono_lls_get_hazardous_pointer_with_mask (gpointer volatile *pp, MonoThreadHazar
 		/* Make it hazardous */
 		mono_hazard_pointer_set (hp, hazard_index, mono_lls_pointer_unmask (p));
 
-		mono_memory_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 		/* Check that it's still the same.  If not, try
 		   again. */
@@ -102,7 +102,7 @@ try_again:
 		 * after reading cur->next above, so we need a read
 		 * barrier.
 		 */
-		mono_memory_read_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 		if (*prev != cur)
 			goto try_again;
@@ -117,7 +117,7 @@ try_again:
 			next = (MonoLinkedListSetNode *) mono_lls_pointer_unmask (next);
 			if (mono_atomic_cas_ptr ((volatile gpointer*)prev, next, cur) == cur) {
 				/* The hazard pointer must be cleared after the CAS. */
-				mono_memory_write_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				mono_hazard_pointer_clear (hp, 1);
 				if (list->free_node_func)
 					mono_thread_hazardous_queue_free (cur, list->free_node_func);
@@ -141,7 +141,7 @@ mono_lls_insert (MonoLinkedListSet *list, MonoThreadHazardPointers *hp, MonoLink
 	MonoLinkedListSetNode *cur, **prev;
 	/*We must do a store barrier before inserting 
 	to make sure all values in @node are globally visible.*/
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	while (1) {
 		if (mono_lls_find (list, hp, value->key))
@@ -152,7 +152,7 @@ mono_lls_insert (MonoLinkedListSet *list, MonoThreadHazardPointers *hp, MonoLink
 		value->next = cur;
 		mono_hazard_pointer_set (hp, 0, value);
 		/* The CAS must happen after setting the hazard pointer. */
-		mono_memory_write_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 		if (mono_atomic_cas_ptr ((volatile gpointer*)prev, value, cur) == cur)
 			return TRUE;
 	}
@@ -180,10 +180,10 @@ mono_lls_remove (MonoLinkedListSet *list, MonoThreadHazardPointers *hp, MonoLink
 		if (mono_atomic_cas_ptr ((volatile gpointer*)&cur->next, mask (next, 1), next) != next)
 			continue;
 		/* The second CAS must happen before the first. */
-		mono_memory_write_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 		if (mono_atomic_cas_ptr ((volatile gpointer*)prev, mono_lls_pointer_unmask (next), cur) == cur) {
 			/* The CAS must happen before the hazard pointer clear. */
-			mono_memory_write_barrier ();
+			mono_atomic_fence (MONO_ATOMIC_STRONG);
 			mono_hazard_pointer_clear (hp, 1);
 			if (list->free_node_func)
 				mono_thread_hazardous_queue_free (value, list->free_node_func);

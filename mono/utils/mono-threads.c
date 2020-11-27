@@ -22,9 +22,8 @@
 #include <mono/utils/mono-threads.h>
 #include <mono/utils/mono-tls.h>
 #include <mono/utils/hazard-pointer.h>
-#include <mono/utils/mono-memory-model.h>
 #include <mono/utils/mono-mmap.h>
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 #include <mono/utils/mono-time.h>
 #include <mono/utils/mono-lazy-init.h>
 #include <mono/utils/mono-coop-mutex.h>
@@ -863,7 +862,7 @@ static void
 mono_thread_info_set_inited (void)
 {
 	mono_threads_inited = TRUE;
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	GSList *old = init_callbacks;
 

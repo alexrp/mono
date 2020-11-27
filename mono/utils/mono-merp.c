@@ -385,7 +385,7 @@ get_apple_model (char *buffer, size_t max_length)
 static void
 mono_init_merp (const intptr_t crashed_pid, const char *signal, MonoStackHash *hashes, MERPStruct *merp)
 {
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 	g_assert (mono_merp_enabled ());
 
 	merp->merpFilePath = config.merpFilePath;
@@ -581,7 +581,7 @@ mono_merp_add_annotation (const char *key, const char *value)
 void
 mono_merp_disable (void)
 {
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	if (!config.enable_merp)
 		return;
@@ -595,13 +595,13 @@ mono_merp_disable (void)
 	g_slist_free (config.annotations);
 	memset (&config, 0, sizeof (config));
 
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 }
 
 void
 mono_merp_enable (const char *appBundleID, const char *appSignature, const char *appVersion, const char *merpGUIPath, const char *appPath, const char *configDir)
 {
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	g_assert (!config.enable_merp);
 
@@ -630,7 +630,7 @@ mono_merp_enable (const char *appBundleID, const char *appSignature, const char 
 
 	config.enable_merp = TRUE;
 
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 }
 
 gboolean

@@ -4845,14 +4845,37 @@ if test "x$enable_vtune" = "xyes"; then
 	AC_SUBST(VTUNE_LIBS)
 	AC_SUBST(VTUNE_CFLAGS)
 fi
-dnl Use GCC atomic ops if they work on the target.
-if test x$GCC = "xyes"; then
-	case $TARGET in
-	X86 | AMD64 | ARM | ARM64 | ARM6432 | POWERPC | POWERPC64 | MIPS | S390X | SPARC | SPARC64 | RISCV32 | RISCV64)
-		AC_DEFINE(USE_GCC_ATOMIC_OPS, 1, [...])
-		;;
-	esac
+
+# Try the new __atomic builtins.
+AC_TRY_COMPILE([], [
+	#ifndef __ATOMIC_SEQ_CST
+	#error unavailable
+	#endif
+], [
+	atomic=new
+], [
+	atomic=none
+])
+
+# Try the old __sync builtins.
+if test x$atomic = xnone; then
+	AC_TRY_LINK([], [
+		__sync_synchronize ();
+	], [
+		atomic=old
+	], [
+		atomic=none
+	])
 fi
+
+case "$atomic" in
+new)
+	AC_DEFINE([HAVE_ATOMIC_BUILTINS], [1], [Use GCC/Clang __atomic_* builtins])
+	;;
+old)
+	AC_DEFINE([HAVE_SYNC_BUILTINS], [1], [Use GCC/Clang __sync_* builtins])
+	;;
+esac
 
 if test "x$target_mach" = "xyes"; then
 

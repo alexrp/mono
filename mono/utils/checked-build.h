@@ -12,7 +12,7 @@
 #define __CHECKED_BUILD_H__
 
 #include <config.h>
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 #include <mono/utils/mono-compiler.h>
 #include <mono/utils/mono-publib.h>
 

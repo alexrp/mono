@@ -126,7 +126,7 @@ rehash_table (MonoConcurrentHashTable *hash_table, int multiplier)
 		if (kvs [i].key && kvs [i].key != TOMBSTONE)
 			insert_one_local (new_table, hash_table->hash_func, kvs [i].key, kvs [i].value);
 	}
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 	hash_table->table = new_table;
 	hash_table->overflow_count = (int)(new_table->table_size * LOAD_FACTOR);
 	hash_table->element_count -= hash_table->tombstone_count;
@@ -213,7 +213,7 @@ retry:
 			if (key == kvs [i].key) {
 				gpointer value;
 				/* The read of keys must happen before the read of values */
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				value = kvs [i].value;
 				/* FIXME check for NULL if we add suppport for removal */
 				mono_hazard_pointer_clear (hp, 0);
@@ -228,7 +228,7 @@ retry:
 			if (kvs [i].key != TOMBSTONE && equal (key, kvs [i].key)) {
 				gpointer value;
 				/* The read of keys must happen before the read of values */
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				value = kvs [i].value;
 
 				/* We just read a value been deleted, try again. */
@@ -243,7 +243,7 @@ retry:
 	}
 
 	/* The table might have expanded and the value is now on the newer table */
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 	if (hash_table->table != table)
 		goto retry;
 
@@ -281,7 +281,7 @@ mono_conc_hashtable_remove (MonoConcurrentHashTable *hash_table, gpointer key)
 			if (key == kvs [i].key) {
 				gpointer value = kvs [i].value;
 				kvs [i].value = NULL;
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				kvs [i].key = TOMBSTONE;
 				++hash_table->tombstone_count;
 
@@ -306,7 +306,7 @@ mono_conc_hashtable_remove (MonoConcurrentHashTable *hash_table, gpointer key)
 				gpointer old_key = kvs [i].key;
 				gpointer value = kvs [i].value;
 				kvs [i].value = NULL;
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				kvs [i].key = TOMBSTONE;
 				++hash_table->tombstone_count;
 
@@ -352,7 +352,7 @@ mono_conc_hashtable_insert (MonoConcurrentHashTable *hash_table, gpointer key, g
 			if (!kvs [i].key || kvs [i].key == TOMBSTONE) {
 				kvs [i].value = value;
 				/* The write to values must happen after the write to keys */
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				if (kvs [i].key == TOMBSTONE)
 					--hash_table->tombstone_count;
 				else
@@ -372,7 +372,7 @@ mono_conc_hashtable_insert (MonoConcurrentHashTable *hash_table, gpointer key, g
 			if (!kvs [i].key || kvs [i].key == TOMBSTONE) {
 				kvs [i].value = value;
 				/* The write to values must happen after the write to keys */
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				if (kvs [i].key == TOMBSTONE)
 					--hash_table->tombstone_count;
 				else
@@ -424,7 +424,7 @@ mono_conc_hashtable_foreach_steal (MonoConcurrentHashTable *hash_table, GHRFunc 
 		if (kvs [i].key && kvs [i].key != TOMBSTONE) {
 			if (func (kvs [i].key, kvs [i].value, userdata)) {
 				kvs [i].value = NULL;
-				mono_memory_barrier ();
+				mono_atomic_fence (MONO_ATOMIC_STRONG);
 				kvs [i].key = TOMBSTONE;
 				++hash_table->tombstone_count;
 			}

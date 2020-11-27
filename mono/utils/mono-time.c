@@ -16,7 +16,7 @@
 #endif
 
 #include <mono/utils/mono-time.h>
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 
 #if HAVE_MACH_ABSOLUTE_TIME
 #include <mach/mach_time.h>
@@ -139,11 +139,11 @@ mono_msec_boottime (void)
 		g_assert (machRet == KERN_SUCCESS);
 		/* Assume memcpy works correctly if ran concurrently */
 		memcpy (&s_TimebaseInfo, &tmp, sizeof (mach_timebase_info_data_t));
-		mono_memory_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 		timebase_inited = TRUE;
 	} else {
 		// This barrier prevents reading s_TimebaseInfo before reading timebase_inited.
-		mono_memory_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 	}
 	return (mach_absolute_time () * s_TimebaseInfo.numer / s_TimebaseInfo.denom) / tccMillieSecondsToNanoSeconds;
 

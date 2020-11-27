@@ -564,10 +564,4 @@ mono_thread_info_get_system_max_stack_size (void)
 	return INT_MAX;
 }
 
-void
-mono_memory_barrier_process_wide (void)
-{
-	FlushProcessWriteBuffers ();
-}
-
 #endif

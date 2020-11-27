@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <winbase.h>
 
-#include "atomic.h"
+#include "mono-atomic.h"
 #include "mono-os-wait.h"
 
 void

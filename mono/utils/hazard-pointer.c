@@ -11,11 +11,9 @@
 #include <string.h>
 
 #include <mono/utils/hazard-pointer.h>
-#include <mono/utils/mono-membar.h>
-#include <mono/utils/mono-memory-model.h>
 #include <mono/utils/monobitset.h>
 #include <mono/utils/lock-free-array-queue.h>
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 #include <mono/utils/mono-os-mutex.h>
 #ifdef SGEN_WITHOUT_MONO
 #include <mono/sgen/sgen-gc.h>
@@ -140,7 +138,7 @@ mono_thread_small_id_alloc (void)
 
 	if (id > highest_small_id) {
 		highest_small_id = id;
-		mono_memory_write_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 	}
 
 	mono_os_mutex_unlock (&small_id_mutex);
@@ -259,7 +257,7 @@ mono_hazard_pointer_save_for_signal_handler (void)
 		g_assert (!hp_overflow->hazard_pointers [i]);
 	*hp_overflow = *hp;
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	memset (hp, 0, sizeof (MonoThreadHazardPointers));
 
@@ -286,11 +284,11 @@ mono_hazard_pointer_restore_for_signal_handler (int small_id)
 
 	*hp = *hp_overflow;
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	memset (hp_overflow, 0, sizeof (MonoThreadHazardPointers));
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	overflow_busy [small_id] = 0;
 }

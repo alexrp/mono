@@ -232,9 +232,6 @@
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-math.h">
       <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-membar.h">
-      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
-    </ClInclude>
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-path.h">
       <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
     </ClInclude>
@@ -376,13 +373,25 @@
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\linux_magic.h">
       <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
     </ClInclude>
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-memory-model.h">
-      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
-    </ClInclude>
-    <ClCompile Include="$(MonoSourceLocation)\mono\utils\atomic.c">
+    <ClCompile Include="$(MonoSourceLocation)\mono\utils\mono-atomic.c">
       <Filter>Source Files$(MonoUtilsFilterSubFolder)\common</Filter>
     </ClCompile>
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\atomic.h">
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic.h">
+      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
+    </ClInclude>
+    <ClCompile Include="$(MonoSourceLocation)\mono\utils\mono-atomic-fallback.c">
+      <Filter>Source Files$(MonoUtilsFilterSubFolder)\common</Filter>
+    </ClCompile>
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-fallback.h">
+      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-new.h">
+      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-old.h">
+      <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-windows.h">
       <Filter>Header Files$(MonoUtilsFilterSubFolder)\common</Filter>
     </ClInclude>
     <ClCompile Include="$(MonoSourceLocation)\mono\utils\mono-hwcap.c">

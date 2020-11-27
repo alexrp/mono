@@ -8,7 +8,7 @@
 #include <glib.h>
 #include <config.h>
 
-#include "atomic.h"
+#include "mono-atomic.h"
 
 /*
  * Mechanism for ref-counting which tries to be as user-friendly as possible. Instead of being a wrapper around

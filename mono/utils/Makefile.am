@@ -148,7 +148,6 @@ monoutils_sources = \
 	mono-forward-internal.h	\
 	mono-machine.h	\
 	mono-math.h	\
-	mono-membar.h	\
 	mono-path.h	\
 	mono-poll.h	\
 	mono-uri.h	\
@@ -196,9 +195,13 @@ monoutils_sources = \
 	mono-utils-debug.c \
 	mono-utils-debug.h \
 	linux_magic.h	\
-	mono-memory-model.h	\
-	atomic.h	\
-	atomic.c	\
+	mono-atomic.c	\
+	mono-atomic.h	\
+	mono-atomic-fallback.c	\
+	mono-atomic-fallback.h	\
+	mono-atomic-new.h	\
+	mono-atomic-old.h	\
+	mono-atomic-windows.h	\
 	mono-hwcap.h	\
 	mono-hwcap.c	\
 	mono-hwcap-vars.h	\

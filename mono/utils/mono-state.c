@@ -130,7 +130,7 @@ mono_summarize_toggle_assertions (gboolean enable)
 		saved = FALSE;
 	}
 
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 #endif
 }
 

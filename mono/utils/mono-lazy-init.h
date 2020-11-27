@@ -15,9 +15,8 @@
 
 #include <config.h>
 
-#include "atomic.h"
+#include "mono-atomic.h"
 #include "mono-threads.h"
-#include "mono-memory-model.h"
 
 /*
  * These functions should be used if you want some form of lazy initialization. You can have a look at the
@@ -94,7 +93,7 @@ mono_lazy_initialize (mono_lazy_init_t *lazy_init, void (*initialize) (void))
 	// an extra use early in runtime initialization. i.e. so it does not
 	// take any locks, and become coop-unfriendly.
 	//
-	mono_memory_read_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	if (status >= MONO_LAZY_INIT_STATUS_INITIALIZED)
 		return status == MONO_LAZY_INIT_STATUS_INITIALIZED;

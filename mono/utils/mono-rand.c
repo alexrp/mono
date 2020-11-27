@@ -16,7 +16,7 @@
 #include <glib.h>
 #include <config.h>
 
-#include "atomic.h"
+#include "mono-atomic.h"
 #include "mono-error.h"
 #include "mono-error-internals.h"
 #include "mono-rand.h"

@@ -10,7 +10,7 @@
 
 #include "os-event.h"
 
-#include "atomic.h"
+#include "mono-atomic.h"
 #include "mono-lazy-init.h"
 #include "mono-threads.h"
 #include "mono-time.h"

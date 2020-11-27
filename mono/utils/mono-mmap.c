@@ -36,7 +36,7 @@
 #include "mono-mmap-internals.h"
 #include "mono-proclib.h"
 #include <mono/utils/mono-threads.h>
-#include <mono/utils/atomic.h>
+#include <mono/utils/mono-atomic.h>
 #include <mono/utils/mono-counters.h>
 
 #define BEGIN_CRITICAL_SECTION do { \

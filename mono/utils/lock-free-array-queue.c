@@ -20,8 +20,7 @@
 
 #include <string.h>
 
-#include <mono/utils/atomic.h>
-#include <mono/utils/mono-membar.h>
+#include <mono/utils/mono-atomic.h>
 #ifdef SGEN_WITHOUT_MONO
 #include <mono/sgen/sgen-gc.h>
 #include <mono/sgen/sgen-client.h>
@@ -67,7 +66,7 @@ mono_lock_free_array_nth (MonoLockFreeArray *arr, int index)
 
 	if (!arr->chunk_list) {
 		chunk = alloc_chunk (arr);
-		mono_memory_write_barrier ();
+		mono_atomic_fence (MONO_ATOMIC_STRONG);
 		if (mono_atomic_cas_ptr ((volatile gpointer *)&arr->chunk_list, chunk, NULL) != NULL)
 			free_chunk (chunk, arr->account_type);
 	}
@@ -79,7 +78,7 @@ mono_lock_free_array_nth (MonoLockFreeArray *arr, int index)
 		Chunk *next = chunk->next;
 		if (!next) {
 			next = alloc_chunk (arr);
-			mono_memory_write_barrier ();
+			mono_atomic_fence (MONO_ATOMIC_STRONG);
 			if (mono_atomic_cas_ptr ((volatile gpointer *) &chunk->next, next, NULL) != NULL) {
 				free_chunk (next, arr->account_type);
 				next = chunk->next;
@@ -149,15 +148,15 @@ mono_lock_free_array_queue_push (MonoLockFreeArrayQueue *q, gpointer entry_data_
 		entry = (Entry *) mono_lock_free_array_nth (&q->array, index);
 	} while (mono_atomic_cas_i32 (&entry->state, STATE_BUSY, STATE_FREE) != STATE_FREE);
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	memcpy (entry->data, entry_data_ptr, ENTRY_SIZE (q));
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	entry->state = STATE_USED;
 
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	do {
 		num_used = q->num_used_entries;
@@ -165,7 +164,7 @@ mono_lock_free_array_queue_push (MonoLockFreeArrayQueue *q, gpointer entry_data_
 			break;
 	} while (mono_atomic_cas_i32 (&q->num_used_entries, index + 1, num_used) != num_used);
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 }
 
 gboolean
@@ -185,15 +184,15 @@ mono_lock_free_array_queue_pop (MonoLockFreeArrayQueue *q, gpointer entry_data_p
 	} while (mono_atomic_cas_i32 (&entry->state, STATE_BUSY, STATE_USED) != STATE_USED);
 
 	/* Reading the item must happen before CASing the state. */
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	memcpy (entry_data_ptr, entry->data, ENTRY_SIZE (q));
 
-	mono_memory_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	entry->state = STATE_FREE;
 
-	mono_memory_write_barrier ();
+	mono_atomic_fence (MONO_ATOMIC_STRONG);
 
 	return TRUE;
 }

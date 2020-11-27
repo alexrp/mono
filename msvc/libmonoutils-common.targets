@@ -95,7 +95,6 @@
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-digest.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-machine.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-math.h" />
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-membar.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-path.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-poll.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-uri.h" />
@@ -165,9 +164,13 @@
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-tls.h" />
     <ClCompile Include="$(MonoSourceLocation)\mono\utils\mono-tls.c" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\linux_magic.h" />
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-memory-model.h" />
-    <ClCompile Include="$(MonoSourceLocation)\mono\utils\atomic.c" />
-    <ClInclude Include="$(MonoSourceLocation)\mono\utils\atomic.h" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic.c" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic.h" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-fallback.c" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-fallback.h" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-new.h" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-old.h" />
+    <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-atomic-windows.h" />
     <ClCompile Include="$(MonoSourceLocation)\mono\utils\mono-hwcap.c" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-hwcap.h" />
     <ClInclude Include="$(MonoSourceLocation)\mono\utils\mono-hwcap-vars.h" />
